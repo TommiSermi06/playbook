@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=0.17">
+  <link rel="stylesheet" href="style.css?v=0.18">
 </head>
 <body>
   <!-- ======================================================================
@@ -48,6 +48,7 @@
         <span class="nome-playbook" id="nome-playbook"></span>
         <span class="badge-formato" id="badge-playbook"></span>
         <span class="badge-vista">👁 Sola lettura · condiviso dal coach</span>
+        <span class="badge-staff" id="badge-staff" hidden></span>
       </div>
 
       <!-- Controllo segmentato: Attacco / Difesa -->
@@ -74,7 +75,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.17</p>
+      <p class="versione" id="versione">Versione 0.18</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -253,6 +254,8 @@
   <div class="dialogo dialogo-condividi" id="foglio-condividi" role="dialog" aria-modal="true" hidden>
     <div class="icona-condividi">🔗</div>
     <p class="dialogo-titolo" id="titolo-condividi">Condividi</p>
+
+    <p class="sezione-condividi">Link in sola lettura · staff e giocatori</p>
     <p class="dialogo-testo">Chi ha il link vede gli schemi e li può stampare, ma <b>non può modificarli</b>. Non serve un account.</p>
     <p class="condividi-attesa" id="condividi-attesa">Controllo…</p>
     <div id="condividi-senza" hidden>
@@ -270,6 +273,17 @@
       </div>
     </div>
     <p class="messaggio-errore" id="errore-condividi"></p>
+
+    <!-- Co-allenatori: altri coach che possono modificare il playbook -->
+    <p class="sezione-condividi">Co-allenatori · possono modificare</p>
+    <p class="dialogo-testo">Scrivi la mail con cui il coach accede a Playbook (se non ha un account, se lo crea con questa mail). Non mandiamo nessuna mail: avvisalo tu.</p>
+    <ul class="lista-coach" id="lista-coach"></ul>
+    <form class="riga-link" id="form-invita">
+      <input id="email-invito" type="email" placeholder="coach@esempio.it" autocomplete="off" required>
+      <button type="submit" class="btn-pieno" id="btn-invita">Invita</button>
+    </form>
+    <p class="messaggio-errore" id="errore-invito"></p>
+
     <div class="dialogo-pulsanti">
       <button type="button" class="btn-secondario" id="btn-condividi-chiudi">Chiudi</button>
     </div>
@@ -464,22 +478,22 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.17"></script>
+  <script src="config.js?v=0.18"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.17"></script>
-  <script src="regole.js?v=0.17"></script>
-  <script src="cloud.js?v=0.17"></script>
-  <script src="dati.js?v=0.17"></script>
-  <script src="formazioni-personali.js?v=0.17"></script>
-  <script src="app.js?v=0.17"></script>
-  <script src="tracce.js?v=0.17"></script>
-  <script src="costruttore.js?v=0.17"></script>
-  <script src="lucchetto.js?v=0.17"></script>
-  <script src="stampa.js?v=0.17"></script>
-  <script src="partita.js?v=0.17"></script>
-  <script src="playbook.js?v=0.17"></script>
-  <script src="squadra.js?v=0.17"></script>
-  <script src="condivisione.js?v=0.17"></script>
-  <script src="accesso.js?v=0.17"></script>
+  <script src="formazioni.js?v=0.18"></script>
+  <script src="regole.js?v=0.18"></script>
+  <script src="cloud.js?v=0.18"></script>
+  <script src="dati.js?v=0.18"></script>
+  <script src="formazioni-personali.js?v=0.18"></script>
+  <script src="app.js?v=0.18"></script>
+  <script src="tracce.js?v=0.18"></script>
+  <script src="costruttore.js?v=0.18"></script>
+  <script src="lucchetto.js?v=0.18"></script>
+  <script src="stampa.js?v=0.18"></script>
+  <script src="partita.js?v=0.18"></script>
+  <script src="playbook.js?v=0.18"></script>
+  <script src="squadra.js?v=0.18"></script>
+  <script src="condivisione.js?v=0.18"></script>
+  <script src="accesso.js?v=0.18"></script>
 </body>
 </html>

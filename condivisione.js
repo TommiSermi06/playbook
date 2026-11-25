@@ -47,12 +47,17 @@ async function apriFoglioCondividi(pb) {
     $("#foglio-condividi").classList.add("visibile");
   });
 
+  $("#lista-coach").innerHTML = "";
+  $("#email-invito").value = "";
+  $("#errore-invito").textContent = "";
   if (!Cloud.attivo) {
     mostraStatoCondivisione(null, false);
+    $("#btn-invita").disabled = true;
     $("#btn-crea-link").disabled = true;
     $("#errore-condividi").textContent = "Per condividere serve un account online (ora sei in modalità locale).";
     return;
   }
+  caricaCoach(pb);
   try {
     const codice = await Cloud.leggiCondivisione(pb.id);
     ricordaCondiviso(pb.id, codice);
@@ -88,7 +93,7 @@ async function creaLink() {
   bottone.disabled = true;
   $("#errore-condividi").textContent = "";
   try {
-    salvaSubito();
+    salvaInSospeso();
     await Dati.invia(); // il link deve mostrare gli schemi aggiornati
     const codice = await Cloud.creaCondivisione(pb.id, ordineSchemi(pb.id));
     ricordaCondiviso(pb.id, codice);
@@ -160,6 +165,158 @@ function aggiornaOrdineSeCondiviso(idPlaybook) {
   if (!mappa[idPlaybook]) return;
   Cloud.aggiornaOrdineCondivisione(idPlaybook, ordineSchemi(idPlaybook)).catch(() => {});
 }
+
+/* ==========================================================================
+   CO-ALLENATORI
+   Il proprietario invita un coach con la sua email; quando quel coach
+   accede con la stessa email, il playbook compare tra i suoi e può
+   modificarne gli schemi.
+   ========================================================================== */
+async function caricaCoach(pb) {
+  const lista = $("#lista-coach");
+  if (!Cloud.attivo) return;
+  try {
+    const coach = await Cloud.elencoCollaboratori(pb.id);
+    ricordaStaff(pb.id, coach.length);
+    if (playbookDaCondividere !== pb) return;
+    lista.innerHTML = "";
+    if (!coach.length) lista.appendChild(elemento("li", "coach-vuoto", "Nessun co-allenatore per ora."));
+    for (const c of coach) {
+      const riga = elemento("li", "riga-coach");
+      riga.appendChild(elemento("span", "coach-iniziale", c.email[0].toUpperCase()));
+      const testi = elemento("span", "coach-testi");
+      testi.appendChild(elemento("span", "coach-email", c.email));
+      testi.appendChild(elemento("span", "coach-stato" + (c.utente ? " attivo" : ""),
+        c.utente ? "Attivo · può modificare" : "In attesa del primo accesso"));
+      riga.appendChild(testi);
+      const togli = elemento("button", "coach-togli", "×");
+      togli.type = "button";
+      togli.title = "Togli l'accesso";
+      togli.addEventListener("click", () => togliCoach(pb, c.email, riga));
+      riga.appendChild(togli);
+      lista.appendChild(riga);
+    }
+  } catch (errore) {
+    $("#errore-invito").textContent = errore.message;
+  }
+}
+
+$("#form-invita").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pb = playbookDaCondividere;
+  const email = $("#email-invito").value.trim().toLowerCase();
+  $("#errore-invito").textContent = "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    $("#errore-invito").textContent = "Controlla l'indirizzo email.";
+    return;
+  }
+  if (Cloud.utente && email === (Cloud.utente.email || "").toLowerCase()) {
+    $("#errore-invito").textContent = "Questa è la tua email: il playbook è già tuo.";
+    return;
+  }
+  const bottone = $("#btn-invita");
+  bottone.disabled = true;
+  try {
+    await Cloud.invitaCollaboratore(pb.id, email, Squadra.nome || (Cloud.utente && Cloud.utente.email) || "");
+    $("#email-invito").value = "";
+    await caricaCoach(pb);
+    festeggiaStemma();
+    mostraAvviso(`Invitato ${email}: digli di accedere con questa mail`);
+  } catch (errore) {
+    $("#errore-invito").textContent = errore.message;
+  } finally {
+    bottone.disabled = false;
+  }
+});
+
+async function togliCoach(pb, email, riga) {
+  riga.classList.add("in-uscita");
+  try {
+    await Cloud.rimuoviCollaboratore(pb.id, email);
+    await caricaCoach(pb);
+    mostraAvviso(`${email} non può più modificare «${pb.nome}»`);
+  } catch (errore) {
+    riga.classList.remove("in-uscita");
+    $("#errore-invito").textContent = errore.message;
+  }
+}
+
+// Quanti co-allenatori ha ogni mio playbook (promemoria sul computer)
+function chiaveStaff() { return "playbook.coach-invitati." + (Cloud.utente ? Cloud.utente.id : "locale"); }
+function staffDi(idPlaybook) { return (leggiLocale(chiaveStaff()) || {})[idPlaybook] || 0; }
+function ricordaStaff(idPlaybook, quanti) {
+  const mappa = leggiLocale(chiaveStaff()) || {};
+  if (quanti) mappa[idPlaybook] = quanti; else delete mappa[idPlaybook];
+  scriviLocale(chiaveStaff(), mappa);
+}
+
+// "Condiviso da Guelfi" sulle schede e nella barra laterale
+function testoStaff(pb) {
+  return `Condiviso da ${pb.squadra || "un altro coach"}`;
+}
+
+// Il co-allenatore lascia un playbook condiviso con lui
+function lasciaPlaybook(pb) {
+  chiediConferma(`Lasciare «${pb.nome}»?`,
+    "Non lo vedrai più tra i tuoi playbook. Gli schemi restano al proprietario, che può invitarti di nuovo.", "Lascia", async () => {
+      try {
+        await Cloud.lasciaPlaybook(pb.id);
+        Playbook._scrivi(Playbook.tutti().filter((p) => p.id !== pb.id));
+        Dati._scrivi(Dati.tutti().filter((s) => s.playbook !== pb.id));
+        disegnaHome();
+        mostraAvviso(`Hai lasciato «${pb.nome}»`);
+      } catch (errore) {
+        mostraAvviso(errore.message);
+      }
+    });
+}
+
+/* ---------- Aggiornamento dal lavoro degli altri coach ----------
+   Ogni minuto (e quando si torna sulla finestra) l'app scarica le
+   modifiche fatte dai co-allenatori. Non lo fa mentre si sta lavorando
+   a qualcosa di non ancora salvato. */
+let aggiornamentoInCorso = false;
+async function aggiornaDaStaff() {
+  if (!Cloud.attivo || !Cloud.utente || CODICE_VISTA || aggiornamentoInCorso) return;
+  if (document.visibilityState !== "visible" || !$("#intro").hidden) return;
+  const condivisi = Playbook.tutti().some((p) => p.proprietario);
+  const mieiCondivisi = Object.keys(leggiLocale("playbook.coach-invitati." + Cloud.utente.id) || {}).length;
+  if (!condivisi && !mieiCondivisi) return; // nessuno staff: niente da scaricare
+  if (modificheInSospeso || Tracce.disegno || Dati.daInviare.size) return;
+  aggiornamentoInCorso = true;
+  try {
+    const persi = await Playbook.sincronizza();
+    const cambiato = await Dati.sincronizza(persi);
+    if (modificheInSospeso || Tracce.disegno) return; // nel frattempo il coach ha toccato qualcosa
+    if (document.body.classList.contains("in-home")) { disegnaHome(); return; }
+    if (playbookCorrente && !Playbook.trova(playbookCorrente.id)) {
+      mostraHome();
+      mostraAvviso("Non hai più accesso a questo playbook");
+      return;
+    }
+    if (!cambiato) return;
+    if (schemaCorrente) {
+      const fresco = Dati.trova(schemaCorrente.id);
+      if (!fresco) {
+        chiudiEditor();
+        mostraAvviso("Questo schema è stato eliminato da un co-allenatore");
+      } else if (fresco.modificato > schemaCorrente.modificato) {
+        const selezionato = giocatoreSelezionato;
+        apriEditor(fresco.id);
+        if (selezionato && fresco.giocatori.some((g) => g.id === selezionato)) { giocatoreSelezionato = selezionato; ridisegna(); }
+        mostraAvviso("Schema aggiornato da un co-allenatore");
+      } else {
+        mostraElenco();
+      }
+    } else {
+      mostraElenco();
+    }
+  } finally {
+    aggiornamentoInCorso = false;
+  }
+}
+setInterval(aggiornaDaStaff, 60000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") aggiornaDaStaff(); });
 
 /* ==========================================================================
    Lato di chi apre il link: l'app in sola lettura

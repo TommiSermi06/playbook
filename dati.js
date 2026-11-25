@@ -189,30 +189,51 @@ const Dati = {
     }
   },
 
-  // All'accesso: unisce gli schemi online con quelli sul computer
-  async sincronizza() {
-    if (!Cloud.attivo) return;
+  /* Unisce gli schemi online con quelli sul computer (all'accesso e,
+     con i co-allenatori, di tanto in tanto). Per ogni schema vince la
+     versione modificata più di recente.
+     "persi" = playbook condivisi non più accessibili: i loro schemi
+     spariscono dal computer. Restituisce true se qualcosa è cambiato. */
+  async sincronizza(persi = []) {
+    if (!Cloud.attivo) return false;
     segnalaSync("inizio");
     try {
       const online = await Cloud.scaricaSchemi();
       const locali = this.tutti();
       const perId = new Map(online.map((s) => [s.id, s]));
+      const tolti = new Set(persi);
+      let cambiato = false;
 
       for (const s of locali) {
+        if (tolti.has(s.playbook)) { this.daInviare.delete(s.id); cambiato = true; continue; }
         const remoto = perId.get(s.id);
-        // Più recente sul computer (o mai inviato): vince la copia locale
-        if (!remoto || s.modificato > remoto.modificato) {
+        if (!remoto) {
+          // Non è online: se aspettava di essere inviato è nuovo e lo teniamo,
+          // altrimenti è stato eliminato (anche da un co-allenatore)
+          if (this.daInviare.has(s.id)) perId.set(s.id, s);
+          else cambiato = true;
+        } else if (s.modificato > remoto.modificato) {
           perId.set(s.id, s);
           this.daInviare.add(s.id);
+        } else if (remoto.modificato > s.modificato) {
+          cambiato = true;
         }
       }
-      const uniti = [...perId.values()].sort((a, b) => b.modificato - a.modificato);
+      if (online.some((s) => !locali.some((l) => l.id === s.id))) cambiato = true;
+
+      // L'ordine del computer resta; gli schemi arrivati da online vanno in cima
+      const posizione = new Map(locali.map((s, i) => [s.id, i]));
+      const uniti = [...perId.values()].sort((a, b) =>
+        (posizione.has(a.id) ? posizione.get(a.id) : -1) - (posizione.has(b.id) ? posizione.get(b.id) : -1)
+        || b.modificato - a.modificato);
       this._scrivi(uniti);
       this._ricordaDaInviare();
       segnalaSync("fine");
       await this.invia();
+      return cambiato;
     } catch (errore) {
       segnalaSync("errore", errore);
+      return false;
     }
   },
 };

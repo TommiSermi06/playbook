@@ -2339,3 +2339,68 @@ body.sola-lettura .campo-cornice::after { content: none; }
 body.sola-lettura .nome-schema { pointer-events: none; }
 .numero-fisso { font-weight: 800; color: var(--testo) !important; }
 .pannello-partita span.situazione { cursor: default; }
+
+/* ==========================================================================
+   CO-ALLENATORI
+   ========================================================================== */
+.dialogo-condividi { width: 480px; max-height: calc(100vh - 40px); overflow-y: auto; }
+.sezione-condividi {
+  margin: 6px 0 0;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--testo-secondario);
+}
+.sezione-condividi + .dialogo-testo { text-align: left; margin-bottom: 2px; }
+.lista-coach { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.coach-vuoto { font-size: 12.5px; color: var(--testo-secondario); text-align: left; }
+.riga-coach {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px 7px 7px;
+  border-radius: 10px;
+  background: var(--sfondo-hover);
+  text-align: left;
+  animation: appari 0.25s var(--curva) both;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.riga-coach.in-uscita { opacity: 0.3; transform: translateX(8px); }
+.coach-iniziale {
+  flex: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accento-tenue);
+  color: var(--accento);
+  font-weight: 800;
+  font-size: 13px;
+}
+.coach-testi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.coach-email { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coach-stato { font-size: 11.5px; color: var(--testo-secondario); }
+.coach-stato.attivo { color: #34C77B; }
+.coach-togli {
+  flex: none;
+  width: 26px; height: 26px;
+  border: 0; border-radius: 50%;
+  background: transparent;
+  color: var(--testo-secondario);
+  font-size: 18px; line-height: 1;
+  cursor: pointer;
+}
+.coach-togli:hover { background: rgba(255, 90, 78, 0.15); color: var(--rosso); }
+
+.badge-staff {
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(52, 199, 123, 0.14);
+  color: #34C77B;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.badge-staff[hidden] { display: none; }
+.scheda-corpo .badge-staff { margin-top: 4px; }

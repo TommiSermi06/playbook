@@ -3,6 +3,16 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.18 — co-allenatori
+
+- Menu ⋯ del playbook → **Condividi e co-allenatori…**: il proprietario invita un coach con la sua email.
+- Quando quel coach accede con la stessa email, il playbook compare tra i suoi («Condiviso da …»)
+  e può creare, modificare ed eliminare gli schemi. Rinominare, eliminare, condividere il playbook
+  e gestire gli inviti restano al proprietario. Il co-allenatore può lasciare il playbook.
+- Ogni minuto (e quando si torna sulla finestra) l'app scarica le modifiche dello staff;
+  aprire uno schema senza toccarlo non lo salva più, così non si sovrascrive il lavoro degli altri.
+- Su Supabase serve lo script `supabase/coallenatori.sql`.
+
 ## Versione 0.17 — condivisione in sola lettura
 
 - Menu ⋯ del playbook → **Condividi (sola lettura)…**: crea un link da mandare a staff e giocatori.

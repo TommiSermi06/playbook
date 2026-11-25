@@ -96,7 +96,7 @@ function controllaDoppione() {
 /* Dà un numero agli schemi che non ce l'hanno, nell'ordine del playbook,
    partendo dal primo numero libero. Quelli già numerati non cambiano. */
 function numeraInAutomatico(lato) {
-  salvaSubito();
+  salvaInSospeso();
   const schemi = schemiDelPlaybook().filter((s) => s.lato === lato);
   const usati = new Set(schemi.filter((s) => s.chiamata).map((s) => s.chiamata));
   const daNumerare = schemi.filter((s) => !s.chiamata);

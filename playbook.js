@@ -51,9 +51,16 @@ const Playbook = {
     return pb;
   },
 
+  // Proprietario di un playbook condiviso con me (null se è mio)
+  proprietarioDi(id) {
+    const pb = id && this.trova(id);
+    return (pb && pb.proprietario) || null;
+  },
+
   salva(pb) {
     pb.modificato = Date.now();
     this._scrivi([pb, ...this.tutti().filter((p) => p.id !== pb.id)]);
+    if (pb.proprietario) return; // condiviso: lo modifica solo il proprietario
     this.daInviare.add(pb.id);
     this.daEliminare.delete(pb.id);
     this._ricorda();
@@ -74,7 +81,7 @@ const Playbook = {
     if (!Cloud.attivo || (!this.daInviare.size && !this.daEliminare.size)) return;
     segnalaSync("inizio");
     try {
-      const daSalvare = this.tutti().filter((p) => this.daInviare.has(p.id));
+      const daSalvare = this.tutti().filter((p) => this.daInviare.has(p.id) && !p.proprietario);
       if (daSalvare.length) await Cloud.salvaRighe("playbook", daSalvare);
       for (const id of this.daEliminare) await Cloud.eliminaRiga("playbook", id);
       this.daInviare.clear();
@@ -86,23 +93,51 @@ const Playbook = {
     }
   },
 
+  /* All'accesso: unisce i propri playbook con quelli online e aggiunge
+     quelli in cui si è co-allenatori. Restituisce gli id dei playbook
+     condivisi che non sono più accessibili (invito tolto). */
   async sincronizza() {
-    if (!Cloud.attivo) return;
+    if (!Cloud.attivo) return [];
     try {
-      const online = (await Cloud.scaricaRighe("playbook")).filter((p) => !this.daEliminare.has(p.id));
-      const perId = new Map(online.map((p) => [p.id, p]));
-      for (const p of this.tutti()) {
+      await Cloud.accettaInviti().catch(() => 0); // se lo script non c'è ancora, si va avanti
+      const righe = await Cloud.scaricaPlaybook();
+      const io = Cloud.utente.id;
+      const miei = righe.filter((r) => r.utente === io).map((r) => r.dati).filter((p) => !this.daEliminare.has(p.id));
+      const altrui = righe.filter((r) => r.utente !== io);
+      const squadre = new Map();
+      if (altrui.length) {
+        for (const c of await Cloud.mieCollaborazioni().catch(() => [])) squadre.set(c.playbook, c.squadra);
+      }
+      const condivisi = altrui.map((r) => ({ ...r.dati, proprietario: r.utente, squadra: squadre.get(r.dati.id) || "" }));
+      // Quanti co-allenatori hanno i miei playbook
+      try {
+        const { data } = await Cloud.client.from("collaboratori").select("playbook").eq("proprietario", io);
+        if (data) {
+          const conta = {};
+          for (const r of data) conta[r.playbook] = (conta[r.playbook] || 0) + 1;
+          scriviLocale(chiaveStaff(), conta);
+        }
+      } catch { /* script dei co-allenatori non ancora eseguito */ }
+
+      const perId = new Map(miei.map((p) => [p.id, p]));
+      const locali = this.tutti();
+      for (const p of locali) {
+        if (p.proprietario) continue; // i condivisi arrivano sempre da online
         const remoto = perId.get(p.id);
         if (!remoto || p.modificato > remoto.modificato) {
           perId.set(p.id, p);
           this.daInviare.add(p.id);
         }
       }
-      this._scrivi([...perId.values()]);
+      const idCondivisi = new Set(condivisi.map((p) => p.id));
+      const persi = locali.filter((p) => p.proprietario && !idCondivisi.has(p.id)).map((p) => p.id);
+      this._scrivi([...perId.values(), ...condivisi]);
       this._ricorda();
       await this.invia();
+      return persi;
     } catch (errore) {
       console.warn("Playbook non sincronizzati (uso la copia sul computer):", errore);
+      return [];
     }
   },
 };
@@ -206,6 +241,13 @@ function disegnaHome() {
     corpo.querySelector(".scheda-conteggi").textContent =
       `${attacco} ${attacco === 1 ? "schema" : "schemi"} di attacco · ${difesa} di difesa`;
     corpo.querySelector(".scheda-data").textContent = `Modificato ${dataBreve(pb.modificato)}`;
+    if (pb.proprietario) {
+      scheda.classList.add("condiviso");
+      corpo.insertBefore(elemento("span", "badge-staff", `👥 ${testoStaff(pb)}`), corpo.querySelector("h3"));
+    } else if (staffDi(pb.id)) {
+      const n = staffDi(pb.id);
+      corpo.insertBefore(elemento("span", "badge-staff", `👥 ${n} ${n === 1 ? "co-allenatore" : "co-allenatori"}`), corpo.querySelector("h3"));
+    }
     scheda.appendChild(corpo);
 
     // Menu ⋯: rinomina, duplica, elimina
@@ -240,10 +282,16 @@ function apriMenuScheda(bottone, pb) {
   const menu = document.createElement("div");
   menu.className = "menu-scheda";
   menu.id = "menu-scheda";
-  const voci = [
+  // Un playbook condiviso con me: lo modifico, ma lo gestisce il proprietario
+  const voci = pb.proprietario ? [
+    ["Apri", () => apriPlaybook(pb.id)],
+    ["Duplica (una copia tutta mia)", () => duplicaPlaybook(pb)],
+    ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
+    ["Lascia il playbook…", () => lasciaPlaybook(pb), "distruttiva"],
+  ] : [
     ["Apri", () => apriPlaybook(pb.id)],
     ["Rinomina…", () => apriFoglioPlaybook(pb)],
-    ["Condividi (sola lettura)…", () => apriFoglioCondividi(pb)],
+    ["Condividi e co-allenatori…", () => apriFoglioCondividi(pb)],
     ["Duplica", () => duplicaPlaybook(pb)],
     ["Rinomina un ruolo…", () => apriRinominaRuolo(pb)],
     ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
@@ -295,6 +343,8 @@ function aggiornaTestaPlaybook() {
   $("#nome-playbook").textContent = playbookCorrente.nome;
   const badge = $("#badge-playbook");
   badge.textContent = descriviPlaybook(playbookCorrente);
+  $("#badge-staff").hidden = !playbookCorrente.proprietario || Boolean(CODICE_VISTA);
+  $("#badge-staff").textContent = playbookCorrente.proprietario ? `👥 ${testoStaff(playbookCorrente)}` : "";
   badge.className = "badge-formato " + (eFlag(playbookCorrente) ? "tipo-flag" : "tipo-tackle");
 }
 
@@ -409,6 +459,10 @@ function eliminaPlaybook(pb) {
     : "Il playbook è vuoto. Potrai annullare subito dopo.";
   chiediConferma(`Eliminare «${pb.nome}»?`, testo, "Elimina", () => {
     Playbook.elimina(pb.id);
+    if (Cloud.attivo) { // via anche il link e gli inviti dei co-allenatori
+      Cloud.eliminaCondivisione(pb.id).catch(() => {});
+      Cloud.client.from("collaboratori").delete().eq("playbook", pb.id).then(() => {}, () => {});
+    }
     for (const s of schemi) Dati.elimina(s.id);
     disegnaHome();
     mostraAvviso(`«${pb.nome}» eliminato`, () => {

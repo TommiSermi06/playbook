@@ -72,7 +72,7 @@ let opzioniStampa = { ...OPZIONI_STAMPA_DEFAULT, ...(leggiLocale("playbook.opzio
 function apriFoglioStampa() {
   if (Tracce.disegno) Tracce.annullaDisegno();
   chiudiMenuTracce();
-  salvaSubito();
+  salvaInSospeso();
 
   if (!playbookCorrente) return; // si stampa da dentro un playbook
   const tutti = schemiDelPlaybook();

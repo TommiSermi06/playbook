@@ -417,7 +417,7 @@ $("#btn-nuovo-vuoto").addEventListener("click", nuovoSchema);
 const svgCampo = $("#campo");
 
 function apriEditor(id, { focusNome = false } = {}) {
-  salvaSubito(); // salva lo schema che stavamo modificando
+  salvaInSospeso(); // salva lo schema che stavamo modificando (se è cambiato)
   nascondiAvviso();
 
   chiudiMenuTracce();
@@ -448,7 +448,7 @@ function apriEditor(id, { focusNome = false } = {}) {
 }
 
 function chiudiEditor() {
-  salvaSubito();
+  salvaInSospeso();
   schemaCorrente = null;
   giocatoreSelezionato = null;
   $("#editor").hidden = true;
@@ -476,13 +476,22 @@ function ridisegna() {
    Come nell'app Note: ogni modifica si salva da sola dopo un attimo,
    senza bisogno di premere "Salva". */
 let timerSalvataggio = null;
+let modificheInSospeso = false; // vero tra una modifica e il suo salvataggio
 function salvaTraPoco() {
+  modificheInSospeso = true;
   clearTimeout(timerSalvataggio);
   $("#stato-salvataggio").textContent = "Modificato";
   timerSalvataggio = setTimeout(salvaSubito, 400);
 }
+/* Salva solo se c'è qualcosa di non ancora salvato: aprire o chiudere
+   uno schema senza toccarlo non lo "ritocca" (importante quando più
+   coach lavorano sullo stesso playbook). */
+function salvaInSospeso() {
+  if (modificheInSospeso) salvaSubito();
+}
 function salvaSubito() {
   clearTimeout(timerSalvataggio);
+  modificheInSospeso = false;
   if (!schemaCorrente) return;
   const ok = Dati.salva(schemaCorrente);
   $("#stato-salvataggio").textContent = ok ? "Salvato" : "Errore nel salvataggio";
@@ -1232,7 +1241,7 @@ function nascondiAvviso() {
 
 // Salva anche se la finestra viene chiusa o la scheda nascosta
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") salvaSubito();
+  if (document.visibilityState === "hidden") salvaInSospeso();
 });
 window.addEventListener("beforeunload", salvaSubito);
 

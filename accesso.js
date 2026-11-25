@@ -141,12 +141,13 @@ async function entra(utente) {
   $("#email-utente").textContent = utente.email || "Solo su questo computer";
   $("#btn-esci").textContent = utente.email ? "Esci" : "Cambia";
 
-  const [profilo] = await Promise.all([
+  // Prima i playbook (anche quelli condivisi dai co-allenatori), poi gli schemi
+  const [profilo, persi] = await Promise.all([
     Cloud.caricaProfilo().catch(() => ({})),
-    Dati.sincronizza(),
-    FormazioniMie.sincronizza(),
     Playbook.sincronizza(),
+    FormazioniMie.sincronizza(),
   ]);
+  await Dati.sincronizza(persi);
   sistemaSchemiSenzaPlaybook(); // gli schemi di prima finiscono in un playbook
   Squadra.imposta(profilo);
   avviaApp();
@@ -168,7 +169,7 @@ $("#btn-squadra-annulla").addEventListener("click", () => {
 });
 
 $("#btn-esci").addEventListener("click", async () => {
-  salvaSubito();
+  salvaInSospeso();
   await Dati.invia().catch(() => {});
   await Cloud.esci();
   location.reload(); // si riparte puliti dalla schermata di accesso

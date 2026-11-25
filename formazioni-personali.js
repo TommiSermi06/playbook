@@ -38,8 +38,11 @@ const FormazioniMie = {
       .sort((a, b) => a.nome.localeCompare(b.nome, "it"));
   },
 
+  // Cerca anche tra le formazioni dello staff (co-allenatori), solo per leggerle
   trova(id) {
-    return this.tutte().find((f) => f.id === id) || null;
+    return this.tutte().find((f) => f.id === id)
+      || (leggiLocale(this.chiave + ".staff") || []).find((f) => f.id === id)
+      || null;
   },
 
   // Vero se esiste già una formazione con questo nome (stesso lato)
@@ -116,7 +119,11 @@ const FormazioniMie = {
   async sincronizza() {
     if (!Cloud.attivo) return;
     try {
-      const online = (await Cloud.scaricaFormazioni()).filter((f) => !this.daEliminare.has(f.id));
+      const tutte = await Cloud.scaricaFormazioni();
+      // Quelle degli altri coach dello staff: solo per mostrarne il nome
+      scriviLocale(this.chiave + ".staff", tutte.filter((f) => f._utente !== Cloud.utente.id).map(({ _utente, ...f }) => f));
+      const online = tutte.filter((f) => f._utente === Cloud.utente.id && !this.daEliminare.has(f.id))
+        .map(({ _utente, ...f }) => f);
       const perId = new Map(online.map((f) => [f.id, f]));
       for (const f of this.tutte()) {
         const remota = perId.get(f.id);

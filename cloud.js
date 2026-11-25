@@ -145,7 +145,8 @@ const Cloud = {
     if (!schemi.length) return;
     const righe = schemi.map((s) => ({
       id: s.id,
-      utente: this.utente.id,
+      // Lo schema di un playbook condiviso resta del proprietario del playbook
+      utente: Playbook.proprietarioDi(s.playbook) || this.utente.id,
       dati: s,
       modificato: new Date(s.modificato).toISOString(),
     }));
@@ -176,10 +177,11 @@ const Cloud = {
 
   /* ---------------- Formazioni salvate dal coach ---------------- */
 
+  // Formazioni: le proprie e (in sola lettura) quelle dello staff
   async scaricaFormazioni() {
-    const { data, error } = await this.client.from("formazioni").select("dati");
+    const { data, error } = await this.client.from("formazioni").select("dati, utente");
     if (error) throw new Error(traduciErrore(error));
-    return data.map((riga) => riga.dati);
+    return data.map((riga) => ({ ...riga.dati, _utente: riga.utente }));
   },
 
   async salvaFormazioni(formazioni) {
@@ -195,6 +197,56 @@ const Cloud = {
 
   async eliminaFormazione(id) {
     const { error } = await this.client.from("formazioni").delete().eq("id", id);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  /* ---------------- Co-allenatori ---------------- */
+
+  // Playbook visibili: i propri e quelli in cui si è co-allenatori
+  async scaricaPlaybook() {
+    const { data, error } = await this.client.from("playbook").select("dati, utente");
+    if (error) throw new Error(traduciErrore(error));
+    return data.map((riga) => ({ dati: riga.dati, utente: riga.utente }));
+  },
+
+  // Collega all'account gli inviti fatti alla sua email
+  async accettaInviti() {
+    const { data, error } = await this.client.rpc("accetta_inviti");
+    if (error) throw new Error(traduciErrore(error));
+    return data || 0;
+  },
+
+  // I playbook in cui sono co-allenatore (con il nome della squadra del proprietario)
+  async mieCollaborazioni() {
+    const { data, error } = await this.client.from("collaboratori")
+      .select("playbook, proprietario, squadra").eq("utente", this.utente.id);
+    if (error) throw new Error(traduciErrore(error));
+    return data;
+  },
+
+  async elencoCollaboratori(idPlaybook) {
+    const { data, error } = await this.client.from("collaboratori")
+      .select("email, utente, creato").eq("playbook", idPlaybook).eq("proprietario", this.utente.id);
+    if (error) throw new Error(traduciErrore(error));
+    return data.sort((a, b) => a.creato.localeCompare(b.creato));
+  },
+
+  async invitaCollaboratore(idPlaybook, email, squadra) {
+    const { error } = await this.client.from("collaboratori")
+      .insert({ playbook: idPlaybook, proprietario: this.utente.id, email, squadra });
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  async rimuoviCollaboratore(idPlaybook, email) {
+    const { error } = await this.client.from("collaboratori")
+      .delete().eq("playbook", idPlaybook).eq("email", email);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  // Il co-allenatore lascia il playbook
+  async lasciaPlaybook(idPlaybook) {
+    const { error } = await this.client.from("collaboratori")
+      .delete().eq("playbook", idPlaybook).eq("utente", this.utente.id);
     if (error) throw new Error(traduciErrore(error));
   },
 
@@ -263,6 +315,9 @@ function traduciErrore(errore) {
   if (/Password should be at least/i.test(m)) return "La password deve avere almeno 6 caratteri.";
   if (/valid email|invalid format|Unable to validate email/i.test(m)) return "Controlla l'indirizzo email.";
   if (/rate limit|too many/i.test(m)) return "Troppi tentativi ravvicinati. Riprova tra qualche minuto.";
+  if (/collaboratori|accetta_inviti/i.test(m) && /does not exist|Could not find|schema cache/i.test(m))
+    return "Manca un passaggio su Supabase: esegui lo script «coallenatori.sql» nell'SQL Editor.";
+  if (/collaboratori_pkey/i.test(m)) return "Questa email è già stata invitata.";
   if (/condivisioni|playbook_condiviso/i.test(m) && /does not exist|Could not find|schema cache/i.test(m))
     return "Manca un passaggio su Supabase: esegui lo script «condivisione.sql» nell'SQL Editor.";
   if (/Failed to fetch|NetworkError|network/i.test(m)) return "Nessuna connessione. Controlla internet e riprova.";
