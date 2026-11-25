@@ -113,6 +113,24 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
   // Il pallone, al centro sulla linea di scrimmage
   crea("ellipse", { cx: LARGHEZZA_CAMPO / 2, cy: yDisegno(0) - 0.05, rx: 0.32, ry: 0.5, class: "pallone" }, svg);
 
+  // Tracce (sotto i giocatori): un gruppo per giocatore, spostato sulla
+  // sua posizione, così quando lo trascini la traccia lo segue.
+  const conTracce = typeof Tracce !== "undefined";
+  const livelloTracce = crea("g", { class: "tracce" }, svg);
+  for (const g of schema.giocatori) {
+    const gt = crea("g", {
+      class: `tracce-giocatore ruolo-${ruoloDi(schema.lato, g.etichetta)}`,
+      "data-id": g.id,
+      transform: `translate(${g.x} ${yDisegno(g.y)})`,
+    }, livelloTracce);
+    const inDisegno = conTracce && Tracce.disegno && Tracce.disegno.giocatore.id === g.id;
+    if (g.traccia && !inDisegno) {
+      const anima = !miniatura && conTracce && Tracce.daAnimare === g.id;
+      disegnaTraccia(gt, g, { anima, idMaschera: "m-" + g.id + "-" + Date.now() });
+    }
+  }
+  if (!miniatura && conTracce) Tracce.daAnimare = null;
+
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
   schema.giocatori.forEach((g, i) => {
@@ -120,6 +138,15 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
     el.style.setProperty("--i", i); // per far entrare i giocatori uno dopo l'altro
     if (g.id === selezionato) el.classList.add("selezionato");
   });
+
+  // Maniglie: i punti della traccia del giocatore selezionato, da trascinare
+  const sel = schema.giocatori.find((g) => g.id === selezionato);
+  if (!miniatura && sel && sel.traccia && !(typeof Tracce !== "undefined" && Tracce.disegno)) {
+    const maniglie = crea("g", { class: "maniglie" }, svg);
+    sel.traccia.punti.forEach((p, i) => {
+      crea("circle", { cx: sel.x + p.dx, cy: yDisegno(sel.y + p.dy), r: 0.42, class: "maniglia", "data-indice": i }, maniglie);
+    });
+  }
 }
 
 /* Piccola animazione: i giocatori "entrano" sul campo uno dopo l'altro */
@@ -302,6 +329,8 @@ function apriEditor(id, { focusNome = false } = {}) {
   salvaSubito(); // salva lo schema che stavamo modificando
   nascondiAvviso();
 
+  chiudiMenuTracce();
+  if (Tracce.disegno) Tracce.annullaDisegno();
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
   giocatoreSelezionato = null;
@@ -392,6 +421,7 @@ function mostraFormazioni() {
 
 function cambiaFormazione(idFormazione) {
   if (idFormazione === schemaCorrente.formazione) return;
+  chiudiMenuTracce();
   ricordaStato();
   schemaCorrente.formazione = idFormazione;
   schemaCorrente.giocatori = giocatoriDaFormazione(schemaCorrente.lato, idFormazione);
@@ -419,9 +449,11 @@ function mostraLegenda() {
 /* ---------- Ribalta: lo schema diventa a specchio (destra <-> sinistra) ---------- */
 function ribalta() {
   if (!schemaCorrente) return;
+  chiudiMenuTracce();
   ricordaStato();
   for (const g of schemaCorrente.giocatori) {
     g.x = +(LARGHEZZA_CAMPO - g.x).toFixed(2);
+    if (g.traccia) g.traccia.punti.forEach((p) => { p.dx = -p.dx; }); // anche le tracce a specchio
   }
   schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
   ridisegna();
@@ -451,7 +483,36 @@ function mostraInfoGiocatore() {
     <div class="riga-campo">
       <span>Profondità</span>
       <span class="valore" id="pos-giocatore"></span>
+    </div>
+    <div class="riga-campo">
+      <span>Traccia</span>
+      <span class="valore" id="nome-traccia"></span>
+    </div>
+    <label class="riga-campo" id="riga-tipo-traccia">
+      <span>Tipo di linea</span>
+      <select id="tipo-traccia"></select>
+    </label>
+    <div class="riga-pulsanti">
+      <button class="btn-mini" id="btn-traccia-menu">Scegli traccia…</button>
+      <button class="btn-mini" id="btn-traccia-mano">Disegna a mano</button>
+      <button class="btn-mini distruttiva" id="btn-traccia-via">Rimuovi</button>
     </div>`;
+  // Traccia del giocatore
+  $("#nome-traccia").textContent = g.traccia ? (g.traccia.nome || infoTipo(g.traccia.tipo).nome) : "Nessuna";
+  $("#riga-tipo-traccia").hidden = !g.traccia;
+  $("#btn-traccia-via").hidden = !g.traccia;
+  const scelta = $("#tipo-traccia");
+  for (const t of TIPI_TRACCIA[schemaCorrente.lato]) scelta.add(new Option(t.nome, t.id));
+  if (g.traccia) scelta.value = g.traccia.tipo;
+  scelta.addEventListener("change", () => {
+    ricordaStato();
+    g.traccia.tipo = scelta.value;
+    ridisegna();
+    salvaTraPoco();
+  });
+  $("#btn-traccia-menu").addEventListener("click", () => apriMenuTracce(g));
+  $("#btn-traccia-mano").addEventListener("click", () => Tracce.iniziaDisegno(g));
+  $("#btn-traccia-via").addEventListener("click", () => Tracce.rimuovi(g));
   const input = $("#etichetta-giocatore");
   input.value = g.etichetta;
   $("#pos-giocatore").textContent = descriviPosizione(g);
@@ -492,22 +553,54 @@ function giocatoreVicino(p, raggio = 1.6) {
 }
 
 function selezionaGiocatore(id) {
+  if (id !== giocatoreSelezionato) chiudiMenuTracce();
   giocatoreSelezionato = id;
-  svgCampo.querySelectorAll(".giocatore").forEach((el) =>
-    el.classList.toggle("selezionato", el.dataset.id === id));
+  disegnaCampo(svgCampo, schemaCorrente, { selezionato: id }); // mostra le maniglie della traccia
   mostraInfoGiocatore();
+}
+
+// Trova la maniglia (punto della traccia) vicina al mouse
+function manigliaVicina(p) {
+  const g = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
+  if (!g || !g.traccia) return null;
+  let migliore = null, distMin = 0.9;
+  g.traccia.punti.forEach((pt, i) => {
+    const d = Math.hypot(g.x + pt.dx - p.x, yDisegno(g.y + pt.dy) - p.y);
+    if (d < distMin) { distMin = d; migliore = { giocatore: g, indice: i }; }
+  });
+  return migliore;
 }
 
 svgCampo.addEventListener("pointerdown", (evento) => {
   if (!schemaCorrente || evento.button > 0) return;
   const p = puntoNelCampo(evento);
+
+  // Disegno a mano in corso: ogni clic aggiunge un punto
+  if (Tracce.disegno) {
+    evento.preventDefault();
+    Tracce.aggiungiPunto(p, evento.shiftKey);
+    return;
+  }
+
+  // Prima le maniglie della traccia selezionata (per correggerla)
+  const maniglia = manigliaVicina(p);
+  if (maniglia) {
+    evento.preventDefault();
+    svgCampo.setPointerCapture(evento.pointerId);
+    chiudiMenuTracce();
+    document.body.classList.add("trascinando");
+    trascinamento = { tipo: "maniglia", ...maniglia, prima: istantanea(), mosso: false };
+    return;
+  }
+
   const g = giocatoreVicino(p);
 
-  // Clic sul prato vuoto: togli la selezione
-  if (!g) { selezionaGiocatore(null); return; }
+  // Clic sul prato vuoto: togli la selezione e chiudi il menu
+  if (!g) { chiudiMenuTracce(); selezionaGiocatore(null); return; }
 
   evento.preventDefault();
   svgCampo.setPointerCapture(evento.pointerId);
+  const menuEraAperto = menuTracceAperto() && $("#menu-tracce").dataset.giocatore === g.id;
   selezionaGiocatore(g.id);
   const elemento = svgCampo.querySelector(`.giocatore[data-id="${g.id}"]`);
   elemento.parentNode.appendChild(elemento); // portalo sopra gli altri
@@ -519,17 +612,38 @@ svgCampo.addEventListener("pointerdown", (evento) => {
     scostY: yDisegno(g.y) - p.y,
     prima: istantanea(), // per Annulla, salvata solo se il giocatore si muove davvero
     mosso: false,
+    menuEraAperto,
   };
 });
 
+// Doppio clic: finisce il disegno a mano
+svgCampo.addEventListener("dblclick", (e) => {
+  if (Tracce.disegno) { e.preventDefault(); Tracce.finisciDisegno(); }
+});
+
 svgCampo.addEventListener("pointermove", (evento) => {
+  if (Tracce.disegno) { Tracce.anteprima(puntoNelCampo(evento), evento.shiftKey); return; }
   if (!trascinamento) {
-    // Cursore a "mano" quando passi sopra un giocatore
-    if (schemaCorrente) svgCampo.classList.toggle("sopra-giocatore", !!giocatoreVicino(puntoNelCampo(evento)));
+    // Cursore a "mano" quando passi sopra un giocatore o una maniglia
+    if (schemaCorrente) {
+      const p = puntoNelCampo(evento);
+      svgCampo.classList.toggle("sopra-giocatore", !!(giocatoreVicino(p) || manigliaVicina(p)));
+    }
     return;
   }
   const p = puntoNelCampo(evento);
   const g = trascinamento.giocatore;
+
+  // Trascinamento di un punto della traccia
+  if (trascinamento.tipo === "maniglia") {
+    const passo = evento.shiftKey ? 0.5 : 0.1;
+    const x = Math.round(p.x / passo) * passo;
+    const y = Math.round((YARDE_AVANTI - p.y) / passo) * passo;
+    g.traccia.punti[trascinamento.indice] = dentroCampo(g, x - g.x, y - g.y);
+    trascinamento.mosso = true;
+    disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
+    return;
+  }
 
   // Nuova posizione, tenuta dentro i bordi del campo.
   // Con Maiusc premuto si aggancia alla mezza yarda (più ordine).
@@ -542,19 +656,31 @@ svgCampo.addEventListener("pointermove", (evento) => {
 
   g.x = +x.toFixed(1);
   g.y = +y.toFixed(1);
+  if (!trascinamento.mosso) chiudiMenuTracce();
   trascinamento.mosso = true;
   trascinamento.elemento.setAttribute("transform", `translate(${g.x} ${yDisegno(g.y)})`);
+  // La traccia segue il giocatore (e anche le maniglie)
+  const livello = svgCampo.querySelector(`.tracce-giocatore[data-id="${g.id}"]`);
+  if (livello) livello.setAttribute("transform", `translate(${g.x} ${yDisegno(g.y)})`);
+  const maniglie = svgCampo.querySelector(".maniglie");
+  if (maniglie) maniglie.remove();
   $("#pos-giocatore") && ($("#pos-giocatore").textContent = descriviPosizione(g));
 });
 
 function fineTrascinamento() {
   if (!trascinamento) return;
-  document.body.classList.remove("trascinando");
-  if (trascinamento.mosso) {
-    ricordaStato(trascinamento.prima);
-    salvaTraPoco();
-  }
+  const t = trascinamento;
   trascinamento = null;
+  document.body.classList.remove("trascinando");
+  if (t.mosso) {
+    ricordaStato(t.prima);
+    salvaTraPoco();
+    disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato }); // rimette le maniglie
+  } else if (t.tipo !== "maniglia") {
+    // Semplice clic su un giocatore: apre (o chiude) il menu delle tracce
+    if (t.menuEraAperto) chiudiMenuTracce();
+    else apriMenuTracce(t.giocatore);
+  }
 }
 svgCampo.addEventListener("pointerup", fineTrascinamento);
 svgCampo.addEventListener("pointercancel", fineTrascinamento);
@@ -591,6 +717,7 @@ function ripristina(foto) {
 }
 
 function annulla() {
+  if (Tracce.disegno) { Tracce.annullaDisegno(); return; } // durante il disegno annulla il disegno
   if (!schemaCorrente || !storia.indietro.length) return;
   storia.avanti.push(istantanea());
   ripristina(storia.indietro.pop());
@@ -614,9 +741,6 @@ $("#btn-ripeti").addEventListener("click", ripeti);
 /* ==========================================================================
    6. SCORCIATOIE DA TASTIERA
    ========================================================================== */
-$("#suggerimento").innerHTML =
-  `Trascina per spostare · <kbd>Maiusc</kbd> aggancia alla mezza yarda · ` +
-  `<kbd>←↑↓→</kbd> sposta il selezionato · <kbd>R</kbd> ribalta · <kbd>${TASTO_CMD}Z</kbd> annulla`;
 $("#kbd-duplica").textContent = TASTO_CMD + "D";
 $("#btn-annulla").title = `Annulla (${TASTO_CMD}Z)`;
 $("#btn-ripeti").title = `Ripeti (${TASTO_CMD}${SU_MAC ? "⇧" : "Shift+"}Z)`;
@@ -651,6 +775,13 @@ document.addEventListener("keydown", (e) => {
 
   if (staScrivendo || cmd || e.altKey) return;
 
+  // Disegno a mano in corso: valgono solo Invio (finisci) ed Esc (annulla)
+  if (Tracce.disegno) {
+    if (e.key === "Enter") { e.preventDefault(); Tracce.finisciDisegno(); }
+    if (e.key === "Escape") { e.preventDefault(); Tracce.annullaDisegno(); }
+    return;
+  }
+
   // R = ribalta lo schema aperto
   if ((e.key === "r" || e.key === "R") && schemaCorrente) { e.preventDefault(); ribalta(); return; }
 
@@ -659,8 +790,30 @@ document.addEventListener("keydown", (e) => {
 
   if (!schemaCorrente) return;
 
-  // Esc = togli la selezione
-  if (e.key === "Escape") { selezionaGiocatore(null); return; }
+  // Esc = chiudi il menu, poi togli la selezione
+  if (e.key === "Escape") {
+    if (menuTracceAperto()) chiudiMenuTracce();
+    else selezionaGiocatore(null);
+    return;
+  }
+
+  // Scorciatoie delle tracce sul giocatore selezionato
+  const sel = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
+  if (sel) {
+    const attacco = schemaCorrente.lato === "attacco";
+    const numero = parseInt(e.key, 10);
+    if (numero >= 1 && numero <= 9) {
+      if (attacco) Tracce.applica(sel, tracciaDaRoute(sel, ALBERO_ROUTE[numero - 1]));
+      else if (TRACCE_DIFESA[numero - 1]) Tracce.applica(sel, tracciaDaDifesa(sel, TRACCE_DIFESA[numero - 1]));
+      return;
+    }
+    if (e.key === "t" || e.key === "T") { e.preventDefault(); Tracce.iniziaDisegno(sel); return; }
+    if ((e.key === "b" || e.key === "B") && attacco) {
+      Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, 1.5)] });
+      return;
+    }
+    if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); Tracce.rimuovi(sel); return; }
+  }
 
   // Frecce = sposta il giocatore selezionato di mezza yarda (2 yarde con Maiusc)
   const direzioni = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };

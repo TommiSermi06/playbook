@@ -3,6 +3,14 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.5 — tracce
+- Clic su un giocatore: menu con l'albero delle route (1-Flat … 9-Fly), disegnate in automatico con animazione
+- Blocco (B), disegno a mano (T: clic per i punti, Maiusc dritto/45°, doppio clic o Invio per finire)
+- Difesa: blitz e zone (flat, hook/curl, centrale, terzo profondo, metà profonda)
+- Tipi di linea: route, blocco, motion (ondulata), opzione (tratteggiata), blitz, zona, uomo
+- Punti correggibili trascinando le maniglie; la traccia segue il giocatore e si ribalta con lo schema
+- Tasti 1–9 sul giocatore selezionato, Canc per rimuovere la traccia
+
 ## Versione 0.4 — account e squadra
 - Animazione iniziale e accesso con email e password (registrazione, password dimenticata)
 - Ogni allenatore ha il suo account: gli schemi si salvano online (Supabase) e sul computer, anche offline
@@ -47,6 +55,7 @@ Senza questi dati l'app funziona in "modalità locale" (solo su questo computer)
 - `dati.js` — copia locale degli schemi e sincronizzazione
 - `squadra.js` — nome e logo della squadra (anche da PDF)
 - `accesso.js` — animazione iniziale e login
+- `tracce.js` — albero delle route, disegno e animazione delle tracce
 - `supabase/setup.sql` — tabelle e regole di sicurezza
 - `lib/` — librerie Supabase e pdf.js (incluse, senza CDN)
 - `app.js` — disegno del campo, trascinamento, schermate
