@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=0.16">
+  <link rel="stylesheet" href="style.css?v=0.17">
 </head>
 <body>
   <!-- ======================================================================
@@ -47,6 +47,7 @@
       <div class="playbook-attivo">
         <span class="nome-playbook" id="nome-playbook"></span>
         <span class="badge-formato" id="badge-playbook"></span>
+        <span class="badge-vista">👁 Sola lettura · condiviso dal coach</span>
       </div>
 
       <!-- Controllo segmentato: Attacco / Difesa -->
@@ -73,7 +74,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.16</p>
+      <p class="versione" id="versione">Versione 0.17</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -138,7 +139,7 @@
     <!-- ============ COLONNA 3: pannello dei dettagli ============ -->
     <aside class="pannello" id="pannello" hidden>
       <!-- Formato: quanti giocatori in campo (e quali sono obbligatori) -->
-      <p class="titolo-sezione">Formato</p>
+      <p class="titolo-sezione solo-coach">Formato</p>
       <p class="formato-fisso" id="formato-fisso"></p>
       <div class="segmentato segmentato-4" id="scelta-formato" hidden>
         <button type="button" class="segmento" data-valore="11">11</button>
@@ -147,12 +148,12 @@
         <button type="button" class="segmento" data-valore="flag">Flag 5</button>
       </div>
 
-      <p class="titolo-sezione">Formazione</p>
+      <p class="titolo-sezione solo-coach">Formazione</p>
       <div class="lista lista-scelte" id="lista-formazioni"></div>
       <!-- Tavolozza delle pedine per "Crea da zero" -->
       <div class="tavolozza" id="tavolozza" hidden></div>
 
-      <p class="titolo-sezione">Giocatore selezionato</p>
+      <p class="titolo-sezione solo-coach">Giocatore selezionato</p>
       <div class="card info-giocatore" id="info-giocatore">
         <p class="testo-secondario">Clicca un giocatore sul campo.</p>
       </div>
@@ -248,6 +249,32 @@
   <!-- ======================================================================
        FINESTRA "RINOMINA UN RUOLO" (es. H -> RB in tutto il playbook)
        ====================================================================== -->
+  <!-- Finestra «Condividi»: link in sola lettura per staff e giocatori -->
+  <div class="dialogo dialogo-condividi" id="foglio-condividi" role="dialog" aria-modal="true" hidden>
+    <div class="icona-condividi">🔗</div>
+    <p class="dialogo-titolo" id="titolo-condividi">Condividi</p>
+    <p class="dialogo-testo">Chi ha il link vede gli schemi e li può stampare, ma <b>non può modificarli</b>. Non serve un account.</p>
+    <p class="condividi-attesa" id="condividi-attesa">Controllo…</p>
+    <div id="condividi-senza" hidden>
+      <button type="button" class="btn-pieno largo" id="btn-crea-link">Crea il link</button>
+    </div>
+    <div id="condividi-con" hidden>
+      <div class="riga-link">
+        <input id="link-condiviso" type="text" readonly>
+        <button type="button" class="btn-pieno" id="btn-copia-link">Copia</button>
+      </div>
+      <p class="nota-condividi">Le modifiche che fai agli schemi compaiono a chi riapre il link.</p>
+      <div class="azioni-link">
+        <button type="button" class="btn-link" id="btn-nuovo-link">Crea un nuovo link</button>
+        <button type="button" class="btn-link distruttivo" id="btn-disattiva-link">Disattiva il link</button>
+      </div>
+    </div>
+    <p class="messaggio-errore" id="errore-condividi"></p>
+    <div class="dialogo-pulsanti">
+      <button type="button" class="btn-secondario" id="btn-condividi-chiudi">Chiudi</button>
+    </div>
+  </div>
+
   <form class="dialogo dialogo-ruolo" id="foglio-ruolo" role="dialog" aria-modal="true" hidden>
     <p class="dialogo-titolo">Rinomina un ruolo</p>
     <p class="dialogo-testo" id="testo-ruolo"></p>
@@ -437,21 +464,22 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.16"></script>
+  <script src="config.js?v=0.17"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.16"></script>
-  <script src="regole.js?v=0.16"></script>
-  <script src="cloud.js?v=0.16"></script>
-  <script src="dati.js?v=0.16"></script>
-  <script src="formazioni-personali.js?v=0.16"></script>
-  <script src="app.js?v=0.16"></script>
-  <script src="tracce.js?v=0.16"></script>
-  <script src="costruttore.js?v=0.16"></script>
-  <script src="lucchetto.js?v=0.16"></script>
-  <script src="stampa.js?v=0.16"></script>
-  <script src="partita.js?v=0.16"></script>
-  <script src="playbook.js?v=0.16"></script>
-  <script src="squadra.js?v=0.16"></script>
-  <script src="accesso.js?v=0.16"></script>
+  <script src="formazioni.js?v=0.17"></script>
+  <script src="regole.js?v=0.17"></script>
+  <script src="cloud.js?v=0.17"></script>
+  <script src="dati.js?v=0.17"></script>
+  <script src="formazioni-personali.js?v=0.17"></script>
+  <script src="app.js?v=0.17"></script>
+  <script src="tracce.js?v=0.17"></script>
+  <script src="costruttore.js?v=0.17"></script>
+  <script src="lucchetto.js?v=0.17"></script>
+  <script src="stampa.js?v=0.17"></script>
+  <script src="partita.js?v=0.17"></script>
+  <script src="playbook.js?v=0.17"></script>
+  <script src="squadra.js?v=0.17"></script>
+  <script src="condivisione.js?v=0.17"></script>
+  <script src="accesso.js?v=0.17"></script>
 </body>
 </html>

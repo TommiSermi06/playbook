@@ -2264,3 +2264,78 @@ body.in-home .app { display: none; }
 .riga-chiamata.con-schema { height: 17mm; }
 .chiamata-campo { flex: none; width: 24mm; height: 15mm; }
 .callsheet-vuoto { color: var(--inchiostro-tenue); text-align: center; margin-top: 20mm; }
+
+/* ==========================================================================
+   CONDIVIDI: finestra del coach
+   ========================================================================== */
+.dialogo-condividi { width: 440px; display: flex; flex-direction: column; gap: 10px; }
+.dialogo-condividi .dialogo-testo { margin-bottom: 4px; }
+.dialogo-condividi .dialogo-testo b { color: var(--testo); }
+.icona-condividi {
+  font-size: 30px;
+  line-height: 1;
+  animation: salta-condividi 0.5s 0.15s var(--curva) both;
+}
+@keyframes salta-condividi {
+  from { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.condividi-attesa { color: var(--testo-secondario); font-size: 13px; margin: 6px 0; }
+.condividi-attesa[hidden], #condividi-senza[hidden], #condividi-con[hidden] { display: none; }
+.btn-pieno.largo { width: 100%; }
+.riga-link { display: flex; gap: 8px; }
+.riga-link input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--separatore);
+  background: var(--sfondo, #0F1412);
+  color: var(--testo);
+  font: inherit;
+  font-size: 12.5px;
+}
+.riga-link .btn-pieno { flex: none; min-width: 92px; transition: background 0.2s; }
+.riga-link .btn-pieno.fatto { background: #1E9E57; }
+.nota-condividi { margin: 4px 0 0; font-size: 12px; color: var(--testo-secondario); }
+.azioni-link { display: flex; justify-content: space-between; margin: 2px 0 6px; }
+.btn-link.distruttivo { color: var(--rosso); }
+.dialogo-condividi .dialogo-pulsanti { grid-template-columns: 1fr; }
+
+/* ==========================================================================
+   SOLA LETTURA: chi apre il link vede e stampa, senza poter modificare
+   ========================================================================== */
+.badge-vista { display: none; }
+body.sola-lettura .badge-vista {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--accento-tenue);
+  color: var(--accento);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+body.sola-lettura #btn-nuovo,
+body.sola-lettura #btn-home,
+body.sola-lettura #btn-esci,
+body.sola-lettura .gruppo-pulsanti,
+body.sola-lettura .stato-salvataggio,
+body.sola-lettura #btn-nuovo-vuoto,
+body.sola-lettura #btn-crea-da-zero-campo,
+body.sola-lettura #formato-fisso,
+body.sola-lettura #scelta-formato,
+body.sola-lettura #lista-formazioni,
+body.sola-lettura #tavolozza,
+body.sola-lettura #info-giocatore,
+body.sola-lettura .azioni-card,
+body.sola-lettura .solo-coach,
+body.sola-lettura .suggerimento,
+body.sola-lettura .stato-sync { display: none !important; }
+body.sola-lettura .mini-lucchetto { display: none; }
+body.sola-lettura #btn-squadra { pointer-events: none; }
+body.sola-lettura .campo { cursor: default; border-color: transparent; }
+body.sola-lettura .campo-cornice::after { content: none; }
+body.sola-lettura .nome-schema { pointer-events: none; }
+.numero-fisso { font-weight: 800; color: var(--testo) !important; }
+.pannello-partita span.situazione { cursor: default; }

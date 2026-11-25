@@ -27,6 +27,7 @@ function mostraPartita() {
   const box = $("#pannello-partita");
   if (!schemaCorrente) return;
   const s = schemaCorrente;
+  if (CODICE_VISTA) { mostraPartitaSolaLettura(box, s); return; }
   box.innerHTML = `
     <div class="riga-campo">
       <span>N° di chiamata</span>
@@ -68,6 +69,18 @@ function mostraPartita() {
     $("#situazioni").appendChild(b);
   }
   $("#btn-numera").addEventListener("click", () => numeraInAutomatico(schemaCorrente.lato));
+}
+
+// Nel link condiviso: solo il numero e le situazioni scelte dal coach
+function mostraPartitaSolaLettura(box, s) {
+  box.innerHTML = `
+    <div class="riga-campo"><span>N° di chiamata</span><span class="valore numero-fisso"></span></div>
+    <div class="situazioni" id="situazioni"></div>`;
+  box.querySelector(".numero-fisso").textContent = s.chiamata || "—";
+  const scelte = new Set(s.situazioni || []);
+  const lista = SITUAZIONI.filter((x) => scelte.has(x.id));
+  for (const sit of lista) box.querySelector("#situazioni").appendChild(elemento("span", "situazione attiva", sit.nome));
+  if (!lista.length) box.querySelector("#situazioni").appendChild(elemento("span", "testo-secondario", "Nessuna situazione"));
 }
 
 // Avvisa se lo stesso numero è già usato da un altro schema dello stesso lato

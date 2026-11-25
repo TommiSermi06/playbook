@@ -22,6 +22,15 @@ async function avvio() {
     });
   }
 
+  // Link condiviso (?vedi=...): niente login, si apre il playbook in sola lettura
+  if (CODICE_VISTA) {
+    await new Promise((ok) => setTimeout(ok, DURATA_INTRO));
+    if (Cloud.configurato) return apriVista(CODICE_VISTA);
+    mostraAccesso();
+    impostaModo("vista-errore");
+    return;
+  }
+
   // L'animazione e la verifica della sessione vanno in parallelo
   const [utente] = await Promise.all([
     Cloud.sessione().catch(() => null),
@@ -47,6 +56,7 @@ function impostaModo(modo) {
     registrati:      ["Crea il tuo account", "Un account per ogni allenatore: i tuoi schemi restano tuoi, su ogni computer.", "Crea account"],
     recupera:        ["Password dimenticata", "Ti mandiamo una mail con il link per sceglierne una nuova.", "Invia il link"],
     "nuova-password":["Nuova password", "Scegli la nuova password per il tuo account.", "Salva password"],
+    "vista-errore":  ["Link non disponibile", "Il coach ha disattivato questo link, oppure non è scritto giusto. Chiedigliene uno nuovo.", "Vai a Playbook"],
     locale:          ["Modalità locale", "Gli account online non sono ancora attivi: puoi usare l'app su questo computer.", "Continua"],
   }[modo];
   $("#accesso-titolo").textContent = testi[0];
@@ -59,8 +69,9 @@ function impostaModo(modo) {
   $("#accesso-schede").dataset.scelto = modo === "registrati" ? "destra" : "sinistra";
   document.querySelectorAll("#accesso-schede .segmento").forEach((b) =>
     b.classList.toggle("attivo", b.dataset.modo === modo));
-  $("#campo-email").hidden = modo === "nuova-password" || modo === "locale";
-  $("#campo-password").hidden = modo === "recupera" || modo === "locale";
+  const senzaCampi = modo === "locale" || modo === "vista-errore";
+  $("#campo-email").hidden = modo === "nuova-password" || senzaCampi;
+  $("#campo-password").hidden = modo === "recupera" || senzaCampi;
   $("#accesso-password").autocomplete = modo === "accedi" ? "current-password" : "new-password";
   $("#link-dimenticata").hidden = modo !== "accedi";
   $("#link-indietro").hidden = modo !== "recupera";
@@ -89,7 +100,10 @@ $("#accesso").addEventListener("submit", async (e) => {
   messaggioAccesso("", "");
 
   try {
-    if (modoAccesso === "locale") {
+    if (modoAccesso === "vista-errore") {
+      location.href = location.pathname; // l'app normale, senza il link
+      return;
+    } else if (modoAccesso === "locale") {
       await entra(Cloud.accediLocale());
     } else if (modoAccesso === "accedi") {
       await entra(await Cloud.accedi(email, password));

@@ -3,6 +3,14 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.17 — condivisione in sola lettura
+
+- Menu ⋯ del playbook → **Condividi (sola lettura)…**: crea un link da mandare a staff e giocatori.
+- Chi apre il link non ha bisogno di un account: vede gli schemi, numeri e situazioni, e può stampare
+  playbook, wristband e call sheet, ma non può modificare niente.
+- Il coach può copiare il link, crearne uno nuovo (il vecchio smette di funzionare) o disattivarlo.
+- Su Supabase serve lo script `supabase/condivisione.sql` (tabella `condivisioni` e funzione `playbook_condiviso`).
+
 ## Versione 0.16 — wristband e call sheet
 
 - Nuova sezione **Partita** nel pannello di ogni schema: numero di chiamata

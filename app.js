@@ -820,6 +820,7 @@ function manigliaVicina(p) {
 }
 
 svgCampo.addEventListener("pointerdown", (evento) => {
+  if (CODICE_VISTA) return; // sola lettura: il campo si guarda soltanto
   if (!schemaCorrente || evento.button > 0) return;
   if (schemaCorrente.bloccato) {
     // Schema bloccato: il clic non cambia niente, solo un avviso se tocchi un giocatore
@@ -1028,6 +1029,15 @@ document.addEventListener("keydown", (e) => {
   }
   // Ctrl/⌘+P: la nostra stampa del playbook al posto di quella della pagina
   if (cmd && e.key.toLowerCase() === "p") { e.preventDefault(); apriFoglioStampa(); return; }
+  if (!$("#foglio-condividi").hidden) {
+    if (e.key === "Escape") chiudiFoglioCondividi();
+    return;
+  }
+  // Link condiviso: si guarda e si stampa, nessuna altra scorciatoia
+  if (CODICE_VISTA) {
+    if (!$("#dialogo").hidden && e.key === "Escape") chiudiDialogo();
+    return;
+  }
   if (!$("#dialogo").hidden) {
     if (e.key === "Escape") chiudiDialogo();
     return;
@@ -1187,6 +1197,7 @@ $("#velo").addEventListener("click", () => {
   else if (!$("#foglio-stampa").hidden) chiudiFoglioStampa();
   else if (!$("#foglio-playbook").hidden) chiudiFoglioPlaybook();
   else if (!$("#foglio-ruolo").hidden) chiudiFoglioRuolo();
+  else if (!$("#foglio-condividi").hidden) chiudiFoglioCondividi();
   else chiudiDialogo();
 });
 

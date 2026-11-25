@@ -243,6 +243,7 @@ function apriMenuScheda(bottone, pb) {
   const voci = [
     ["Apri", () => apriPlaybook(pb.id)],
     ["Rinomina…", () => apriFoglioPlaybook(pb)],
+    ["Condividi (sola lettura)…", () => apriFoglioCondividi(pb)],
     ["Duplica", () => duplicaPlaybook(pb)],
     ["Rinomina un ruolo…", () => apriRinominaRuolo(pb)],
     ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
@@ -277,6 +278,7 @@ function apriPlaybook(id) {
   document.body.classList.remove("in-home");
   $("#home").hidden = true;
   aggiornaTestaPlaybook();
+  aggiornaOrdineSeCondiviso(pb.id);
   $("#cerca").value = "";
   if (schemaCorrente) chiudiEditor();
   const ultimo = schemiDelPlaybook()[0];

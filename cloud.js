@@ -9,17 +9,26 @@
    salvano tutto nel browser, così l'app resta usabile anche senza account.
    ========================================================================== */
 
+/* Link condiviso in sola lettura: index.html?vedi=CODICE
+   In questa modalità non c'è nessun account e niente viene salvato online. */
+const CODICE_VISTA = new URLSearchParams(location.search).get("vedi");
+
 const Cloud = {
   client: null,
   utente: null, // { id, email }
 
   // Vero se config.js contiene i dati di Supabase
+  // (e non stiamo guardando un link condiviso: lì non si salva niente)
   get attivo() {
+    return this.configurato && !CODICE_VISTA;
+  },
+
+  get configurato() {
     return Boolean(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY && window.supabase);
   },
 
   inizializza() {
-    if (this.attivo && !this.client) {
+    if (this.configurato && !this.client) {
       this.client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
     }
   },
@@ -189,6 +198,41 @@ const Cloud = {
     if (error) throw new Error(traduciErrore(error));
   },
 
+  /* ---------------- Condivisione in sola lettura ---------------- */
+
+  // Il link già creato per questo playbook (o null)
+  async leggiCondivisione(idPlaybook) {
+    const { data, error } = await this.client.from("condivisioni")
+      .select("codice").eq("playbook", idPlaybook).maybeSingle();
+    if (error) throw new Error(traduciErrore(error));
+    return data ? data.codice : null;
+  },
+
+  async creaCondivisione(idPlaybook, ordine) {
+    const codice = nuovoCodice();
+    const { error } = await this.client.from("condivisioni")
+      .insert({ codice, utente: this.utente.id, playbook: idPlaybook, ordine });
+    if (error) throw new Error(traduciErrore(error));
+    return codice;
+  },
+
+  async eliminaCondivisione(idPlaybook) {
+    const { error } = await this.client.from("condivisioni").delete().eq("playbook", idPlaybook);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  async aggiornaOrdineCondivisione(idPlaybook, ordine) {
+    const { error } = await this.client.from("condivisioni").update({ ordine }).eq("playbook", idPlaybook);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  // Chi apre il link: legge il playbook condiviso (senza account)
+  async apriCondivisione(codice) {
+    const { data, error } = await this.client.rpc("playbook_condiviso", { codice_link: codice });
+    if (error) throw new Error(traduciErrore(error));
+    return data; // null se il link non esiste più
+  },
+
   async eliminaSchema(id) {
     const { error } = await this.client.from("schemi").delete().eq("id", id);
     if (error) throw new Error(traduciErrore(error));
@@ -196,6 +240,13 @@ const Cloud = {
 };
 
 /* ---------- Piccoli aiuti ---------- */
+// Codice casuale e lungo per i link: impossibile da indovinare
+function nuovoCodice() {
+  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const byte = crypto.getRandomValues(new Uint8Array(24));
+  return [...byte].map((b) => alfabeto[b % alfabeto.length]).join("");
+}
+
 function leggiLocale(chiave) {
   try { return JSON.parse(localStorage.getItem(chiave)); } catch { return null; }
 }
@@ -212,6 +263,8 @@ function traduciErrore(errore) {
   if (/Password should be at least/i.test(m)) return "La password deve avere almeno 6 caratteri.";
   if (/valid email|invalid format|Unable to validate email/i.test(m)) return "Controlla l'indirizzo email.";
   if (/rate limit|too many/i.test(m)) return "Troppi tentativi ravvicinati. Riprova tra qualche minuto.";
+  if (/condivisioni|playbook_condiviso/i.test(m) && /does not exist|Could not find|schema cache/i.test(m))
+    return "Manca un passaggio su Supabase: esegui lo script «condivisione.sql» nell'SQL Editor.";
   if (/Failed to fetch|NetworkError|network/i.test(m)) return "Nessuna connessione. Controlla internet e riprova.";
   return m;
 }

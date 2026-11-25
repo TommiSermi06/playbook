@@ -15,6 +15,7 @@ function schemaBloccato() {
 
 let ultimoAvvisoBlocco = 0;
 function avvisaBloccato() {
+  if (CODICE_VISTA) return; // nel link condiviso non c'è niente da sbloccare
   // Il lucchetto "fa no" con la testa
   const btn = $("#btn-lucchetto");
   btn.classList.remove("scuoti");
