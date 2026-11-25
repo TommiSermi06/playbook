@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.11 — formati e regole
+- Formato dello schema: 11, 9, 7 o Flag 5 (il nuovo schema parte dall'ultimo usato)
+- Attacco obbligatorio: a 11 almeno 1 C, 2 G, 2 T; a 9 e 7 almeno 1 C e 2 G; nel flag 1 C e niente G/T; un solo centro
+- Tavolozza con lista di controllo e pedine spente quando le regole non le permettono
+- Nel flag il centro ha l'albero delle route e non esistono blocchi
+- Formazioni pronte anche per 9, 7 e Flag 5 (attacco e difesa); «Le tue formazioni» separate per formato
+
 ## Versione 0.10 — le tue formazioni
 - Con «Crea da zero» e 11 giocatori in campo si salva la formazione con un nome
 - Le formazioni salvate sono solo del coach (account) e compaiono in «Le tue formazioni» in ogni nuovo schema
@@ -89,6 +96,7 @@ Senza questi dati l'app funziona in "modalità locale" (solo su questo computer)
 - `index.html` — struttura delle due schermate
 - `style.css` — stile iOS
 - `formazioni.js` — posizioni di partenza (in yarde)
+- `regole.js` — formati (11, 9, 7, Flag 5), giocatori obbligatori, formazioni pronte per 9/7/flag
 - `config.js` — dati del progetto Supabase
 - `cloud.js` — account, profilo squadra e schemi online
 - `dati.js` — copia locale degli schemi e sincronizzazione

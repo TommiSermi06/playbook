@@ -31,10 +31,10 @@ const FormazioniMie = {
     return leggiLocale(this.chiave) || [];
   },
 
-  // Le formazioni di un lato, in ordine alfabetico
-  perLato(lato) {
+  // Le formazioni di un lato e di un formato (11, 9, 7, flag), in ordine alfabetico
+  perLato(lato, formato = "11") {
     return this.tutte()
-      .filter((f) => f.lato === lato)
+      .filter((f) => f.lato === lato && (f.formato || "11") === formato)
       .sort((a, b) => a.nome.localeCompare(b.nome, "it"));
   },
 
@@ -43,18 +43,19 @@ const FormazioniMie = {
   },
 
   // Vero se esiste già una formazione con questo nome (stesso lato)
-  nomeUsato(nome, lato) {
+  nomeUsato(nome, lato, formato) {
     const n = nome.trim().toLocaleLowerCase("it");
-    const pronte = FORMAZIONI[lato].some((f) => f.nome.toLocaleLowerCase("it") === n);
-    return pronte || this.perLato(lato).some((f) => f.nome.toLocaleLowerCase("it") === n);
+    const pronte = formazioniPronte(lato, formato).some((f) => f.nome.toLocaleLowerCase("it") === n);
+    return pronte || this.perLato(lato, formato).some((f) => f.nome.toLocaleLowerCase("it") === n);
   },
 
-  crea(nome, lato, giocatori) {
+  crea(nome, lato, formato, giocatori) {
     const adesso = Date.now();
     const formazione = {
       id: "f_" + adesso.toString(36) + Math.random().toString(36).slice(2, 6),
       nome: nome.trim(),
       lato,
+      formato,
       // Salviamo solo le posizioni: le tracce restano nello schema
       giocatori: giocatori.map(({ etichetta, x, y, forma }) => ({ etichetta, x, y, forma })),
       creato: adesso,
@@ -146,11 +147,12 @@ function salvaFormazioneCorrente(nome) {
     setTimeout(() => campo.classList.remove("scuoti"), 400);
     return;
   }
-  if (FormazioniMie.nomeUsato(nome, schemaCorrente.lato)) {
+  if (!statoRegole(schemaCorrente).completa) return; // le regole del formato vanno rispettate
+  if (FormazioniMie.nomeUsato(nome, schemaCorrente.lato, formatoDi(schemaCorrente).id)) {
     $("#errore-formazione").textContent = "Hai già una formazione con questo nome: scegline un altro.";
     return;
   }
-  const f = FormazioniMie.crea(nome, schemaCorrente.lato, schemaCorrente.giocatori);
+  const f = FormazioniMie.crea(nome, schemaCorrente.lato, formatoDi(schemaCorrente).id, schemaCorrente.giocatori);
   ricordaStato();
   schemaCorrente.formazione = f.id;
   tavolozzaAperta = false;

@@ -1745,3 +1745,46 @@ body.schema-bloccato .campo-cornice::after {
 .salva-riga input.scuoti { animation: scuoti 0.4s var(--curva); border-color: var(--rosso); }
 .salva-riga .btn-pieno { width: 100%; }
 .salva-formazione .messaggio-errore:empty { display: none; }
+
+/* ==========================================================================
+   FORMATO E REGOLE DEI GIOCATORI
+   ========================================================================== */
+#scelta-formato { margin: 0 0 4px; }
+#scelta-formato.disattivata { opacity: 0.45; pointer-events: none; }
+
+.obbligatori {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 12px;
+}
+.obbligatori-titolo { color: var(--testo-secondario); font-weight: 600; margin-right: 2px; }
+.obbligo {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 90, 78, 0.16);
+  color: var(--rosso);
+  font-weight: 700;
+  transition: background 0.25s, color 0.25s;
+}
+.obbligo.ok { background: rgba(76, 217, 138, 0.16); color: var(--ruolo-back); animation: salta 0.35s var(--curva); }
+.obbligatori-nota { width: 100%; color: var(--testo-secondario); font-size: 11px; }
+
+.avviso-regole {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 90, 78, 0.14);
+  color: var(--rosso);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Pedina non permessa dalle regole */
+.pedina.spenta { opacity: 0.28; filter: grayscale(0.6); cursor: not-allowed; animation: none; }
+.pedina.spenta:hover { transform: none; }
+.pedina.scuoti { animation: scuoti 0.4s var(--curva); }

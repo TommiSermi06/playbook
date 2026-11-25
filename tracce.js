@@ -83,6 +83,8 @@ function piuVicino(x, valori) {
 
 // Vero per gli uomini di linea d'attacco (C, G, T…): fanno solo blocchi
 function eUomoDiLinea(g) {
+  // Nel flag non c'è la linea: il centro snappa e poi corre le route
+  if (formatoDi(schemaCorrente).flag) return false;
   return schemaCorrente.lato === "attacco" && ruoloDi("attacco", g.etichetta) === "linea";
 }
 
@@ -483,7 +485,7 @@ function apriMenuTracce(g) {
     aggiungiAzione("✏️  Disegna il blocco a mano", "T", () => Tracce.iniziaDisegno(g));
   } else {
     aggiungiAzione("✏️  Disegna a mano", "T", () => Tracce.iniziaDisegno(g));
-    if (attacco) {
+    if (attacco && !formatoDi(schemaCorrente).flag) { // nel flag non si blocca
       aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
     }
   }

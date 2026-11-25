@@ -254,7 +254,7 @@ const RUOLI = {
     ricevitori: ["X", "Y", "Z", "H", "W", "TE", "WR", "SL", "A"],
   },
   difesa: {
-    dl: ["E", "T", "N", "DE", "DT", "NT", "DL"],
+    dl: ["E", "T", "N", "DE", "DT", "NT", "DL", "R"], // R = rusher del flag
     lb: ["W", "M", "S", "B", "J", "LB", "OLB", "ILB", "MLB", "SAM", "MIK", "WIL"],
     db: ["C", "CB", "FS", "SS", "NB", "$", "DB", "F"],
   },
@@ -462,7 +462,7 @@ function ridisegna() {
   disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
   const lato = schemaCorrente.lato === "attacco" ? "Attacco" : "Difesa";
   const ribaltato = schemaCorrente.ribaltato ? " (ribaltata)" : "";
-  $("#info-schema").textContent = `${lato} · ${nomeFormazione(schemaCorrente)}${ribaltato} ·`;
+  $("#info-schema").textContent = `${lato} · ${formatoDi(schemaCorrente).nome} · ${nomeFormazione(schemaCorrente)}${ribaltato} ·`;
   $("#btn-ribalta").classList.toggle("attivo", !!schemaCorrente.ribaltato);
   mostraFormazioni();
   mostraLegenda();
@@ -505,7 +505,9 @@ $("#note-schema").addEventListener("input", (e) => {
 function mostraFormazioni() {
   const contenitore = $("#lista-formazioni");
   contenitore.innerHTML = "";
-  for (const f of FORMAZIONI[schemaCorrente.lato]) {
+  const formato = formatoDi(schemaCorrente).id;
+  mostraFormato();
+  for (const f of formazioniPronte(schemaCorrente.lato, formato)) {
     const scelta = document.createElement("button");
     scelta.className = "scelta" + (f.id === schemaCorrente.formazione ? " attiva" : "");
     scelta.innerHTML = `<span></span><svg class="spunta" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
@@ -514,7 +516,7 @@ function mostraFormazioni() {
     contenitore.appendChild(scelta);
   }
   // Le formazioni salvate dal coach (solo sue)
-  const mie = FormazioniMie.perLato(schemaCorrente.lato);
+  const mie = FormazioniMie.perLato(schemaCorrente.lato, formato);
   if (mie.length) {
     contenitore.appendChild(Object.assign(document.createElement("div"), {
       className: "titolo-scelte", textContent: "Le tue formazioni",
@@ -548,6 +550,45 @@ function mostraFormazioni() {
   contenitore.classList.toggle("disattivata", Boolean(schemaCorrente.bloccato));
   mostraTavolozza();
 }
+
+/* ---------- Formato: 11, 9, 7 o Flag 5 ---------- */
+function mostraFormato() {
+  const gruppo = $("#scelta-formato");
+  const id = formatoDi(schemaCorrente).id;
+  const bottoni = [...gruppo.querySelectorAll(".segmento")];
+  bottoni.forEach((b, i) => {
+    b.classList.toggle("attivo", b.dataset.valore === id);
+    if (b.dataset.valore === id) gruppo.style.setProperty("--indice", i);
+  });
+  gruppo.classList.toggle("disattivata", Boolean(schemaCorrente.bloccato));
+}
+
+function cambiaFormato(id) {
+  if (!schemaCorrente || schemaBloccato()) return;
+  if (id === formatoDi(schemaCorrente).id) return;
+  const applica = () => {
+    ricordaStato();
+    schemaCorrente.formato = id;
+    schemaCorrente.giocatori = [];
+    schemaCorrente.formazione = null;
+    schemaCorrente.ribaltato = false;
+    giocatoreSelezionato = null;
+    tavolozzaAperta = false;
+    scriviLocale("playbook.formato", id); // il prossimo schema partirà da qui
+    ridisegna();
+    salvaSubito();
+    mostraAvviso(`Formato: ${FORMATI[id].nome}`, annulla);
+  };
+  // Con giocatori in campo chiediamo prima: il campo verrà svuotato
+  if (schemaCorrente.giocatori.length) {
+    chiediConferma(`Passare a «${FORMATI[id].nome}»?`,
+      "Il campo verrà svuotato (puoi annullare subito dopo).", "Cambia formato", applica);
+  } else {
+    applica();
+  }
+}
+document.querySelectorAll("#scelta-formato .segmento").forEach((b) =>
+  b.addEventListener("click", () => cambiaFormato(b.dataset.valore)));
 
 function cambiaFormazione(idFormazione) {
   if (schemaBloccato()) return;
@@ -892,6 +933,7 @@ let storia = { indietro: [], avanti: [] };
 
 function istantanea() {
   return JSON.stringify({
+    formato: formatoDi(schemaCorrente).id,
     formazione: schemaCorrente.formazione,
     giocatori: schemaCorrente.giocatori,
     ribaltato: !!schemaCorrente.ribaltato,
@@ -906,7 +948,8 @@ function ricordaStato(foto = istantanea()) {
 }
 
 function ripristina(foto) {
-  const { formazione, giocatori, ribaltato } = JSON.parse(foto);
+  const { formato, formazione, giocatori, ribaltato } = JSON.parse(foto);
+  schemaCorrente.formato = formato || "11";
   schemaCorrente.formazione = formazione;
   schemaCorrente.ribaltato = ribaltato;
   schemaCorrente.giocatori = giocatori;
@@ -1026,7 +1069,7 @@ document.addEventListener("keydown", (e) => {
     }
     if (e.key === "t" || e.key === "T") { e.preventDefault(); Tracce.iniziaDisegno(sel); return; }
     if (e.key === "c" || e.key === "C") { e.preventDefault(); Tracce.commutaCurva(sel); return; }
-    if ((e.key === "b" || e.key === "B") && attacco && !eQuarterback(sel)) {
+    if ((e.key === "b" || e.key === "B") && attacco && !eQuarterback(sel) && !formatoDi(schemaCorrente).flag) {
       Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, 1.5)] });
       return;
     }

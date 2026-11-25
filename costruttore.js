@@ -5,10 +5,9 @@
    - scegliere una formazione pronta (Pro I, Shotgun 2x2, 4-3…), oppure
    - "Crea da zero": si apre la tavolozza con le pedine dei giocatori,
      da trascinare in campo dove vuole (con un clic la pedina va nella
-     sua posizione più tipica). Massimo 11 giocatori.
+     sua posizione più tipica).
+   Quanti giocatori e quali sono obbligatori lo decide il formato (regole.js).
    ========================================================================== */
-
-const MAX_GIOCATORI = 11;
 
 // Pedine disponibili nella tavolozza, raggruppate per ruolo
 const PEDINE = {
@@ -23,6 +22,21 @@ const PEDINE = {
     { gruppo: "Secondaria",  sigle: ["C", "FS", "SS", "NB"] },
   ],
 };
+
+// Nel flag la linea non esiste: il centro è l'unico "uomo di linea"
+function pedineDelFormato() {
+  const flag = formatoDi(schemaCorrente).flag;
+  if (schemaCorrente.lato === "attacco") {
+    return flag
+      ? [{ gruppo: "Centro", sigle: ["C"] }, { gruppo: "Backfield", sigle: ["QB", "RB"] },
+         { gruppo: "Ricevitori", sigle: ["X", "Y", "Z", "H", "WR"] }]
+      : PEDINE.attacco;
+  }
+  return flag
+    ? [{ gruppo: "Rusher", sigle: ["R"] }, { gruppo: "Linebacker", sigle: ["W", "M"] },
+       { gruppo: "Secondaria", sigle: ["C", "FS", "SS", "NB"] }]
+    : PEDINE.difesa;
+}
 
 let tavolozzaAperta = false;
 
@@ -55,14 +69,39 @@ function mostraTavolozza() {
   if (!visibile) return;
 
   const inCampo = schemaCorrente.giocatori.length;
+  const max = maxGiocatori();
+  const regole = statoRegole(schemaCorrente);
   box.innerHTML = `
     <div class="tavolozza-testa">
       <span>Trascina in campo</span>
-      <span class="contatore${inCampo >= MAX_GIOCATORI ? " pieno" : ""}">${inCampo}/${MAX_GIOCATORI}</span>
+      <span class="contatore${inCampo >= max ? " pieno" : ""}">${inCampo}/${max}</span>
     </div>`;
 
-  // Con 11 giocatori in campo: si può salvare la formazione con un nome
-  if (inCampo === MAX_GIOCATORI) {
+  // Lista di controllo degli obbligatori (solo attacco): C ✓ · G 1/2 · T 0/2
+  if (regole.obbligatori.length) {
+    const lista = document.createElement("div");
+    lista.className = "obbligatori";
+    lista.appendChild(Object.assign(document.createElement("span"), {
+      className: "obbligatori-titolo",
+      textContent: regole.formato.flag ? "Obbligatorio" : "Obbligatori",
+    }));
+    for (const o of regole.obbligatori) {
+      const ok = o.ci >= o.servono;
+      const voce = document.createElement("span");
+      voce.className = "obbligo" + (ok ? " ok" : "");
+      voce.textContent = ok ? `${o.fam} ✓` : `${o.fam} ${o.ci}/${o.servono}`;
+      lista.appendChild(voce);
+    }
+    if (regole.formato.flag) {
+      lista.appendChild(Object.assign(document.createElement("span"), {
+        className: "obbligatori-nota", textContent: "Nel flag il centro corre anche le route",
+      }));
+    }
+    box.appendChild(lista);
+  }
+
+  // Formazione completa e regolare: si può salvare con un nome
+  if (regole.completa) {
     const salva = document.createElement("form");
     salva.className = "salva-formazione";
     salva.innerHTML = `
@@ -78,9 +117,19 @@ function mostraTavolozza() {
       salvaFormazioneCorrente($("#nome-formazione").value);
     });
     box.appendChild(salva);
+  } else if (inCampo === max) {
+    // Pieno ma irregolare (es. un G rinominato in X): spieghiamo cosa manca
+    const avviso = document.createElement("p");
+    avviso.className = "avviso-regole";
+    avviso.textContent = regole.vietati
+      ? "Nel flag non ci sono guardie né tackle: togli G e T."
+      : regole.troppiCentri ? "Il centro è uno solo: togline uno."
+      : "Mancano giocatori obbligatori: togli qualcuno e aggiungi " +
+        regole.obbligatori.filter((o) => o.ci < o.servono).map((o) => `${o.servono - o.ci} ${o.fam}`).join(", ") + ".";
+    box.appendChild(avviso);
   }
 
-  for (const { gruppo, sigle } of PEDINE[schemaCorrente.lato]) {
+  for (const { gruppo, sigle } of pedineDelFormato()) {
     const riga = document.createElement("div");
     riga.className = "tavolozza-gruppo";
     const titolo = document.createElement("span");
@@ -96,6 +145,13 @@ function mostraTavolozza() {
       p.textContent = sigla;
       p.title = `Trascina ${sigla} in campo (o clicca per metterlo nella posizione tipica)`;
       p.style.setProperty("--i", i);
+      // Pedine "spente" quando le regole del formato non le permettono
+      const permesso = puoAggiungere(schemaCorrente, sigla);
+      if (!permesso.ok) {
+        p.classList.add("spenta");
+        p.title = permesso.motivo;
+        p.setAttribute("aria-disabled", "true");
+      }
       p.addEventListener("pointerdown", (e) => iniziaTrascinamentoPedina(e, sigla, p));
       pedine.appendChild(p);
     });
@@ -123,6 +179,15 @@ function mostraTavolozza() {
 function iniziaTrascinamentoPedina(evento, sigla, origine) {
   if (evento.button > 0 || schemaBloccato()) return;
   evento.preventDefault();
+  const permesso = puoAggiungere(schemaCorrente, sigla);
+  if (!permesso.ok) {
+    // Pedina spenta: scuote la testa e spiega il motivo
+    origine.classList.remove("scuoti");
+    void origine.offsetWidth;
+    origine.classList.add("scuoti");
+    mostraAvviso(permesso.motivo);
+    return;
+  }
   const partenza = { x: evento.clientX, y: evento.clientY };
   let fantasma = null;
 
@@ -170,8 +235,9 @@ function sopraCampo(e) {
 /* ---------- Aggiungere e togliere giocatori ---------- */
 function aggiungiGiocatore(sigla, posizione = null) {
   if (schemaBloccato()) return;
-  if (schemaCorrente.giocatori.length >= MAX_GIOCATORI) {
-    mostraAvviso(`In campo ci sono già ${MAX_GIOCATORI} giocatori`);
+  const permesso = puoAggiungere(schemaCorrente, sigla);
+  if (!permesso.ok) {
+    mostraAvviso(permesso.motivo);
     return;
   }
   ricordaStato();
@@ -209,7 +275,9 @@ function rimuoviGiocatore(g) {
    altrimenti spostiamo un po' di lato finché troviamo spazio libero. */
 function posizioneSuggerita(lato, sigla) {
   const libero = (x, y) => schemaCorrente.giocatori.every((g) => Math.hypot(g.x - x, g.y - y) > 1.6);
-  for (const f of FORMAZIONI[lato]) {
+  const formato = formatoDi(schemaCorrente).id;
+  const ordinate = [...formazioniPronte(lato, formato), ...FORMAZIONI[lato].filter((f) => f.formato !== formato)];
+  for (const f of ordinate) {
     for (const g of f.giocatori) {
       if (g.etichetta === sigla && libero(g.x, g.y)) return { x: g.x, y: g.y };
     }
