@@ -1383,3 +1383,278 @@ body.schema-bloccato .campo-cornice::after {
   70%  { opacity: 1; transform: translateY(0.1px) scale(1.25) rotate(10deg); }
   100% { opacity: 1; transform: none; }
 }
+
+/* ==========================================================================
+   FINESTRA "STAMPA IL PLAYBOOK"
+   ========================================================================== */
+.dialogo-stampa {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.dialogo-stampa .dialogo-titolo,
+.dialogo-stampa .dialogo-testo { text-align: center; }
+.dialogo-stampa .dialogo-testo { margin: -4px 0 6px; }
+.etichetta-stampa {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--testo-secondario);
+}
+.lista-stampa {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+.scelta-stampa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+.scelta-stampa + .scelta-stampa { border-top: 1px solid var(--separatore); }
+.scelta-stampa:hover { background: var(--sfondo-hover); }
+.scelta-stampa input { accent-color: var(--accento); }
+.scelta-stampa span:nth-of-type(1) { flex: 1; }
+.conteggio-stampa { font-size: 12px; color: var(--testo-secondario); }
+.scelta-stampa.vuota { opacity: 0.4; cursor: default; }
+
+/* Segmentati con 2 o 4 opzioni: la pillola si sposta con --indice */
+.segmentato-4 { grid-template-columns: repeat(4, 1fr); }
+.segmentato-4::before { width: calc(25% - 1px); }
+.segmentato-4::before,
+.segmentato-2::before { transform: translateX(calc(var(--indice, 0) * 100%)); }
+
+.spunta-stampa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+.spunta-stampa input { accent-color: var(--accento); width: 16px; height: 16px; }
+.suggerimento-stampa { margin: 2px 0 6px; font-size: 12px; color: var(--testo-secondario); text-align: center; }
+.suggerimento-stampa b { color: var(--testo); }
+
+/* ==========================================================================
+   PAGINE DI STAMPA (A4)
+   Sullo schermo non si vedono: compaiono solo durante la stampa.
+   ========================================================================== */
+.stampa { display: none; }
+
+.stampa {
+  /* Colori fissi per la carta (non quelli del tema scuro) */
+  --carta: #FFFFFF;
+  --inchiostro: #15191A;
+  --inchiostro-tenue: #6B7370;
+  --bordo-carta: #D7DCD9;
+  color: var(--inchiostro);
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Helvetica Neue", sans-serif;
+}
+.stampa * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* Campo chiaro: bianco con linee grigie, colori dei ruoli più scuri */
+.stampa.campo-chiaro {
+  --prato: #FFFFFF;
+  --prato-striscia: #F4F6F5;
+  --linee-campo: rgba(0, 0, 0, 0.22);
+  --tacche-campo: rgba(0, 0, 0, 0.2);
+  --numeri-campo: rgba(0, 0, 0, 0.3);
+  --linea-scrimmage: #1C74D4;
+  --linea-primo-down: #E08600;
+  --pallone: #8A4A1C;
+  --testo-giocatore: #FFFFFF;
+  --contorno-difesa: #FFFFFF;
+  --ruolo-linea: #5F6B66;
+  --ruolo-qb: #E07E00;
+  --ruolo-back: #1E9E57;
+  --ruolo-ricevitori: #1679C2;
+  --ruolo-dl: #D33A2E;
+  --ruolo-lb: #E07000;
+  --ruolo-db: #A88C00;
+}
+
+.pagina-stampa {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  padding: 12mm 12mm 9mm;
+  display: flex;
+  flex-direction: column;
+  background: var(--carta);
+  overflow: hidden;
+  break-after: page;
+  page-break-after: always;
+}
+.stampa.orizzontale .pagina-stampa { width: 297mm; height: 210mm; }
+.pagina-stampa:last-child { break-after: auto; page-break-after: auto; }
+
+.pagina-testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 3mm;
+  margin-bottom: 5mm;
+  border-bottom: 0.4mm solid var(--bordo-carta);
+}
+.pagina-squadra { display: flex; align-items: center; gap: 3mm; }
+.pagina-squadra img { height: 11mm; width: 11mm; object-fit: contain; }
+.pagina-squadra div { display: flex; flex-direction: column; }
+.pagina-squadra strong { font-size: 13pt; }
+.pagina-squadra span { font-size: 9pt; color: var(--inchiostro-tenue); }
+.pagina-numero { font-size: 9pt; color: var(--inchiostro-tenue); }
+.pagina-piede {
+  margin: 3mm 0 0;
+  font-size: 7pt;
+  color: var(--inchiostro-tenue);
+  text-align: right;
+}
+
+/* Griglia degli schemi: 1, 2, 4 o 6 per pagina */
+.griglia-stampa {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 5mm;
+}
+.per-pagina-1 .griglia-stampa { grid-template: minmax(0, 1fr) / 1fr; }
+.per-pagina-2 .griglia-stampa { grid-template: repeat(2, minmax(0, 1fr)) / 1fr; }
+.per-pagina-4 .griglia-stampa { grid-template: repeat(2, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr)); }
+.per-pagina-6 .griglia-stampa { grid-template: repeat(3, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr)); }
+
+.scheda-schema {
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
+  min-height: 0;
+  padding: 3mm;
+  border: 0.3mm solid var(--bordo-carta);
+  border-radius: 3mm;
+  break-inside: avoid;
+}
+.scheda-titolo { display: flex; align-items: baseline; gap: 2mm; flex-wrap: wrap; }
+.scheda-numero {
+  display: inline-grid;
+  place-items: center;
+  min-width: 5.5mm;
+  height: 5.5mm;
+  padding: 0 1mm;
+  border-radius: 3mm;
+  background: var(--inchiostro);
+  color: var(--carta);
+  font-size: 8pt;
+  font-weight: 700;
+}
+.scheda-titolo strong { font-size: 12pt; }
+.per-pagina-6 .scheda-titolo strong { font-size: 10.5pt; }
+.scheda-info { font-size: 8.5pt; color: var(--inchiostro-tenue); }
+
+.campo-stampa {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+/* Il campo si allinea in alto nel riquadro; il bordo è disegnato attorno al campo */
+.per-pagina-2 .campo-stampa,
+.per-pagina-4 .campo-stampa,
+.per-pagina-6 .campo-stampa { flex: 0 1 auto; height: auto; aspect-ratio: 53.33 / 35; max-height: 100%; }
+.bordo-campo { fill: none; stroke: var(--bordo-carta); stroke-width: 0.15; }
+.stampa .filigrana { opacity: 0.08; }
+
+.scheda-note {
+  margin: 0;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  color: var(--inchiostro);
+  white-space: pre-wrap;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+.per-pagina-4 .scheda-note { -webkit-line-clamp: 3; }
+.per-pagina-6 .scheda-note { -webkit-line-clamp: 2; font-size: 7.5pt; }
+
+/* Copertina */
+.copertina { justify-content: space-between; }
+.copertina-centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 18mm;
+}
+.copertina-logo { width: 62mm; height: 62mm; object-fit: contain; margin-bottom: 8mm; }
+.copertina-squadra { margin: 0; font-size: 16pt; font-weight: 700; color: var(--inchiostro-tenue); letter-spacing: 0.04em; text-transform: uppercase; }
+.copertina-titolo { margin: 2mm 0 3mm; font-size: 34pt; font-weight: 800; letter-spacing: -0.01em; }
+.copertina-data { margin: 0; font-size: 10pt; color: var(--inchiostro-tenue); }
+.stampa.orizzontale .copertina-centro { margin-top: 6mm; }
+.stampa.orizzontale .copertina-logo { width: 40mm; height: 40mm; margin-bottom: 4mm; }
+
+.indice { flex: 1; min-height: 0; margin-top: 12mm; overflow: hidden; }
+.stampa.orizzontale .indice { margin-top: 6mm; }
+.indice h2 {
+  margin: 0 0 3mm;
+  font-size: 11pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--inchiostro-tenue);
+  border-bottom: 0.4mm solid var(--bordo-carta);
+  padding-bottom: 2mm;
+}
+.indice-lista { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 10mm; }
+.indice-lista li {
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
+  padding: 1.2mm 0;
+  font-size: 9.5pt;
+  break-inside: avoid;
+}
+.indice-numero { min-width: 6mm; color: var(--inchiostro-tenue); font-variant-numeric: tabular-nums; }
+.indice-nome { font-weight: 700; }
+.indice-info { flex: 1; color: var(--inchiostro-tenue); font-size: 8pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.indice-pagina { color: var(--inchiostro-tenue); font-size: 8.5pt; }
+
+/* Durante la stampa si vedono solo le pagine */
+@media print {
+  html, body { height: auto; overflow: visible; background: #FFFFFF; }
+  body.in-stampa > *:not(#stampa) { display: none !important; }
+  body.in-stampa .stampa { display: block; }
+}
+
+/* Interruttore (sì/no) in stile iOS, usato per "Linea morbida" */
+.interruttore {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 11px;
+  background: var(--sfondo-grigio);
+  cursor: pointer;
+  transition: background 0.2s var(--curva);
+}
+.interruttore::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s var(--curva);
+}
+.interruttore:checked { background: var(--accento); }
+.interruttore:checked::after { transform: translateX(16px); }

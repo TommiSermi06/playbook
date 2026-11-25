@@ -64,6 +64,7 @@ function tracciaDaQb(g, movimento) {
   return {
     tipo: "qb",
     nome: movimento.nome,
+    curva: movimento.punti.length > 1, // i rollout sono curvi, i drop dritti
     punti: movimento.punti.map(([dx, dy]) => dentroCampo(g, dx, dy)),
   };
 }
@@ -135,13 +136,57 @@ function percorso(punti) {
 }
 
 // Accorcia la linea alla fine (per lasciare spazio alla punta della freccia)
+// (funziona anche sulle linee curve, fatte di tanti piccoli segmenti)
 function accorcia(punti, quanto) {
-  const n = punti.length;
-  const a = punti[n - 2], b = punti[n - 1];
-  const lung = Math.hypot(b.x - a.x, b.y - a.y);
-  if (lung <= quanto) return punti;
-  const t = (lung - quanto) / lung;
-  return [...punti.slice(0, -1), { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }];
+  const risultato = [...punti];
+  let resto = quanto;
+  while (risultato.length > 1) {
+    const b = risultato[risultato.length - 1];
+    const a = risultato[risultato.length - 2];
+    const lung = Math.hypot(b.x - a.x, b.y - a.y);
+    if (lung > resto) {
+      const t = (lung - resto) / lung;
+      risultato[risultato.length - 1] = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+      return risultato;
+    }
+    if (risultato.length === 2) return punti; // traccia troppo corta: la lasciamo intera
+    risultato.pop();
+    resto -= lung;
+  }
+  return punti;
+}
+
+/* Linea morbida: invece degli angoli netti, una curva che passa per
+   tutti i punti. Usiamo la curva di Catmull-Rom "centripeta": segue i
+   punti senza mai fare riccioli o sforare nei cambi di direzione bruschi.
+   La trasformiamo in tanti piccoli segmenti, così freccia, onde del motion
+   e animazione funzionano come per le linee spezzate. */
+function curvaMorbida(p) {
+  if (p.length < 3) return p;
+  const n = p.length;
+  // Punti "fantasma" prima dell'inizio e dopo la fine, per far partire e finire bene la curva
+  const prima = { x: 2 * p[0].x - p[1].x, y: 2 * p[0].y - p[1].y };
+  const dopo = { x: 2 * p[n - 1].x - p[n - 2].x, y: 2 * p[n - 1].y - p[n - 2].y };
+  const tutti = [prima, ...p, dopo];
+  const passo = (a, b) => Math.max(Math.sqrt(Math.hypot(b.x - a.x, b.y - a.y)), 1e-4); // alfa = 0,5
+  const mescola = (a, b, ta, tb, t) => ({
+    x: ((tb - t) * a.x + (t - ta) * b.x) / (tb - ta),
+    y: ((tb - t) * a.y + (t - ta) * b.y) / (tb - ta),
+  });
+
+  const risultato = [p[0]];
+  for (let i = 1; i < tutti.length - 2; i++) {
+    const [p0, p1, p2, p3] = [tutti[i - 1], tutti[i], tutti[i + 1], tutti[i + 2]];
+    const t0 = 0, t1 = t0 + passo(p0, p1), t2 = t1 + passo(p1, p2), t3 = t2 + passo(p2, p3);
+    const campioni = Math.max(6, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / 0.2));
+    for (let s = 1; s <= campioni; s++) {
+      const t = t1 + ((t2 - t1) * s) / campioni;
+      const a1 = mescola(p0, p1, t0, t1, t), a2 = mescola(p1, p2, t1, t2, t), a3 = mescola(p2, p3, t2, t3, t);
+      const b1 = mescola(a1, a2, t0, t2, t), b2 = mescola(a2, a3, t1, t3, t);
+      risultato.push(mescola(b1, b2, t1, t2, t));
+    }
+  }
+  return risultato;
 }
 
 // Linea ondulata per il motion: piccole onde lungo il percorso
@@ -172,10 +217,14 @@ function disegnaTraccia(genitore, g, { anima = false, idMaschera = "", scala = 1
   if (!t || !t.punti.length) return;
   const info = infoTipo(t.tipo);
   let punti = puntiDisegno(t);
+  if (t.curva) punti = curvaMorbida(punti); // linea morbida: niente angoli netti
 
-  const gruppo = crea("g", { class: `traccia tipo-${t.tipo}` }, genitore);
+  const gruppo = crea("g", { class: `traccia tipo-${t.tipo}${t.curva ? " curva" : ""}` }, genitore);
   const fine = punti[punti.length - 1];
-  const prima = punti[punti.length - 2];
+  // Direzione finale (per freccia e barra del blocco): guardiamo un po' indietro lungo la linea
+  const indietro = accorcia(punti, 0.6);
+  let prima = indietro[indietro.length - 1];
+  if (prima === fine) prima = punti[punti.length - 2]; // traccia cortissima: usiamo il punto precedente
   const ang = Math.atan2(fine.y - prima.y, fine.x - prima.x);
 
   let lineaPunti = info.fine === "freccia" ? accorcia(punti, 0.7 * scala) : punti;
@@ -243,6 +292,7 @@ const Tracce = {
     this.disegno = {
       giocatore: g,
       punti: [],
+      curva: Boolean(leggiLocale("playbook.disegno-curvo")), // ultima scelta del coach
       // La linea disegna blocchi (con la T finale), gli altri route o blitz
       tipo: (g.traccia && g.traccia.tipo) ||
         (eUomoDiLinea(g) ? "blocco" : eQuarterback(g) ? "qb" : schemaCorrente.lato === "attacco" ? "route" : "blitz"),
@@ -270,10 +320,11 @@ const Tracce = {
   anteprima(p, conMaiusc) {
     const d = this.disegno;
     if (!d) return;
+    this.ultimoPunto = { p, maiusc: conMaiusc };
     const g = d.giocatore;
     let x = p.x, y = YARDE_AVANTI - p.y;
     if (conMaiusc) ({ x, y } = aggancia45(g, d.punti, x, y));
-    const provvisoria = { tipo: d.tipo, punti: [...d.punti, dentroCampo(g, x - g.x, y - g.y)] };
+    const provvisoria = { tipo: d.tipo, curva: d.curva, punti: [...d.punti, dentroCampo(g, x - g.x, y - g.y)] };
     const livello = svgCampo.querySelector(`.tracce-giocatore[data-id="${g.id}"]`);
     if (!livello) return;
     livello.innerHTML = "";
@@ -288,11 +339,32 @@ const Tracce = {
     document.body.classList.remove("disegnando");
     if (d.punti.length) {
       ricordaStato(d.prima);
-      d.giocatore.traccia = { tipo: d.tipo, nome: "A mano", punti: d.punti };
+      d.giocatore.traccia = { tipo: d.tipo, nome: "A mano", curva: d.curva, punti: d.punti };
       salvaTraPoco();
     }
     aggiornaSuggerimento();
     ridisegna();
+  },
+
+  // Tasto C durante il disegno: passa da linea spezzata a morbida e viceversa
+  commutaCurvaDisegno() {
+    const d = this.disegno;
+    if (!d) return;
+    d.curva = !d.curva;
+    scriviLocale("playbook.disegno-curvo", d.curva);
+    aggiornaSuggerimento();
+    if (this.ultimoPunto) this.anteprima(this.ultimoPunto.p, this.ultimoPunto.maiusc);
+  },
+
+  // Linea morbida sì/no su una traccia già fatta
+  commutaCurva(g) {
+    if (!g || !g.traccia || schemaBloccato()) return;
+    ricordaStato();
+    g.traccia.curva = !g.traccia.curva;
+    chiudiMenuTracce();
+    ridisegna();
+    salvaTraPoco();
+    mostraAvviso(g.traccia.curva ? "Linea morbida" : "Linea con angoli netti");
   },
 
   annullaDisegno() {
@@ -414,7 +486,10 @@ function apriMenuTracce(g) {
       aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
     }
   }
-  if (g.traccia) aggiungiAzione("Rimuovi traccia", "Canc", () => Tracce.rimuovi(g), "distruttiva");
+  if (g.traccia) {
+    aggiungiAzione(g.traccia.curva ? "〰️  Linea con angoli netti" : "〰️  Linea morbida (curva)", "C", () => Tracce.commutaCurva(g));
+    aggiungiAzione("Rimuovi traccia", "Canc", () => Tracce.rimuovi(g), "distruttiva");
+  }
   else aggiungiAzione("Togli giocatore dal campo", "Canc", () => rimuoviGiocatore(g), "distruttiva");
   menu.appendChild(azioni);
 
@@ -455,7 +530,8 @@ function aggiornaSuggerimento() {
   const s = $("#suggerimento");
   if (Tracce.disegno) {
     s.classList.add("in-disegno");
-    s.innerHTML = `<b>Disegno a mano</b> · clic per aggiungere punti · <kbd>Maiusc</kbd> dritto o a 45° · ` +
+    const curva = Tracce.disegno.curva;
+    s.innerHTML = `<b>Disegno a mano</b> · clic per aggiungere punti · <kbd>C</kbd> linea ${curva ? "<b>morbida</b>" : "spezzata"} · <kbd>Maiusc</kbd> dritto o a 45° · ` +
       `<kbd>doppio clic</kbd> o <kbd>Invio</kbd> per finire · <kbd>Esc</kbd> annulla`;
   } else {
     s.classList.remove("in-disegno");

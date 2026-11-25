@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.9 — stampa / PDF e linee morbide
+- Pulsante Stampa (o Ctrl+P): schema aperto, attacco, difesa o tutto il playbook
+- 1, 2, 4 o 6 schemi per pagina A4, campo chiaro (meno inchiostro) o scuro
+- Copertina con logo, nome squadra e indice; logo e numero di pagina su ogni foglio; note degli schemi
+- Si salva in PDF dalla finestra di stampa del browser («Salva come PDF»): campi vettoriali, nitidi
+- Linea morbida (curva) per ogni traccia: tasto C, interruttore nel pannello o voce nel menu; anche durante il disegno a mano
+
 ## Versione 0.8.2
 - QB: drop 3, 5, 7 passi e rollout destra/sinistra pronti (tasti 1–5), con animazione
 - Il movimento del QB finisce con un puntino invece della freccia
@@ -82,6 +89,7 @@ Senza questi dati l'app funziona in "modalità locale" (solo su questo computer)
 - `tracce.js` — albero delle route, disegno e animazione delle tracce
 - `costruttore.js` — «Crea da zero»: tavolozza delle pedine
 - `lucchetto.js` — blocco e sblocco dello schema
+- `stampa.js` — stampa e PDF del playbook
 - `supabase/setup.sql` — tabelle e regole di sicurezza
 - `lib/` — librerie Supabase e pdf.js (incluse, senza CDN)
 - `app.js` — disegno del campo, trascinamento, schermate

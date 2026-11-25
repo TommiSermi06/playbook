@@ -43,7 +43,9 @@ const $ = (sel) => document.querySelector(sel);
 /* ==========================================================================
    1. DISEGNO DEL CAMPO
    ========================================================================== */
-function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {}) {
+function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stampa = false } = {}) {
+  // "vivo" = il campo dell'editor (con animazioni e maniglie); miniature e stampa sono statiche
+  const vivo = !miniatura && !stampa;
   svg.innerHTML = "";
   svg.setAttribute("viewBox", `0 0 ${LARGHEZZA_CAMPO} ${ALTEZZA_CAMPO}`);
 
@@ -110,19 +112,24 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(0), y2: yDisegno(0), class: "linea-scrimmage" }, linee);
 
+  // In stampa: un bordo attorno al campo (sul foglio bianco altrimenti non si vede)
+  if (stampa) {
+    crea("rect", { x: 0.05, y: 0.05, width: LARGHEZZA_CAMPO - 0.1, height: ALTEZZA_CAMPO - 0.1, rx: 0.4, class: "bordo-campo" }, svg);
+  }
+
   // Il pallone: in attacco compare solo quando c'è il centro (C) e sta
   // sempre davanti a lui; in difesa resta al centro della linea come riferimento.
   const palla = posizionePalla(schema);
   if (palla) {
     let sbuca = false;
-    if (!miniatura) {
+    if (vivo) {
       // Animazione solo quando la palla appare (il C è appena entrato in campo)
       sbuca = statoPalla.idSchema === schema.id && !statoPalla.visibile;
       statoPalla = { idSchema: schema.id, visibile: true };
     }
     const gp = crea("g", { class: "palla" + (sbuca ? " sbuca" : ""), transform: `translate(${palla.x} ${yDisegno(palla.y)})` }, svg);
     crea("ellipse", { cx: 0, cy: 0, rx: 0.32, ry: 0.5, class: "pallone" }, gp);
-  } else if (!miniatura) {
+  } else if (vivo) {
     statoPalla = { idSchema: schema.id, visibile: false };
   }
 
@@ -136,13 +143,13 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
       "data-id": g.id,
       transform: `translate(${g.x} ${yDisegno(g.y)})`,
     }, livelloTracce);
-    const inDisegno = conTracce && Tracce.disegno && Tracce.disegno.giocatore.id === g.id;
+    const inDisegno = vivo && conTracce && Tracce.disegno && Tracce.disegno.giocatore.id === g.id;
     if (g.traccia && !inDisegno) {
-      const anima = !miniatura && conTracce && Tracce.daAnimare === g.id;
+      const anima = vivo && conTracce && Tracce.daAnimare === g.id;
       disegnaTraccia(gt, g, { anima, idMaschera: "m-" + g.id + "-" + Date.now() });
     }
   }
-  if (!miniatura && conTracce) Tracce.daAnimare = null;
+  if (vivo && conTracce) Tracce.daAnimare = null;
 
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
@@ -154,7 +161,7 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
 
   // Maniglie: i punti della traccia del giocatore selezionato, da trascinare
   const sel = schema.giocatori.find((g) => g.id === selezionato);
-  if (!miniatura && sel && sel.traccia && !(typeof Tracce !== "undefined" && Tracce.disegno)) {
+  if (vivo && sel && sel.traccia && !(typeof Tracce !== "undefined" && Tracce.disegno)) {
     const maniglie = crea("g", { class: "maniglie" }, svg);
     sel.traccia.punti.forEach((p, i) => {
       crea("circle", { cx: sel.x + p.dx, cy: yDisegno(sel.y + p.dy), r: 0.42, class: "maniglia", "data-indice": i }, maniglie);
@@ -615,6 +622,10 @@ function mostraInfoGiocatore() {
       <span>Tipo di linea</span>
       <select id="tipo-traccia"></select>
     </label>
+    <label class="riga-campo" id="riga-curva">
+      <span>Linea morbida <kbd>C</kbd></span>
+      <input type="checkbox" class="interruttore" id="curva-traccia">
+    </label>
     <div class="riga-pulsanti">
       <button class="btn-mini" id="btn-traccia-menu">Scegli traccia…</button>
       <button class="btn-mini" id="btn-traccia-mano">Disegna a mano</button>
@@ -625,6 +636,9 @@ function mostraInfoGiocatore() {
   // Traccia del giocatore
   $("#nome-traccia").textContent = g.traccia ? (g.traccia.nome || infoTipo(g.traccia.tipo).nome) : "Nessuna";
   $("#riga-tipo-traccia").hidden = !g.traccia;
+  $("#riga-curva").hidden = !g.traccia;
+  $("#curva-traccia").checked = Boolean(g.traccia && g.traccia.curva);
+  $("#curva-traccia").addEventListener("change", () => Tracce.commutaCurva(g));
   $("#btn-traccia-via").hidden = !g.traccia;
   const scelta = $("#tipo-traccia");
   for (const t of TIPI_TRACCIA[schemaCorrente.lato]) scelta.add(new Option(t.nome, t.id));
@@ -901,6 +915,12 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") chiudiFoglioSquadra();
     return;
   }
+  if (!$("#foglio-stampa").hidden) {
+    if (e.key === "Escape") chiudiFoglioStampa();
+    return;
+  }
+  // Ctrl/⌘+P: la nostra stampa del playbook al posto di quella della pagina
+  if (cmd && e.key.toLowerCase() === "p") { e.preventDefault(); apriFoglioStampa(); return; }
   if (!$("#dialogo").hidden) {
     if (e.key === "Escape") chiudiDialogo();
     return;
@@ -923,8 +943,9 @@ document.addEventListener("keydown", (e) => {
 
   if (staScrivendo || cmd || e.altKey) return;
 
-  // Disegno a mano in corso: valgono solo Invio (finisci) ed Esc (annulla)
+  // Disegno a mano in corso: Invio (finisci), Esc (annulla), C (linea morbida)
   if (Tracce.disegno) {
+    if (e.key === "c" || e.key === "C") { e.preventDefault(); Tracce.commutaCurvaDisegno(); }
     if (e.key === "Enter") { e.preventDefault(); Tracce.finisciDisegno(); }
     if (e.key === "Escape") { e.preventDefault(); Tracce.annullaDisegno(); }
     return;
@@ -966,6 +987,7 @@ document.addEventListener("keydown", (e) => {
       return;
     }
     if (e.key === "t" || e.key === "T") { e.preventDefault(); Tracce.iniziaDisegno(sel); return; }
+    if (e.key === "c" || e.key === "C") { e.preventDefault(); Tracce.commutaCurva(sel); return; }
     if ((e.key === "b" || e.key === "B") && attacco && !eQuarterback(sel)) {
       Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, 1.5)] });
       return;
@@ -1055,6 +1077,7 @@ $("#dialogo-ok").addEventListener("click", () => {
 $("#dialogo-annulla").addEventListener("click", chiudiDialogo);
 $("#velo").addEventListener("click", () => {
   if (!$("#foglio-squadra").hidden) chiudiFoglioSquadra();
+  else if (!$("#foglio-stampa").hidden) chiudiFoglioStampa();
   else chiudiDialogo();
 });
 
