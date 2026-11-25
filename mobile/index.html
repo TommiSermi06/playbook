@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Playbook</title>
+  <!-- Impostazioni per sembrare un'app vera sul telefono (PWA) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Playbook">
+  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="../icon-180.png">
+  <link rel="icon" type="image/png" href="../icon-180.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="mobile.css?v=m1">
+</head>
+<body>
+  <!-- Schermata d'avvio, mentre controlliamo l'accesso -->
+  <div class="schermata" id="avvio">
+    <div class="accesso">
+      <img class="accesso-logo" src="../icon-180.png" alt="">
+      <p class="testo" id="avvio-testo">Un attimo…</p>
+    </div>
+  </div>
+
+  <!-- ================= 1. ACCESSO ================= -->
+  <section class="schermata fuori" id="schermata-accesso" hidden>
+    <form class="accesso" id="form-accesso">
+      <img class="accesso-logo" src="../icon-180.png" alt="">
+      <h1 id="accesso-titolo">Bentornato, coach</h1>
+      <p class="testo">Lo stesso account della versione per computer.</p>
+      <div class="gruppo">
+        <div class="campo-riga">
+          <label for="accesso-email">Email</label>
+          <input id="accesso-email" type="email" autocomplete="email" placeholder="coach@squadra.it" required>
+        </div>
+        <div class="campo-riga" id="riga-password">
+          <label for="accesso-password">Password</label>
+          <input id="accesso-password" type="password" autocomplete="current-password" placeholder="Obbligatoria">
+        </div>
+      </div>
+      <div class="azioni-accesso">
+        <button class="btn-pieno toccabile" id="accesso-invia" type="submit">Accedi</button>
+        <button class="btn-testo toccabile" id="link-dimenticata" type="button">Password dimenticata?</button>
+        <button class="btn-testo toccabile" id="link-cambia" type="button">Non hai un account? Registrati</button>
+      </div>
+      <p class="messaggio" id="accesso-messaggio"></p>
+    </form>
+  </section>
+
+  <!-- ================= 2. I TUOI PLAYBOOK ================= -->
+  <section class="schermata fuori" id="schermata-home" hidden>
+    <header class="barra">
+      <span class="barra-sx">
+        <button class="btn-barra toccabile" id="btn-account" aria-label="Account">
+          <svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.7" fill="none"/><circle cx="12" cy="10" r="3.3" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M6.2 18.2c1.4-2.3 3.4-3.4 5.8-3.4s4.4 1.1 5.8 3.4" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>
+        </button>
+      </span>
+      <span class="barra-titolo" id="home-barra-titolo">Playbook</span>
+      <span class="barra-dx">
+        <button class="btn-barra toccabile" id="btn-aggiorna" aria-label="Aggiorna">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </span>
+    </header>
+    <h1 class="titolo-grande">Playbook</h1>
+    <p class="sottotitolo-grande" id="home-squadra">I tuoi playbook</p>
+
+    <p class="titolo-sezione" id="titolo-miei">I miei playbook</p>
+    <div class="gruppo" id="lista-playbook"></div>
+    <p class="titolo-sezione" id="titolo-staff">Condivisi con me</p>
+    <div class="gruppo" id="lista-staff"></div>
+    <p class="vuoto" id="home-vuota" hidden>Non hai ancora playbook.<br>Creali dalla versione per computer: qui compaiono da soli.</p>
+  </section>
+
+  <!-- ================= 3. ELENCO DEGLI SCHEMI ================= -->
+  <section class="schermata fuori" id="schermata-playbook" hidden>
+    <header class="barra">
+      <span class="barra-sx">
+        <button class="btn-barra toccabile" id="btn-pb-indietro" data-indietro></button>
+      </span>
+      <span class="barra-titolo" id="pb-barra-titolo"></span>
+      <span class="barra-dx">
+        <button class="btn-barra grassetto toccabile" id="btn-partita">Partita</button>
+      </span>
+    </header>
+    <h1 class="titolo-grande" id="pb-titolo"></h1>
+    <p class="sottotitolo-grande" id="pb-sotto"></p>
+    <p class="banner" id="banner-vista" hidden>👁 Sola lettura · condiviso dal coach</p>
+
+    <div class="segmentato" id="scelta-lato" style="margin-top: 12px">
+      <button data-valore="attacco">Attacco</button>
+      <button data-valore="difesa">Difesa</button>
+    </div>
+    <label class="cerca">
+      <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2.2" fill="none"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <input id="cerca" type="search" placeholder="Cerca per nome o numero" autocomplete="off">
+    </label>
+    <div class="filtri" id="filtri"></div>
+
+    <p class="titolo-sezione" id="conteggio"></p>
+    <div class="gruppo" id="lista-schemi"></div>
+    <p class="vuoto" id="elenco-vuoto" hidden>Nessuno schema qui.</p>
+  </section>
+
+  <!-- ================= 4. LO SCHEMA ================= -->
+  <section class="schermata fuori" id="schermata-schema" hidden>
+    <header class="barra con-bordo">
+      <span class="barra-sx">
+        <button class="btn-barra toccabile" data-indietro></button>
+      </span>
+      <span class="barra-titolo" id="schema-barra-titolo"></span>
+      <span class="barra-dx">
+        <button class="btn-barra toccabile" id="btn-modifica" hidden>Modifica</button>
+      </span>
+    </header>
+    <div class="contenitore-campo" id="contenitore-campo">
+      <svg class="campo-grande" id="campo-grande" preserveAspectRatio="xMidYMid meet"></svg>
+      <button class="btn-sul-campo btn-zoom toccabile" id="btn-zoom">Campo intero</button>
+      <button class="btn-sul-campo btn-anima toccabile" id="btn-anima">▶︎ Anima tracce</button>
+    </div>
+    <p class="indice-schema" id="indice-schema"></p>
+
+    <h1 class="titolo-grande" id="schema-titolo" style="font-size: 28px; margin-top: 14px"></h1>
+    <div class="info-chiamata">
+      <span class="numero-grande" id="numero-grande">—</span>
+      <span>
+        <span class="etichetta-piccola">Formazione</span><br>
+        <span class="nome-formazione" id="schema-formazione"></span>
+      </span>
+    </div>
+
+    <p class="titolo-sezione">Quando chiamarlo</p>
+    <div class="gruppo"><div class="pillole" id="schema-situazioni"></div></div>
+    <p class="titolo-sezione">Note</p>
+    <div class="gruppo"><div class="note-testo" id="schema-note"></div></div>
+  </section>
+
+  <!-- ================= 5. PARTITA ================= -->
+  <section class="schermata fuori" id="schermata-partita" hidden>
+    <header class="barra">
+      <span class="barra-sx">
+        <button class="btn-barra toccabile" data-indietro></button>
+      </span>
+      <span class="barra-titolo">Partita</span>
+      <span class="barra-dx"></span>
+    </header>
+    <h1 class="titolo-grande">Partita</h1>
+    <p class="sottotitolo-grande">Le chiamate divise per situazione</p>
+    <div class="segmentato" id="scelta-lato-partita">
+      <button data-valore="attacco">Attacco</button>
+      <button data-valore="difesa">Difesa</button>
+    </div>
+    <div id="lista-partita"></div>
+    <p class="vuoto" id="partita-vuota" hidden>Nessuno schema ha ancora una situazione.<br>Sceglile dal pannello «Partita» sul computer, o da «Modifica» in uno schema.</p>
+  </section>
+
+  <!-- ================= FOGLI DAL BASSO ================= -->
+  <div class="velo" id="velo" hidden></div>
+
+  <div class="foglio" id="foglio-modifica" hidden>
+    <div class="maniglia-foglio"></div>
+    <div class="foglio-testa">
+      <button class="btn-barra toccabile" id="mod-annulla" style="justify-self: start">Annulla</button>
+      <strong>Partita</strong>
+      <button class="btn-barra toccabile" id="mod-salva">Salva</button>
+    </div>
+    <div class="gruppo">
+      <div class="campo-riga">
+        <label for="mod-numero" style="width: auto; flex: 1">N° di chiamata</label>
+        <input class="campo-numero" id="mod-numero" type="number" inputmode="numeric" min="1" max="999" placeholder="—">
+      </div>
+    </div>
+    <p class="titolo-sezione">Situazioni</p>
+    <div class="gruppo"><div class="pillole" id="mod-situazioni"></div></div>
+    <p class="titolo-sezione">Note</p>
+    <div class="gruppo"><textarea class="area-note" id="mod-note" placeholder="Chiamata, letture, compiti per ruolo…"></textarea></div>
+  </div>
+
+  <div class="foglio" id="foglio-account" hidden>
+    <div class="maniglia-foglio"></div>
+    <div class="foglio-testa">
+      <span></span>
+      <strong>Account</strong>
+      <button class="btn-barra toccabile" id="btn-account-chiudi">Fine</button>
+    </div>
+    <div class="gruppo">
+      <div class="riga"><span class="riga-testi"><span class="riga-titolo">Email</span></span><span class="riga-valore" id="account-email"></span></div>
+      <div class="riga"><span class="riga-testi"><span class="riga-titolo">Squadra</span></span><span class="riga-valore" id="account-squadra"></span></div>
+    </div>
+    <p class="titolo-sezione">Versione per computer</p>
+    <div class="gruppo">
+      <a class="riga toccabile" href="../" style="color: var(--accento); text-decoration: none">Apri Playbook per computer</a>
+    </div>
+    <div class="gruppo" style="margin-top: 22px">
+      <button class="riga btn-testo rosso toccabile" id="btn-esci" style="justify-content: center">Esci</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <!-- (serve al file delle tracce condiviso con il computer) -->
+  <div id="menu-tracce" hidden></div>
+  <p id="suggerimento" hidden></p>
+
+  <!-- Gli stessi file della versione per computer (dati, account, tracce)... -->
+  <script src="../config.js?v=m1"></script>
+  <script src="../lib/supabase.js"></script>
+  <script src="campo.js?v=m1"></script>
+  <script src="../formazioni.js?v=m1"></script>
+  <script src="../regole.js?v=m1"></script>
+  <script src="../tracce.js?v=m1"></script>
+  <script src="../cloud.js?v=m1"></script>
+  <!-- ...e la logica tutta nuova per il telefono -->
+  <script src="mobile.js?v=m1"></script>
+  <script>
+    // Il pulsante "indietro" con la freccia iOS
+    document.querySelectorAll("[data-indietro]").forEach((b) => {
+      b.innerHTML = '<svg width="13" height="21" viewBox="0 0 13 21"><path d="M11 2L2.5 10.5 11 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Indietro';
+    });
+  </script>
+</body>
+</html>
