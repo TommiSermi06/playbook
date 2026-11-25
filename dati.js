@@ -100,20 +100,35 @@ const Dati = {
     schema.modificato = Date.now();
     const tutti = this.tutti();
     const i = tutti.findIndex((s) => s.id === schema.id);
+    const bozza = this._segnaBozza(schema, i >= 0 ? tutti[i] : null);
     if (i >= 0) tutti[i] = schema;
     else tutti.unshift(schema);
     const ok = this._scrivi(tutti);
-    this.programmaInvio(schema.id);
+    if (bozza) segnalaSync("fine"); // resta solo sul computer finché non diventa una proposta
+    else this.programmaInvio(schema.id);
     return ok;
+  },
+
+  /* Nei playbook dove posso solo proporre, ogni modifica diventa una BOZZA:
+     la vedo solo io finché non la mando al proprietario (bozza = true;
+     nuovo = true se lo schema non esiste nel playbook ufficiale). */
+  _segnaBozza(schema, prima) {
+    const permesso = Playbook.permesso(schema.playbook);
+    if (permesso !== "proposta" && permesso !== "lettura") return false;
+    schema.bozza = true;
+    schema.nuovo = !prima || Boolean(prima.nuovo);
+    return true;
   },
 
   // Aggiorna molti schemi in una volta, lasciandoli al loro posto nell'elenco
   aggiornaMolti(schemi) {
     const perId = new Map(schemi.map((s) => [s.id, s]));
     const adesso = Date.now();
+    const prima = new Map(this.tutti().map((s) => [s.id, s]));
     schemi.forEach((s) => { s.modificato = adesso; });
+    const daMandare = schemi.filter((s) => !this._segnaBozza(s, prima.get(s.id)));
     this._scrivi(this.tutti().map((s) => perId.get(s.id) || s));
-    schemi.forEach((s) => this.daInviare.add(s.id));
+    daMandare.forEach((s) => this.daInviare.add(s.id));
     this._ricordaDaInviare();
     clearTimeout(this.timerInvio);
     this.timerInvio = setTimeout(() => this.invia(), 300);
@@ -173,8 +188,12 @@ const Dati = {
 
   async invia() {
     if (!Cloud.attivo || !this.daInviare.size) return;
+    // Bozze e playbook dove non posso scrivere non partono mai
     const ids = [...this.daInviare];
-    const schemi = this.tutti().filter((s) => ids.includes(s.id));
+    const schemi = this.tutti().filter((s) => ids.includes(s.id)
+      && !s.bozza && ["proprietario", "modifica"].includes(Playbook.permesso(s.playbook)));
+    ids.filter((id) => !schemi.some((s) => s.id === id)).forEach((id) => this.daInviare.delete(id));
+    if (!schemi.length) { this._ricordaDaInviare(); return; }
     segnalaSync("inizio");
     try {
       await Cloud.salvaSchemi(schemi);
@@ -206,6 +225,7 @@ const Dati = {
 
       for (const s of locali) {
         if (tolti.has(s.playbook)) { this.daInviare.delete(s.id); cambiato = true; continue; }
+        if (s.bozza) { perId.set(s.id, s); continue; } // la mia bozza resta finché non la mando
         const remoto = perId.get(s.id);
         if (!remoto) {
           // Non è online: se aspettava di essere inviato è nuovo e lo teniamo,

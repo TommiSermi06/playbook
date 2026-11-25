@@ -160,6 +160,8 @@ async function entra(utente) {
   sistemaSchemiSenzaPlaybook(); // gli schemi di prima finiscono in un playbook
   Squadra.imposta(profilo);
   avviaApp();
+  controllaProposte(); // proposte dello staff da decidere
+  controllaEsiti();    // le mie proposte accettate o rifiutate
 
   // L'introduzione si dissolve e l'app "entra" in scena
   $("#intro").classList.add("esce");

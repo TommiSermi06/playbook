@@ -367,7 +367,7 @@ function mostraElenco() {
     if (schema.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
     const sotto = document.createElement("span");
     sotto.className = "riga-sotto";
-    sotto.textContent = `${schema.chiamata ? "#" + schema.chiamata + " · " : ""}${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
+    sotto.textContent = `${prefissoRiga(schema)}${schema.chiamata ? "#" + schema.chiamata + " · " : ""}${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
     testi.append(titolo, sotto);
 
     riga.append(mini, testi);
@@ -388,7 +388,7 @@ function aggiornaRigaCorrente() {
   if (schemaCorrente.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
   titolo.classList.toggle("senza-nome", !schemaCorrente.nome);
   riga.querySelector(".riga-sotto").textContent =
-    `${schemaCorrente.chiamata ? "#" + schemaCorrente.chiamata + " · " : ""}${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
+    `${prefissoRiga(schemaCorrente)}${schemaCorrente.chiamata ? "#" + schemaCorrente.chiamata + " · " : ""}${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
 }
 
 function scegliLato(lato) {
@@ -469,6 +469,7 @@ function ridisegna() {
   mostraCampoVuoto();
   aggiornaLucchetto();
   mostraPartita();
+  aggiornaBannerBozza();
   mostraInfoGiocatore();
 }
 
@@ -497,6 +498,7 @@ function salvaSubito() {
   $("#stato-salvataggio").textContent = ok ? "Salvato" : "Errore nel salvataggio";
   festeggiaStemma();
   aggiornaRigaCorrente();
+  aggiornaBannerBozza(); // la prima modifica in "Solo proposte" crea la bozza
 }
 
 $("#nome-schema").addEventListener("input", (e) => {
@@ -829,7 +831,7 @@ function manigliaVicina(p) {
 }
 
 svgCampo.addEventListener("pointerdown", (evento) => {
-  if (CODICE_VISTA) return; // sola lettura: il campo si guarda soltanto
+  if (modificheVietate()) return; // sola lettura: il campo si guarda soltanto
   if (!schemaCorrente || evento.button > 0) return;
   if (schemaCorrente.bloccato) {
     // Schema bloccato: il clic non cambia niente, solo un avviso se tocchi un giocatore
@@ -1042,8 +1044,12 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") chiudiFoglioCondividi();
     return;
   }
-  // Link condiviso: si guarda e si stampa, nessuna altra scorciatoia
-  if (CODICE_VISTA) {
+  if (!$("#foglio-proposte").hidden) {
+    if (e.key === "Escape") chiudiFoglioProposte();
+    return;
+  }
+  // Sola lettura (link condiviso o permesso del co-allenatore): si guarda e si stampa
+  if (modificheVietate()) {
     if (!$("#dialogo").hidden && e.key === "Escape") chiudiDialogo();
     return;
   }
@@ -1154,6 +1160,7 @@ function duplica() {
 $("#btn-duplica").addEventListener("click", duplica);
 
 $("#btn-elimina").addEventListener("click", () => {
+  if (soloProposte()) { proponiEliminazione(); return; }
   const nome = schemaCorrente.nome || "Senza nome";
   chiediConferma(`Eliminare "${nome}"?`, "Potrai annullare subito dopo.", "Elimina", () => {
     const eliminato = Dati.elimina(schemaCorrente.id);
@@ -1207,6 +1214,7 @@ $("#velo").addEventListener("click", () => {
   else if (!$("#foglio-playbook").hidden) chiudiFoglioPlaybook();
   else if (!$("#foglio-ruolo").hidden) chiudiFoglioRuolo();
   else if (!$("#foglio-condividi").hidden) chiudiFoglioCondividi();
+  else if (!$("#foglio-proposte").hidden) chiudiFoglioProposte();
   else chiudiDialogo();
 });
 

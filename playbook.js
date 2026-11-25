@@ -51,6 +51,14 @@ const Playbook = {
     return pb;
   },
 
+  // Cosa posso fare su un playbook: "proprietario", "modifica", "proposta" o "lettura"
+  permesso(id) {
+    if (CODICE_VISTA) return "lettura";
+    const pb = id && this.trova(id);
+    if (!pb || !pb.proprietario) return "proprietario";
+    return pb.permesso || "modifica";
+  },
+
   // Proprietario di un playbook condiviso con me (null se è mio)
   proprietarioDi(id) {
     const pb = id && this.trova(id);
@@ -104,11 +112,14 @@ const Playbook = {
       const io = Cloud.utente.id;
       const miei = righe.filter((r) => r.utente === io).map((r) => r.dati).filter((p) => !this.daEliminare.has(p.id));
       const altrui = righe.filter((r) => r.utente !== io);
-      const squadre = new Map();
+      const inviti = new Map();
       if (altrui.length) {
-        for (const c of await Cloud.mieCollaborazioni().catch(() => [])) squadre.set(c.playbook, c.squadra);
+        for (const c of await Cloud.mieCollaborazioni().catch(() => [])) inviti.set(c.playbook, c);
       }
-      const condivisi = altrui.map((r) => ({ ...r.dati, proprietario: r.utente, squadra: squadre.get(r.dati.id) || "" }));
+      const condivisi = altrui.map((r) => {
+        const invito = inviti.get(r.dati.id) || {};
+        return { ...r.dati, proprietario: r.utente, squadra: invito.squadra || "", permesso: invito.permesso || "modifica" };
+      });
       // Quanti co-allenatori hanno i miei playbook
       try {
         const { data } = await Cloud.client.from("collaboratori").select("playbook").eq("proprietario", io);
@@ -191,6 +202,7 @@ function mostraHome() {
   $("#home").hidden = false;
   aggiornaTestaHome();
   disegnaHome();
+  mostraContoProposte();
 }
 
 function aggiornaTestaHome() {
@@ -326,6 +338,7 @@ function apriPlaybook(id) {
   document.body.classList.remove("in-home");
   $("#home").hidden = true;
   aggiornaTestaPlaybook();
+  aggiornaPermessiUI();
   aggiornaOrdineSeCondiviso(pb.id);
   $("#cerca").value = "";
   if (schemaCorrente) chiudiEditor();

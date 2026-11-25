@@ -49,6 +49,7 @@ async function apriFoglioCondividi(pb) {
 
   $("#lista-coach").innerHTML = "";
   $("#email-invito").value = "";
+  scegliPermessoInvito("modifica");
   $("#errore-invito").textContent = "";
   if (!Cloud.attivo) {
     mostraStatoCondivisione(null, false);
@@ -187,8 +188,23 @@ async function caricaCoach(pb) {
       const testi = elemento("span", "coach-testi");
       testi.appendChild(elemento("span", "coach-email", c.email));
       testi.appendChild(elemento("span", "coach-stato" + (c.utente ? " attivo" : ""),
-        c.utente ? "Attivo · può modificare" : "In attesa del primo accesso"));
+        c.utente ? "Attivo" : "In attesa del primo accesso"));
       riga.appendChild(testi);
+      // Il permesso si può cambiare anche dopo l'invito
+      const scelta = elemento("select", "coach-permesso");
+      for (const [valore, testo] of Object.entries(NOMI_PERMESSO)) scelta.add(new Option(testo, valore));
+      scelta.value = c.permesso || "modifica";
+      scelta.title = "Cosa può fare";
+      scelta.addEventListener("change", async () => {
+        try {
+          await Cloud.cambiaPermesso(pb.id, c.email, scelta.value);
+          mostraAvviso(`${c.email}: ${NOMI_PERMESSO[scelta.value].toLowerCase()}`);
+        } catch (errore) {
+          scelta.value = c.permesso || "modifica";
+          $("#errore-invito").textContent = errore.message;
+        }
+      });
+      riga.appendChild(scelta);
       if (!c.utente) {
         const rimanda = elemento("button", "btn-link coach-rimanda", "Rimanda mail");
         rimanda.type = "button";
@@ -223,7 +239,8 @@ $("#form-invita").addEventListener("submit", async (e) => {
   const bottone = $("#btn-invita");
   bottone.disabled = true;
   try {
-    await Cloud.invitaCollaboratore(pb.id, email, Squadra.nome || (Cloud.utente && Cloud.utente.email) || "");
+    await Cloud.invitaCollaboratore(pb.id, email, Squadra.nome || (Cloud.utente && Cloud.utente.email) || "",
+      $("#permesso-invito").dataset.valore || "modifica");
     $("#email-invito").value = "";
     await caricaCoach(pb);
     festeggiaStemma();
@@ -248,6 +265,25 @@ async function spedisciInvito(email, bottone = null) {
   }
 }
 
+/* ---------- Permesso scelto prima di invitare ---------- */
+const NOMI_PERMESSO = { modifica: "Può modificare", proposta: "Solo proposte", lettura: "Solo lettura" };
+const DESCRIZIONI_PERMESSO = {
+  modifica: "Crea, modifica ed elimina gli schemi direttamente.",
+  proposta: "Modifica una bozza che vede solo lui e te la manda: entra nel playbook solo se la accetti.",
+  lettura: "Vede e stampa gli schemi, senza poterli modificare.",
+};
+function scegliPermessoInvito(valore) {
+  const gruppo = $("#permesso-invito");
+  const bottoni = [...gruppo.querySelectorAll(".segmento")];
+  const i = Math.max(0, bottoni.findIndex((b) => b.dataset.valore === valore));
+  bottoni.forEach((b, j) => b.classList.toggle("attivo", j === i));
+  gruppo.style.setProperty("--indice", i);
+  gruppo.dataset.valore = bottoni[i].dataset.valore;
+  $("#descr-permesso").textContent = DESCRIZIONI_PERMESSO[gruppo.dataset.valore];
+}
+$("#permesso-invito").querySelectorAll(".segmento").forEach((b) =>
+  b.addEventListener("click", () => scegliPermessoInvito(b.dataset.valore)));
+
 async function togliCoach(pb, email, riga) {
   riga.classList.add("in-uscita");
   try {
@@ -271,7 +307,8 @@ function ricordaStaff(idPlaybook, quanti) {
 
 // "Condiviso da Guelfi" sulle schede e nella barra laterale
 function testoStaff(pb) {
-  return `Condiviso da ${pb.squadra || "un altro coach"}`;
+  const extra = { proposta: " · solo proposte", lettura: " · solo lettura" }[pb.permesso] || "";
+  return `Condiviso da ${pb.squadra || "un altro coach"}${extra}`;
 }
 
 // Il co-allenatore lascia un playbook condiviso con lui
@@ -306,6 +343,13 @@ async function aggiornaDaStaff() {
   try {
     const persi = await Playbook.sincronizza();
     const cambiato = await Dati.sincronizza(persi);
+    controllaProposte();
+    controllaEsiti();
+    if (playbookCorrente && Playbook.trova(playbookCorrente.id)) {
+      playbookCorrente = Playbook.trova(playbookCorrente.id); // il permesso può essere cambiato
+      aggiornaTestaPlaybook();
+      aggiornaPermessiUI();
+    }
     if (modificheInSospeso || Tracce.disegno) return; // nel frattempo il coach ha toccato qualcosa
     if (document.body.classList.contains("in-home")) { disegnaHome(); return; }
     if (playbookCorrente && !Playbook.trova(playbookCorrente.id)) {
@@ -368,7 +412,7 @@ async function apriVista(codice) {
   Playbook.chiave = "playbook.vista.playbook";
   scriviLocale(Playbook.chiave, [dati.playbook]);
 
-  document.body.classList.add("sola-lettura");
+  document.body.classList.add("sola-lettura", "blocco-modifiche");
   $("#nome-schema").readOnly = true;
   $("#note-schema").readOnly = true;
   $("#note-schema").placeholder = "Nessuna nota";

@@ -3,6 +3,15 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.20 — permessi dei co-allenatori e proposte
+
+- All'invito si sceglie il permesso: **Può modificare**, **Solo proposte** o **Solo lettura**
+  (si può cambiare anche dopo, dall'elenco dei co-allenatori).
+- Solo proposte: ogni modifica diventa una bozza che vede solo chi la fa; con «Invia proposta» arriva al
+  proprietario, che dal pulsante **📥 Proposte** vede prima/dopo e accetta o rifiuta. Anche nuovi schemi ed eliminazioni.
+- Solo lettura: il co-allenatore guarda e stampa, senza modificare.
+- Le regole sono anche nel database (Supabase): serve lo script `supabase/permessi.sql`.
+
 ## Versione 0.19 — invito via mail
 
 - Corretto l'errore «infinite recursion detected in policy» dello script dei co-allenatori:

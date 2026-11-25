@@ -218,24 +218,81 @@ const Cloud = {
   },
 
   // I playbook in cui sono co-allenatore (con il nome della squadra del proprietario)
+  // (se lo script dei permessi non è ancora stato eseguito, si legge senza "permesso")
   async mieCollaborazioni() {
-    const { data, error } = await this.client.from("collaboratori")
-      .select("playbook, proprietario, squadra").eq("utente", this.utente.id);
+    let { data, error } = await this.client.from("collaboratori")
+      .select("playbook, proprietario, squadra, permesso").eq("utente", this.utente.id);
+    if (error && /permesso/i.test(error.message || "")) {
+      ({ data, error } = await this.client.from("collaboratori")
+        .select("playbook, proprietario, squadra").eq("utente", this.utente.id));
+    }
     if (error) throw new Error(traduciErrore(error));
     return data;
   },
 
   async elencoCollaboratori(idPlaybook) {
     const { data, error } = await this.client.from("collaboratori")
-      .select("email, utente, creato").eq("playbook", idPlaybook).eq("proprietario", this.utente.id);
+      .select("email, utente, creato, permesso").eq("playbook", idPlaybook).eq("proprietario", this.utente.id);
     if (error) throw new Error(traduciErrore(error));
     return data.sort((a, b) => a.creato.localeCompare(b.creato));
   },
 
-  async invitaCollaboratore(idPlaybook, email, squadra) {
+  async invitaCollaboratore(idPlaybook, email, squadra, permesso) {
     const { error } = await this.client.from("collaboratori")
-      .insert({ playbook: idPlaybook, proprietario: this.utente.id, email, squadra });
+      .insert({ playbook: idPlaybook, proprietario: this.utente.id, email, squadra, permesso });
     if (error) throw new Error(traduciErrore(error));
+  },
+
+  async cambiaPermesso(idPlaybook, email, permesso) {
+    const { error } = await this.client.from("collaboratori")
+      .update({ permesso }).eq("playbook", idPlaybook).eq("email", email);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  /* ---------------- Proposte (permesso "Solo proposte") ---------------- */
+
+  async inviaProposta(proposta) {
+    const { error } = await this.client.from("proposte").insert({
+      id: "p_" + nuovoCodice().slice(0, 16),
+      autore: this.utente.id,
+      autore_email: this.utente.email,
+      ...proposta,
+    });
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  // Il proprietario: le proposte da decidere sui suoi playbook
+  async proposteDaDecidere() {
+    const { data, error } = await this.client.from("proposte")
+      .select("*").eq("proprietario", this.utente.id).eq("stato", "in attesa");
+    if (error) throw new Error(traduciErrore(error));
+    return data.sort((a, b) => a.creato.localeCompare(b.creato));
+  },
+
+  async decidiProposta(id, stato) {
+    const { error } = await this.client.from("proposte")
+      .update({ stato, deciso: new Date().toISOString() }).eq("id", id);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  // Chi propone: le sue proposte (in attesa e già decise)
+  async mieProposte() {
+    const { data, error } = await this.client.from("proposte")
+      .select("id, schema_id, tipo, stato, dati, playbook").eq("autore", this.utente.id);
+    if (error) throw new Error(traduciErrore(error));
+    return data;
+  },
+
+  async eliminaProposta(id) {
+    const { error } = await this.client.from("proposte").delete().eq("id", id);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  // La versione ufficiale (online) di uno schema
+  async schemaUfficiale(id) {
+    const { data, error } = await this.client.from("schemi").select("dati").eq("id", id).maybeSingle();
+    if (error) throw new Error(traduciErrore(error));
+    return data ? data.dati : null;
   },
 
   /* Manda al coach invitato una mail con il link per entrare in Playbook.
@@ -335,6 +392,8 @@ function traduciErrore(errore) {
   if (/Password should be at least/i.test(m)) return "La password deve avere almeno 6 caratteri.";
   if (/valid email|invalid format|Unable to validate email/i.test(m)) return "Controlla l'indirizzo email.";
   if (/rate limit|too many/i.test(m)) return "Troppi tentativi ravvicinati. Riprova tra qualche minuto.";
+  if ((/proposte|posso_proporre/i.test(m) || /column .*permesso/i.test(m)) && /does not exist|Could not find|schema cache/i.test(m))
+    return "Manca un passaggio su Supabase: esegui lo script «permessi.sql» nell'SQL Editor.";
   if (/collaboratori|accetta_inviti/i.test(m) && /does not exist|Could not find|schema cache/i.test(m))
     return "Manca un passaggio su Supabase: esegui lo script «coallenatori.sql» nell'SQL Editor.";
   if (/not authorized|not allowed to send/i.test(m))

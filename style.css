@@ -2316,27 +2316,29 @@ body.sola-lettura .badge-vista {
   font-size: 11.5px;
   font-weight: 700;
 }
-body.sola-lettura #btn-nuovo,
+/* Pulsanti per modificare: spariscono in sola lettura (link o permesso) */
+body.blocco-modifiche #btn-nuovo,
+body.blocco-modifiche .gruppo-pulsanti,
+body.blocco-modifiche .stato-salvataggio,
+body.blocco-modifiche #btn-nuovo-vuoto,
+body.blocco-modifiche #btn-crea-da-zero-campo,
+body.blocco-modifiche #formato-fisso,
+body.blocco-modifiche #scelta-formato,
+body.blocco-modifiche #lista-formazioni,
+body.blocco-modifiche #tavolozza,
+body.blocco-modifiche #info-giocatore,
+body.blocco-modifiche .azioni-card,
+body.blocco-modifiche .solo-coach,
+body.blocco-modifiche .suggerimento { display: none !important; }
+body.blocco-modifiche .mini-lucchetto { display: none; }
+body.blocco-modifiche .campo { cursor: default; border-color: transparent; }
+body.blocco-modifiche .campo-cornice::after { content: none; }
+body.blocco-modifiche .nome-schema { pointer-events: none; }
+/* Solo nel link condiviso: niente account e niente ritorno ai playbook */
 body.sola-lettura #btn-home,
 body.sola-lettura #btn-esci,
-body.sola-lettura .gruppo-pulsanti,
-body.sola-lettura .stato-salvataggio,
-body.sola-lettura #btn-nuovo-vuoto,
-body.sola-lettura #btn-crea-da-zero-campo,
-body.sola-lettura #formato-fisso,
-body.sola-lettura #scelta-formato,
-body.sola-lettura #lista-formazioni,
-body.sola-lettura #tavolozza,
-body.sola-lettura #info-giocatore,
-body.sola-lettura .azioni-card,
-body.sola-lettura .solo-coach,
-body.sola-lettura .suggerimento,
 body.sola-lettura .stato-sync { display: none !important; }
-body.sola-lettura .mini-lucchetto { display: none; }
 body.sola-lettura #btn-squadra { pointer-events: none; }
-body.sola-lettura .campo { cursor: default; border-color: transparent; }
-body.sola-lettura .campo-cornice::after { content: none; }
-body.sola-lettura .nome-schema { pointer-events: none; }
 .numero-fisso { font-weight: 800; color: var(--testo) !important; }
 .pannello-partita span.situazione { cursor: default; }
 
@@ -2406,3 +2408,101 @@ body.sola-lettura .nome-schema { pointer-events: none; }
 .scheda-corpo .badge-staff { margin-top: 4px; }
 .coach-rimanda { flex: none; font-size: 12px; }
 .coach-rimanda:disabled { opacity: 0.6; cursor: default; text-decoration: none; }
+
+/* ==========================================================================
+   PERMESSI E PROPOSTE
+   ========================================================================== */
+.scelta-permesso { margin-top: 2px; }
+.scelta-permesso .segmento { font-size: 12.5px; }
+.descr-permesso { margin: 0; font-size: 12px; color: var(--testo-secondario); text-align: left; min-height: 1.3em; }
+.coach-permesso {
+  flex: none;
+  max-width: 128px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--separatore);
+  background: var(--sfondo-card);
+  color: var(--testo);
+  font: inherit;
+  font-size: 12px;
+}
+
+/* Banner sopra il campo: bozza da mandare o sola lettura */
+.banner-bozza {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 9px 10px 9px 14px;
+  border-radius: 12px;
+  background: var(--accento-tenue);
+  border: 1px solid rgba(255, 159, 28, 0.35);
+  animation: appari 0.3s var(--curva) both;
+}
+.banner-bozza[hidden] { display: none; }
+.banner-bozza.info { background: var(--sfondo-hover); border-color: var(--separatore); }
+.banner-bozza-testo { flex: 1; font-size: 13px; }
+.banner-bozza .btn-pieno, .banner-bozza .btn-secondario { flex: none; padding: 7px 14px; font-size: 13px; }
+
+/* Pulsante "Proposte" (proprietario) */
+.btn-proposte {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--accento-tenue);
+  color: var(--accento);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  animation: appari 0.3s var(--curva) both;
+}
+.btn-proposte[hidden] { display: none; }
+.btn-proposte:hover { filter: brightness(1.15); }
+.conta-proposte {
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: var(--accento);
+  color: #15191A;
+  font-size: 11.5px;
+  text-align: center;
+}
+.laterale-proposte { margin: 0 2px 10px; justify-content: flex-start; font-size: 12px; }
+
+/* Finestra delle proposte */
+.dialogo-proposte { width: 560px; max-height: calc(100vh - 40px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.lista-proposte { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.proposta {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--sfondo-hover);
+  transition: opacity 0.2s, transform 0.2s;
+  animation: appari 0.25s var(--curva) both;
+}
+.proposta.in-uscita { opacity: 0.3; transform: scale(0.98); }
+.proposta-testa { display: flex; align-items: center; gap: 8px; }
+.proposta-testa strong { font-size: 14px; }
+.proposta-tipo {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(90, 200, 250, 0.16);
+  color: var(--ruolo-ricevitori);
+}
+.proposta-tipo.tipo-nuovo { background: rgba(52, 199, 123, 0.14); color: #34C77B; }
+.proposta-tipo.tipo-elimina { background: rgba(255, 90, 78, 0.15); color: var(--rosso); }
+.proposta-info { margin: 4px 0 8px; font-size: 12px; color: var(--testo-secondario); }
+.proposta-campi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.proposta-campo { margin: 0; }
+.proposta-campo svg { width: 100%; aspect-ratio: 53.3 / 35; display: block; border-radius: 8px; overflow: hidden; }
+.proposta-campo figcaption { margin-top: 3px; font-size: 11.5px; color: var(--testo-secondario); text-align: center; }
+.proposta-campo.nuova svg { outline: 2px solid var(--accento); outline-offset: -2px; }
+.proposta-campo.da-eliminare svg { opacity: 0.45; outline: 2px solid var(--rosso); outline-offset: -2px; }
+.proposta-avviso { margin: 8px 0 0; font-size: 12px; color: var(--accento); }
+.proposta-azioni { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.proposta-azioni button { padding: 7px 16px; }

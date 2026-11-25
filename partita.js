@@ -27,7 +27,7 @@ function mostraPartita() {
   const box = $("#pannello-partita");
   if (!schemaCorrente) return;
   const s = schemaCorrente;
-  if (CODICE_VISTA) { mostraPartitaSolaLettura(box, s); return; }
+  if (modificheVietate()) { mostraPartitaSolaLettura(box, s); return; }
   box.innerHTML = `
     <div class="riga-campo">
       <span>N° di chiamata</span>
