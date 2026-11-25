@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.12 — più playbook
+- Pagina «I tuoi playbook» dopo il login: schede con anteprima, tipo, numero di schemi e data; filtri Tutti / Tackle / Flag
+- Nuovo playbook: nome, Tackle (11, 9 o 7 giocatori) o Flag (5); il formato è del playbook e vale per tutti i suoi schemi
+- Menu ⋯: rinomina, duplica (con tutti gli schemi), elimina (con Annulla)
+- La stampa riguarda il playbook aperto; gli schemi di prima finiscono in automatico in un playbook
+- Tabella `playbook` su Supabase
+
 ## Versione 0.11 — formati e regole
 - Formato dello schema: 11, 9, 7 o Flag 5 (il nuovo schema parte dall'ultimo usato)
 - Attacco obbligatorio: a 11 almeno 1 C, 2 G, 2 T; a 9 e 7 almeno 1 C e 2 G; nel flag 1 C e niente G/T; un solo centro
@@ -106,6 +113,7 @@ Senza questi dati l'app funziona in "modalità locale" (solo su questo computer)
 - `costruttore.js` — «Crea da zero»: tavolozza delle pedine
 - `lucchetto.js` — blocco e sblocco dello schema
 - `stampa.js` — stampa e PDF del playbook
+- `playbook.js` — più playbook (Tackle/Flag), pagina «I tuoi playbook»
 - `supabase/setup.sql` — tabelle e regole di sicurezza
 - `lib/` — librerie Supabase e pdf.js (incluse, senza CDN)
 - `app.js` — disegno del campo, trascinamento, schermate

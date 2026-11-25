@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=0.11">
+  <link rel="stylesheet" href="style.css?v=0.12">
 </head>
 <body>
   <!-- ======================================================================
@@ -39,6 +39,16 @@
         </button>
       </div>
 
+      <!-- Il playbook aperto, con il ritorno alla pagina dei playbook -->
+      <button class="torna-home" id="btn-home" title="Torna a «I tuoi playbook»">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        I tuoi playbook
+      </button>
+      <div class="playbook-attivo">
+        <span class="nome-playbook" id="nome-playbook"></span>
+        <span class="badge-formato" id="badge-playbook"></span>
+      </div>
+
       <!-- Controllo segmentato: Attacco / Difesa -->
       <div class="segmentato" id="filtro-lato" data-scelto="attacco" role="tablist">
         <button class="segmento attivo" data-lato="attacco" role="tab">Attacco</button>
@@ -63,7 +73,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.11</p>
+      <p class="versione" id="versione">Versione 0.12</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -129,7 +139,8 @@
     <aside class="pannello" id="pannello" hidden>
       <!-- Formato: quanti giocatori in campo (e quali sono obbligatori) -->
       <p class="titolo-sezione">Formato</p>
-      <div class="segmentato segmentato-4" id="scelta-formato">
+      <p class="formato-fisso" id="formato-fisso"></p>
+      <div class="segmentato segmentato-4" id="scelta-formato" hidden>
         <button type="button" class="segmento" data-valore="11">11</button>
         <button type="button" class="segmento" data-valore="9">9</button>
         <button type="button" class="segmento" data-valore="7">7</button>
@@ -186,6 +197,73 @@
     <div class="dialogo-pulsanti">
       <button type="button" class="btn-secondario" id="btn-squadra-annulla">Annulla</button>
       <button type="submit" class="btn-pieno" id="btn-squadra-salva">Salva</button>
+    </div>
+  </form>
+
+  <!-- ======================================================================
+       PAGINA "I TUOI PLAYBOOK"
+       ====================================================================== -->
+  <section class="home" id="home" hidden>
+    <header class="home-testa">
+      <button class="squadra" id="btn-squadra-home" title="Nome e logo della squadra">
+        <span class="stemma" id="stemma-home"></span>
+        <span class="squadra-testi">
+          <span class="squadra-nome" id="squadra-nome-home">La tua squadra</span>
+          <span class="squadra-sotto"><img src="icon-180.png" alt="">Playbook</span>
+        </span>
+      </button>
+      <div class="home-account">
+        <span id="email-home"></span>
+        <button class="btn-link" id="btn-esci-home">Esci</button>
+      </div>
+    </header>
+    <div class="home-corpo">
+      <div class="home-titolo-riga">
+        <div>
+          <h1>I tuoi playbook</h1>
+          <p class="home-sottotitolo">Uno per squadra, categoria o torneo: Tackle a 11, 9 o 7, oppure Flag a 5.</p>
+        </div>
+        <div class="segmentato segmentato-3" id="filtro-home">
+          <button type="button" class="segmento attivo" data-valore="tutti">Tutti</button>
+          <button type="button" class="segmento" data-valore="tackle">Tackle</button>
+          <button type="button" class="segmento" data-valore="flag">Flag</button>
+        </div>
+      </div>
+      <div class="griglia-playbook" id="griglia-playbook"></div>
+      <p class="home-vuota" id="home-vuota" hidden>Crea il tuo primo playbook: per esempio «Offense», «Playoff» o «U15».</p>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       FINESTRA "NUOVO PLAYBOOK" / "RINOMINA"
+       ====================================================================== -->
+  <form class="dialogo dialogo-playbook" id="foglio-playbook" role="dialog" aria-modal="true" hidden>
+    <p class="dialogo-titolo" id="titolo-playbook">Nuovo playbook</p>
+    <label class="campo-testo">
+      <span>Nome</span>
+      <input id="nome-nuovo-playbook" type="text" maxlength="40" placeholder="Es. Offense, Playoff, U15" autocomplete="off">
+    </label>
+    <div id="scelte-nuovo-playbook">
+      <p class="etichetta-stampa">Tipo di football</p>
+      <div class="segmentato segmentato-2" id="tipo-nuovo-playbook" data-valore="tackle">
+        <button type="button" class="segmento attivo" data-valore="tackle">🏈 Tackle</button>
+        <button type="button" class="segmento" data-valore="flag">🚩 Flag</button>
+      </div>
+      <div id="riga-giocatori-playbook">
+        <p class="etichetta-stampa">Giocatori in campo</p>
+        <div class="segmentato segmentato-3" id="giocatori-nuovo-playbook" data-valore="11">
+          <button type="button" class="segmento attivo" data-valore="11">11 · senior</button>
+          <button type="button" class="segmento" data-valore="9">9 · giovanili</button>
+          <button type="button" class="segmento" data-valore="7">7 · giovanili</button>
+        </div>
+      </div>
+      <p class="nota-playbook" id="nota-flag-playbook" hidden>Flag: 5 giocatori, il centro corre le route, niente blocchi.</p>
+    </div>
+    <p class="nota-playbook" id="info-formato-playbook" hidden></p>
+    <p class="messaggio-errore" id="errore-playbook"></p>
+    <div class="dialogo-pulsanti">
+      <button type="button" class="btn-secondario" id="btn-playbook-annulla">Annulla</button>
+      <button type="submit" class="btn-pieno" id="btn-playbook-crea">Crea playbook</button>
     </div>
   </form>
 
@@ -289,19 +367,20 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.11"></script>
+  <script src="config.js?v=0.12"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.11"></script>
-  <script src="regole.js?v=0.11"></script>
-  <script src="cloud.js?v=0.11"></script>
-  <script src="dati.js?v=0.11"></script>
-  <script src="formazioni-personali.js?v=0.11"></script>
-  <script src="app.js?v=0.11"></script>
-  <script src="tracce.js?v=0.11"></script>
-  <script src="costruttore.js?v=0.11"></script>
-  <script src="lucchetto.js?v=0.11"></script>
-  <script src="stampa.js?v=0.11"></script>
-  <script src="squadra.js?v=0.11"></script>
-  <script src="accesso.js?v=0.11"></script>
+  <script src="formazioni.js?v=0.12"></script>
+  <script src="regole.js?v=0.12"></script>
+  <script src="cloud.js?v=0.12"></script>
+  <script src="dati.js?v=0.12"></script>
+  <script src="formazioni-personali.js?v=0.12"></script>
+  <script src="app.js?v=0.12"></script>
+  <script src="tracce.js?v=0.12"></script>
+  <script src="costruttore.js?v=0.12"></script>
+  <script src="lucchetto.js?v=0.12"></script>
+  <script src="stampa.js?v=0.12"></script>
+  <script src="playbook.js?v=0.12"></script>
+  <script src="squadra.js?v=0.12"></script>
+  <script src="accesso.js?v=0.12"></script>
 </body>
 </html>

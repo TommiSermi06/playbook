@@ -144,6 +144,27 @@ const Cloud = {
     if (error) throw new Error(traduciErrore(error));
   },
 
+  /* ---------------- Tabelle "semplici" (es. playbook) ----------------
+     Ogni riga: id, utente, dati (JSON), modificato. */
+  async scaricaRighe(tabella) {
+    const { data, error } = await this.client.from(tabella).select("dati");
+    if (error) throw new Error(traduciErrore(error));
+    return data.map((riga) => riga.dati);
+  },
+
+  async salvaRighe(tabella, elementi) {
+    const righe = elementi.map((x) => ({
+      id: x.id, utente: this.utente.id, dati: x, modificato: new Date(x.modificato).toISOString(),
+    }));
+    const { error } = await this.client.from(tabella).upsert(righe);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  async eliminaRiga(tabella, id) {
+    const { error } = await this.client.from(tabella).delete().eq("id", id);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
   /* ---------------- Formazioni salvate dal coach ---------------- */
 
   async scaricaFormazioni() {

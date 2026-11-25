@@ -8,6 +8,7 @@
 --   1. profili  → nome e logo della squadra di ogni allenatore
 --   2. schemi   → gli schemi del playbook (uno per riga, in formato JSON)
 --   2b. formazioni → le formazioni create e salvate da ogni coach
+--   2c. playbook   → i playbook di ogni coach (Tackle 11/9/7 o Flag 5)
 --   3. loghi    → cartella (bucket) per le immagini dei loghi
 -- E le REGOLE DI SICUREZZA (Row Level Security): ogni allenatore può
 -- leggere e modificare SOLO i propri dati.
@@ -65,6 +66,24 @@ create policy "formazioni: solo il proprietario" on public.formazioni
   using (utente = auth.uid())
   with check (utente = auth.uid());
 
+-- 2c. PLAYBOOK DEL COACH ------------------------------------------------------
+create table if not exists public.playbook (
+  id         text primary key,
+  utente     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  dati       jsonb not null,
+  modificato timestamptz not null default now()
+);
+
+create index if not exists playbook_utente_idx on public.playbook (utente);
+
+alter table public.playbook enable row level security;
+
+drop policy if exists "playbook: solo il proprietario" on public.playbook;
+create policy "playbook: solo il proprietario" on public.playbook
+  for all to authenticated
+  using (utente = auth.uid())
+  with check (utente = auth.uid());
+
 -- PERMESSI -------------------------------------------------------------------
 -- Nei progetti Supabase recenti le tabelle create a mano non sono
 -- accessibili all'app finché non lo si dice esplicitamente.
@@ -75,6 +94,7 @@ grant usage on schema public to authenticated;
 grant select, insert, update, delete on public.profili to authenticated;
 grant select, insert, update, delete on public.schemi  to authenticated;
 grant select, insert, update, delete on public.formazioni to authenticated;
+grant select, insert, update, delete on public.playbook   to authenticated;
 
 -- 3. LOGHI (Storage) ---------------------------------------------------------
 -- Bucket pubblico in lettura: i loghi devono comparire nell'app e nelle stampe.

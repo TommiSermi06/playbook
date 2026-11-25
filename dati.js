@@ -80,7 +80,8 @@ const Dati = {
       id: this.nuovoId(),
       nome: "",
       lato,
-      formato: formatoPreferito(), // "11", "9", "7" o "flag"
+      playbook: playbookCorrente ? playbookCorrente.id : null, // a quale playbook appartiene
+      formato: playbookCorrente ? playbookCorrente.formato : formatoPreferito(), // "11", "9", "7" o "flag"
       formazione: null,       // null = nessuna, "libera" = creata da zero
       ribaltato: false,
       bloccato: false,

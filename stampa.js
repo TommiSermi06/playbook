@@ -19,13 +19,14 @@ function apriFoglioStampa() {
   chiudiMenuTracce();
   salvaSubito();
 
-  const tutti = Dati.tutti();
+  if (!playbookCorrente) return; // si stampa da dentro un playbook
+  const tutti = schemiDelPlaybook();
   const conta = (lato) => tutti.filter((s) => s.lato === lato).length;
   const scelte = [
     { id: "schema", testo: "Solo lo schema aperto", n: schemaCorrente ? 1 : 0 },
     { id: "attacco", testo: "Tutto l'attacco", n: conta("attacco") },
     { id: "difesa", testo: "Tutta la difesa", n: conta("difesa") },
-    { id: "tutto", testo: "Tutto il playbook", n: tutti.length },
+    { id: "tutto", testo: `Tutto «${playbookCorrente.nome}»`, n: tutti.length },
   ];
   // Se la scelta salvata non ha schemi, passiamo alla prima che ne ha
   if (!scelte.find((s) => s.id === opzioniStampa.cosa && s.n)) {
@@ -109,7 +110,7 @@ const NOMI_LATO = { attacco: "Attacco", difesa: "Difesa" };
 
 // Ordine di stampa: prima l'attacco poi la difesa, ognuno in ordine alfabetico
 function schemiDaStampare(cosa) {
-  let schemi = Dati.tutti();
+  let schemi = schemiDelPlaybook();
   if (cosa === "schema" && schemaCorrente) schemi = [Dati.trova(schemaCorrente.id)];
   else if (cosa === "attacco" || cosa === "difesa") schemi = schemi.filter((s) => s.lato === cosa);
   const nome = (s) => (s.nome || "￿").toLocaleLowerCase("it"); // "Senza nome" in fondo
@@ -118,10 +119,11 @@ function schemiDaStampare(cosa) {
 }
 
 function titoloStampa(cosa, schemi) {
+  const nome = playbookCorrente ? playbookCorrente.nome : "Playbook";
   if (cosa === "schema") return schemi[0].nome || "Schema";
-  if (cosa === "attacco") return "Playbook offensivo";
-  if (cosa === "difesa") return "Playbook difensivo";
-  return "Playbook";
+  if (cosa === "attacco") return `${nome} · Attacco`;
+  if (cosa === "difesa") return `${nome} · Difesa`;
+  return nome;
 }
 
 function elemento(tag, classe, testo) {

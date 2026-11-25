@@ -1788,3 +1788,209 @@ body.schema-bloccato .campo-cornice::after {
 .pedina.spenta { opacity: 0.28; filter: grayscale(0.6); cursor: not-allowed; animation: none; }
 .pedina.spenta:hover { transform: none; }
 .pedina.scuoti { animation: scuoti 0.4s var(--curva); }
+
+/* ==========================================================================
+   PAGINA "I TUOI PLAYBOOK"
+   ========================================================================== */
+body.in-home .app { display: none; }
+.home {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: radial-gradient(ellipse at 50% -10%, #1B2A22 0%, var(--sfondo) 60%);
+  z-index: 1;
+}
+.home-testa {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 32px;
+  background: rgba(15, 20, 18, 0.8);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--separatore);
+}
+.home-testa .squadra { flex: none; margin: 0; }
+.home-account { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--testo-secondario); }
+
+.home-corpo { max-width: 1180px; margin: 0 auto; padding: 36px 32px 60px; }
+.home-titolo-riga {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+  animation: dalBasso 0.5s var(--curva) both;
+}
+.home-titolo-riga h1 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+.home-sottotitolo { margin: 6px 0 0; color: var(--testo-secondario); }
+#filtro-home { width: 280px; margin: 0; }
+
+.segmentato-3 { grid-template-columns: repeat(3, 1fr); }
+.segmentato-3::before { width: calc(33.333% - 1.4px); transform: translateX(calc(var(--indice, 0) * 100%)); }
+
+.griglia-playbook {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 18px;
+}
+.scheda-playbook {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--sfondo-card);
+  border: 1px solid var(--separatore);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.25s var(--curva), box-shadow 0.25s var(--curva), border-color 0.25s;
+  animation: dalBasso 0.45s var(--curva) both;
+  animation-delay: calc(var(--i, 0) * 50ms + 80ms);
+}
+.scheda-playbook:hover,
+.scheda-playbook:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 159, 28, 0.35);
+}
+/* Striscia colorata in alto: ambra per il tackle, azzurra per il flag */
+.scheda-playbook::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 1;
+  background: var(--accento);
+}
+.scheda-playbook.tipo-flag::before { background: var(--ruolo-ricevitori); }
+.anteprima-playbook { display: block; width: 100%; aspect-ratio: 53.33 / 30; }
+.scheda-corpo { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px 16px; }
+.scheda-corpo h3 { margin: 6px 0 2px; font-size: 18px; font-weight: 800; }
+.scheda-conteggi { margin: 0; font-size: 13px; }
+.scheda-data { margin: 0; font-size: 12px; color: var(--testo-secondario); }
+
+.badge-formato {
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: var(--accento-tenue);
+  color: var(--accento);
+}
+.tipo-flag .badge-formato,
+.badge-formato.tipo-flag { background: rgba(90, 200, 250, 0.16); color: var(--ruolo-ricevitori); }
+
+.scheda-altro {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #FFFFFF;
+  background: rgba(15, 20, 18, 0.65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.scheda-playbook:hover .scheda-altro,
+.scheda-playbook:focus-within .scheda-altro { opacity: 1; }
+.scheda-altro:hover { background: rgba(15, 20, 18, 0.9); }
+
+/* Scheda "Nuovo playbook" */
+.scheda-playbook.nuovo {
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 250px;
+  border: 2px dashed rgba(255, 159, 28, 0.35);
+  background: rgba(255, 159, 28, 0.05);
+  animation-delay: 40ms;
+}
+.scheda-playbook.nuovo::before { display: none; }
+.nuovo-piu {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+  border-radius: 26px;
+  background: var(--accento);
+  color: var(--testo-su-accento);
+  font-size: 26px;
+  font-weight: 800;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.scheda-playbook.nuovo:hover .nuovo-piu { transform: rotate(90deg) scale(1.08); }
+.nuovo-testo { font-size: 17px; font-weight: 800; }
+.nuovo-sotto { font-size: 12px; color: var(--testo-secondario); }
+.home-vuota { margin-top: 18px; color: var(--testo-secondario); }
+
+/* Menu ⋯ delle schede */
+.menu-scheda {
+  position: fixed;
+  z-index: 15;
+  min-width: 170px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(29, 37, 33, 0.97);
+  border: 1px solid var(--separatore);
+  box-shadow: var(--ombra-dialogo);
+  opacity: 0;
+  transform: scale(0.95) translateY(-4px);
+  transform-origin: top right;
+  transition: opacity 0.15s var(--curva), transform 0.15s var(--curva);
+}
+.menu-scheda.visibile { opacity: 1; transform: none; }
+.menu-scheda button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  text-align: left;
+  font-size: 13px;
+}
+.menu-scheda button:hover { background: var(--sfondo-hover); }
+.menu-scheda button.distruttiva { color: var(--rosso); }
+
+/* Finestra "Nuovo playbook" */
+.dialogo-playbook { width: 420px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.dialogo-playbook .dialogo-titolo { text-align: center; }
+.dialogo-playbook .segmentato { margin: 0; }
+.nota-playbook { margin: 2px 0 0; font-size: 12px; color: var(--testo-secondario); line-height: 1.4; }
+
+/* ---------- Dentro un playbook: intestazione nella barra laterale ---------- */
+.torna-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  align-self: flex-start;
+  margin: -4px 0 4px -4px;
+  padding: 4px 6px;
+  border-radius: 7px;
+  color: var(--accento);
+  font-size: 13px;
+  font-weight: 600;
+}
+.torna-home:hover { background: var(--sfondo-hover); }
+.playbook-attivo { display: flex; flex-direction: column; gap: 5px; margin: 0 2px 12px; }
+.nome-playbook { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.formato-fisso {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--sfondo-card);
+  font-size: 13px;
+  font-weight: 600;
+}

@@ -123,6 +123,7 @@ $("#accesso").addEventListener("submit", async (e) => {
 async function entra(utente) {
   Dati.imposta(utente.id);
   FormazioniMie.imposta(utente.id);
+  Playbook.imposta(utente.id);
   $("#email-utente").textContent = utente.email || "Solo su questo computer";
   $("#btn-esci").textContent = utente.email ? "Esci" : "Cambia";
 
@@ -130,7 +131,9 @@ async function entra(utente) {
     Cloud.caricaProfilo().catch(() => ({})),
     Dati.sincronizza(),
     FormazioniMie.sincronizza(),
+    Playbook.sincronizza(),
   ]);
+  sistemaSchemiSenzaPlaybook(); // gli schemi di prima finiscono in un playbook
   Squadra.imposta(profilo);
   avviaApp();
 

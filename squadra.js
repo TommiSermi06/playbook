@@ -25,6 +25,7 @@ const Squadra = {
     disegnaStemma($("#stemma"), this.logo, this.nome);
     document.title = this.nome ? `${this.nome} · Playbook` : "Playbook";
     if (typeof schemaCorrente !== "undefined" && schemaCorrente) ridisegna();
+    if (typeof aggiornaTestaHome === "function" && !$("#home").hidden) aggiornaTestaHome();
   },
 };
 

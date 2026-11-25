@@ -327,7 +327,7 @@ function dataBreve(ms) {
 
 function mostraElenco() {
   const testoCerca = $("#cerca").value.trim().toLowerCase();
-  const delLato = Dati.tutti().filter((s) => s.lato === latoSelezionato);
+  const delLato = schemiDelPlaybook().filter((s) => s.lato === latoSelezionato);
   const schemi = delLato.filter((s) =>
     !testoCerca ||
     (s.nome || "").toLowerCase().includes(testoCerca) ||
@@ -553,6 +553,10 @@ function mostraFormazioni() {
 
 /* ---------- Formato: 11, 9, 7 o Flag 5 ---------- */
 function mostraFormato() {
+  // Il formato è del playbook: qui lo mostriamo e basta
+  if (playbookCorrente) {
+    $("#formato-fisso").textContent = `${descriviPlaybook(playbookCorrente)} · deciso dal playbook`;
+  }
   const gruppo = $("#scelta-formato");
   const id = formatoDi(schemaCorrente).id;
   const bottoni = [...gruppo.querySelectorAll(".segmento")];
@@ -992,6 +996,20 @@ document.addEventListener("keydown", (e) => {
   const staScrivendo = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
   const cmd = e.metaKey || e.ctrlKey;
   if (!$("#intro").hidden) return; // schermata di accesso: niente scorciatoie
+  if (!$("#foglio-playbook").hidden) {
+    if (e.key === "Escape") chiudiFoglioPlaybook();
+    return;
+  }
+  // Pagina «I tuoi playbook»: N crea un nuovo playbook, niente altro
+  if (document.body.classList.contains("in-home")) {
+    const staScrivendoHome = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+    if (!staScrivendoHome && !e.metaKey && !e.ctrlKey && (e.key === "n" || e.key === "N")) {
+      e.preventDefault();
+      apriFoglioPlaybook();
+    }
+    if (!$("#dialogo").hidden && e.key === "Escape") chiudiDialogo();
+    return;
+  }
   if (!$("#foglio-squadra").hidden) {
     if (e.key === "Escape") chiudiFoglioSquadra();
     return;
@@ -1159,6 +1177,7 @@ $("#dialogo-annulla").addEventListener("click", chiudiDialogo);
 $("#velo").addEventListener("click", () => {
   if (!$("#foglio-squadra").hidden) chiudiFoglioSquadra();
   else if (!$("#foglio-stampa").hidden) chiudiFoglioStampa();
+  else if (!$("#foglio-playbook").hidden) chiudiFoglioPlaybook();
   else chiudiDialogo();
 });
 
@@ -1227,7 +1246,5 @@ document.addEventListener("playbook:sync", (e) => {
 
 /* ---------- Avvio: lo chiama accesso.js dopo il login ---------- */
 function avviaApp() {
-  mostraElenco();
-  const ultimo = Dati.tutti()[0];
-  if (ultimo) apriEditor(ultimo.id);
+  mostraHome(); // si parte dalla pagina «I tuoi playbook»
 }
