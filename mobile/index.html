@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="../icon-180.png">
   <link rel="icon" type="image/png" href="../icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="mobile.css?v=m1">
+  <link rel="stylesheet" href="mobile.css?v=m2">
 </head>
 <body>
   <!-- Schermata d'avvio, mentre controlliamo l'accesso -->
@@ -84,11 +84,15 @@
       <span class="barra-titolo" id="pb-barra-titolo"></span>
       <span class="barra-dx">
         <button class="btn-barra grassetto toccabile" id="btn-partita">Partita</button>
+        <button class="btn-barra toccabile" id="btn-nuovo-schema" aria-label="Nuovo schema">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
       </span>
     </header>
     <h1 class="titolo-grande" id="pb-titolo"></h1>
     <p class="sottotitolo-grande" id="pb-sotto"></p>
     <p class="banner" id="banner-vista" hidden>👁 Sola lettura · condiviso dal coach</p>
+    <p class="banner" id="banner-proposte" hidden>📨 In questo playbook puoi solo mandare proposte: per ora si fanno dal computer.</p>
 
     <div class="segmentato" id="scelta-lato" style="margin-top: 12px">
       <button data-valore="attacco">Attacco</button>
@@ -132,6 +136,10 @@
       </span>
     </div>
 
+    <div class="gruppo" id="riga-info" style="margin-top: 14px" hidden>
+      <button class="riga toccabile btn-testo" id="btn-info">Numero, situazioni e note</button>
+    </div>
+
     <p class="titolo-sezione">Quando chiamarlo</p>
     <div class="gruppo"><div class="pillole" id="schema-situazioni"></div></div>
     <p class="titolo-sezione">Note</p>
@@ -157,7 +165,71 @@
     <p class="vuoto" id="partita-vuota" hidden>Nessuno schema ha ancora una situazione.<br>Sceglile dal pannello «Partita» sul computer, o da «Modifica» in uno schema.</p>
   </section>
 
+  <!-- ================= 6. EDITOR: disegnare con il dito ================= -->
+  <section class="schermata fuori editor" id="schermata-editor" hidden>
+    <header class="barra con-bordo">
+      <span class="barra-sx">
+        <button class="btn-barra toccabile" id="btn-annulla-editor" aria-label="Annulla l'ultima modifica" disabled>
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+      </span>
+      <input class="nome-editor" id="nome-editor" type="text" maxlength="60" placeholder="Nome dello schema" autocomplete="off">
+      <span class="barra-dx">
+        <button class="btn-barra grassetto toccabile" id="btn-fine-editor">Fine</button>
+      </span>
+    </header>
+    <p class="banner" id="banner-bloccato" hidden>🔒 Schema bloccato <button class="btn-testo" id="btn-sblocca">Sblocca</button></p>
+    <div class="contenitore-campo editor-campo">
+      <svg class="campo-grande" id="campo-editor" preserveAspectRatio="xMidYMid meet"></svg>
+      <button class="btn-sul-campo btn-zoom toccabile" id="btn-zoom-editor">Campo intero</button>
+      <p class="campo-vuoto-editor" id="campo-vuoto-editor">Scegli una formazione<br>o aggiungi i giocatori</p>
+    </div>
+    <p class="indice-schema" id="conteggio-editor"></p>
+
+    <!-- Strumenti del campo -->
+    <div class="strumenti" id="strumenti-campo">
+      <button class="strumento toccabile" id="btn-formazione"><span>🧩</span>Formazione</button>
+      <button class="strumento toccabile" id="btn-aggiungi"><span>＋</span>Giocatore</button>
+      <button class="strumento toccabile" id="btn-ribalta"><span>⇋</span>Ribalta</button>
+    </div>
+    <!-- Strumenti del giocatore selezionato -->
+    <div class="strumenti" id="strumenti-giocatore" hidden>
+      <p class="nome-selezionato"><span id="nome-selezionato"></span><button class="btn-testo" id="btn-deseleziona">Fatto</button></p>
+      <button class="strumento toccabile" id="btn-traccia"><span>↗︎</span>Traccia</button>
+      <button class="strumento toccabile" id="btn-disegna"><span>✍️</span>Disegna</button>
+      <button class="strumento toccabile" id="btn-sigla"><span>Aa</span>Sigla</button>
+      <button class="strumento toccabile rosso" id="btn-togli"><span>✕</span>Togli</button>
+    </div>
+    <!-- Disegno con il dito in corso -->
+    <div class="strumenti disegno" id="strumenti-disegno" hidden>
+      <p class="nome-selezionato">Trascina il dito dal giocatore<button class="btn-testo" id="btn-annulla-disegno">Annulla</button></p>
+      <div class="filtri" id="tipi-disegno"></div>
+      <div class="filtri"><button class="filtro toccabile" id="btn-curva">〰︎ Linea morbida</button></div>
+    </div>
+    <p class="aiuto-editor">Tocca un giocatore per sceglierlo, trascinalo per spostarlo.</p>
+    <div class="gruppo" style="margin-top: 18px">
+      <button class="riga toccabile btn-testo rosso" id="btn-elimina-schema" style="justify-content: center">Elimina schema</button>
+    </div>
+  </section>
+
   <!-- ================= FOGLI DAL BASSO ================= -->
+  <div class="foglio" id="foglio-formazioni" hidden>
+    <div class="maniglia-foglio"></div>
+    <div class="foglio-testa"><span></span><strong>Formazione</strong><button class="btn-barra toccabile" data-chiudi-foglio>Chiudi</button></div>
+    <div id="lista-formazioni-m"></div>
+  </div>
+  <div class="foglio" id="foglio-pedine" hidden>
+    <div class="maniglia-foglio"></div>
+    <div class="foglio-testa"><span></span><strong>Aggiungi giocatori</strong><button class="btn-barra toccabile" data-chiudi-foglio>Fine</button></div>
+    <p class="sottotitolo-grande" id="info-pedine" style="margin-top: 0"></p>
+    <div id="lista-pedine"></div>
+  </div>
+  <div class="foglio" id="foglio-tracce" hidden>
+    <div class="maniglia-foglio"></div>
+    <div class="foglio-testa"><span></span><strong id="titolo-tracce">Traccia</strong><button class="btn-barra toccabile" data-chiudi-foglio>Chiudi</button></div>
+    <div id="lista-tracce"></div>
+  </div>
+
   <div class="velo" id="velo" hidden></div>
 
   <div class="foglio" id="foglio-modifica" hidden>
@@ -207,13 +279,14 @@
   <!-- Gli stessi file della versione per computer (dati, account, tracce)... -->
   <script src="../config.js?v=m1"></script>
   <script src="../lib/supabase.js"></script>
-  <script src="campo.js?v=m1"></script>
+  <script src="campo.js?v=m2"></script>
   <script src="../formazioni.js?v=m1"></script>
   <script src="../regole.js?v=m1"></script>
   <script src="../tracce.js?v=m1"></script>
   <script src="../cloud.js?v=m1"></script>
   <!-- ...e la logica tutta nuova per il telefono -->
-  <script src="mobile.js?v=m1"></script>
+  <script src="mobile.js?v=m2"></script>
+  <script src="editor.js?v=m2"></script>
   <script>
     // Il pulsante "indietro" con la freccia iOS
     document.querySelectorAll("[data-indietro]").forEach((b) => {

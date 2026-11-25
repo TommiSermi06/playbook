@@ -187,10 +187,31 @@ function indietro() {
   const torna = $("#" + pila[pila.length - 1]);
   torna.classList.remove("dietro");
   setTimeout(() => { via.hidden = true; }, 320);
-  if (pila[pila.length - 1] === "schermata-playbook") mostraElenco();
+  const ora = pila[pila.length - 1];
+  if (ora === "schermata-playbook") { mostraFiltri(); mostraElenco(); }
+  if (ora === "schermata-schema") aggiornaSchemaDopoModifica();
 }
-// Il tasto "indietro" di Android (o il gesto) torna alla schermata precedente
-window.addEventListener("popstate", () => { if (!chiudiFogli()) indietro(); });
+
+// Dopo l'editor: lo schema mostrato prende la versione appena salvata
+function aggiornaSchemaDopoModifica() {
+  const vecchio = Stato.elenco[Stato.indice];
+  if (!vecchio) return;
+  const nuovo = Stato.schemi.find((s) => s.id === vecchio.id);
+  if (!nuovo) return;
+  Stato.elenco = Stato.elenco.map((s) => Stato.schemi.find((x) => x.id === s.id) || s);
+  mostraSchema(false);
+}
+
+/* Il tasto "indietro" di Android (o del browser) torna alla schermata giusta,
+   anche se si torna indietro di più passi in una volta */
+window.addEventListener("popstate", (e) => {
+  if (chiudiFogli()) {
+    history.pushState({ schermata: pila[pila.length - 1] }, ""); // si chiude solo il foglio
+    return;
+  }
+  const meta = e.state && e.state.schermata;
+  while (pila.length > 1 && pila[pila.length - 1] !== meta) indietro();
+});
 document.querySelectorAll("[data-indietro]").forEach((b) => b.addEventListener("click", () => history.back()));
 
 // La barra mostra il titolo piccolo e il bordo quando si scorre
@@ -340,6 +361,8 @@ function apriPlaybook(pb, { sostituisci = false } = {}) {
   $("#pb-barra-titolo").textContent = pb.nome;
   $("#pb-sotto").textContent = descriviPlaybook(pb) + (pb.proprietario ? ` · ${pb.squadra || "staff"}` : "");
   $("#banner-vista").hidden = !Stato.vista;
+  $("#btn-nuovo-schema").hidden = !puoModificare(pb);
+  $("#banner-proposte").hidden = !pb.proprietario || pb.permesso !== "proposta";
   $("#btn-pb-indietro").hidden = Stato.vista;
   impostaSegmentato($("#scelta-lato"), Stato.lato);
   mostraFiltri();
@@ -436,6 +459,7 @@ function mostraSchema(anima) {
   note.textContent = s.note || "Nessuna nota";
   note.classList.toggle("vuote", !s.note);
   $("#btn-modifica").hidden = !puoModificare(Stato.pb);
+  $("#riga-info").hidden = !puoModificare(Stato.pb);
 }
 
 $("#btn-anima").addEventListener("click", () => mostraSchema(true));
@@ -463,7 +487,9 @@ $("#btn-zoom").addEventListener("click", () => { Stato.zoom = !Stato.zoom; mostr
 
 /* ---------- Modifica veloce: numero, situazioni, note ---------- */
 let bozzaSituazioni = new Set();
-$("#btn-modifica").addEventListener("click", () => {
+// "Modifica" apre l'editor per disegnare; "Numero, situazioni e note" il foglio veloce
+$("#btn-modifica").addEventListener("click", () => apriEditor(schemaAperto()));
+$("#btn-info").addEventListener("click", () => {
   const s = schemaAperto();
   $("#mod-numero").value = s.chiamata || "";
   $("#mod-note").value = s.note || "";
@@ -575,6 +601,7 @@ function chiudiFogli() {
 }
 $("#velo").addEventListener("click", chiudiFogli);
 $("#btn-account-chiudi").addEventListener("click", chiudiFogli);
+document.querySelectorAll("[data-chiudi-foglio]").forEach((b) => b.addEventListener("click", chiudiFogli));
 
 /* ==========================================================================
    AVVIO

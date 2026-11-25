@@ -63,9 +63,11 @@ function posizionePalla(schema) {
 
 /* Disegna lo schema dentro "svg".
    - miniatura: campo semplificato per l'elenco
-   - anima: le tracce "corrono" una dopo l'altra (pulsante ▶︎)
+   - anima: le tracce "corrono" una dopo l'altra (pulsante ▶︎);
+     con l'id di un giocatore si anima solo la sua
+   - selezionato: id del giocatore selezionato nell'editor (anello attorno)
    - ritaglio: mostra solo la zona dove ci sono giocatori e tracce */
-function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio = false, logo = null } = {}) {
+function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio = false, logo = null, selezionato = null, viewBox = null } = {}) {
   svg.innerHTML = "";
   svg.setAttribute("viewBox", `0 0 ${LARGHEZZA_CAMPO} ${ALTEZZA_CAMPO}`);
 
@@ -130,8 +132,9 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
       transform: `translate(${g.x} ${yDisegno(g.y)})`,
     }, livello);
     if (g.traccia) {
-      if (anima) gt.style.setProperty("--ritardo", `${(ordine++) * 0.12}s`);
-      disegnaTraccia(gt, g, { anima, idMaschera: `m-${g.id}-${Math.random().toString(36).slice(2, 7)}`, scala: miniatura ? 1.2 : 1 });
+      const animaQui = anima === true || anima === g.id;
+      if (anima === true) gt.style.setProperty("--ritardo", `${(ordine++) * 0.12}s`);
+      disegnaTraccia(gt, g, { anima: animaQui, idMaschera: `m-${g.id}-${Math.random().toString(36).slice(2, 7)}`, scala: miniatura ? 1.2 : 1 });
     }
   }
 
@@ -139,9 +142,11 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
   for (const g of schema.giocatori) {
     const el = crea("g", {
-      class: `giocatore forma-${g.forma} ruolo-${ruoloDi(schema.lato, g.etichetta)}`,
+      class: `giocatore forma-${g.forma} ruolo-${ruoloDi(schema.lato, g.etichetta)}${g.id === selezionato ? " selezionato" : ""}`,
+      "data-id": g.id,
       transform: `translate(${g.x} ${yDisegno(g.y)})`,
     }, gruppo);
+    if (g.id === selezionato) crea("circle", { r: RAGGIO_GIOCATORE * 1.6, class: "alone" }, el);
     if (g.forma === "quadrato") {
       const l = RAGGIO_GIOCATORE * 1.8;
       crea("rect", { x: -l / 2, y: -l / 2, width: l, height: l, rx: 0.15, class: "sagoma" }, el);
@@ -155,12 +160,13 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
     t.textContent = g.etichetta;
   }
 
-  if (ritaglio) ritagliaCampo(svg, schema);
+  if (viewBox) svg.setAttribute("viewBox", viewBox);          // inquadratura tenuta ferma (editor)
+  else if (ritaglio) ritagliaCampo(svg, schema, typeof ritaglio === "number" ? ritaglio : 2.5);
 }
 
 /* Inquadra solo la zona utile (giocatori + tracce), mantenendo la forma
    del campo: sul telefono gli schemi si vedono più grandi. */
-function ritagliaCampo(svg, schema) {
+function ritagliaCampo(svg, schema, margine = 2.5) {
   const xs = [], ys = [];
   for (const g of schema.giocatori || []) {
     xs.push(g.x); ys.push(g.y);
@@ -172,7 +178,6 @@ function ritagliaCampo(svg, schema) {
   }
   if (!xs.length) return;
   const rapporto = LARGHEZZA_CAMPO / ALTEZZA_CAMPO;
-  const margine = 2.5;
   let x0 = Math.min(...xs) - margine, x1 = Math.max(...xs) + margine;
   let y0 = Math.min(...ys) - margine, y1 = Math.max(...ys) + margine;
   let w = x1 - x0, h = y1 - y0;

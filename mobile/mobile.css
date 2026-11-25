@@ -601,3 +601,115 @@ input, textarea { font: inherit; color: inherit; }
 @keyframes scorriDx { from { opacity: 0.2; transform: translateX(-30px); } }
 /* Link nella lista (es. versione per computer) */
 a.riga { display: flex; }
+
+/* ==========================================================================
+   EDITOR: disegnare con il dito
+   ========================================================================== */
+.nome-editor {
+  min-width: 0;
+  width: 56vw;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+}
+.editor-campo { touch-action: none; user-select: none; -webkit-user-select: none; }
+.editor-campo .campo-grande { aspect-ratio: 53.33 / 35; }
+.campo-vuoto-editor {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  pointer-events: none;
+}
+/* Anello attorno al giocatore selezionato */
+.giocatore .alone {
+  fill: none;
+  stroke: #FFFFFF;
+  stroke-width: 0.14;
+  stroke-dasharray: 0.4 0.25;
+  animation: giraAlone 6s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes giraAlone { to { transform: rotate(360deg); } }
+
+.strumenti {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+  margin: 12px 16px 0;
+}
+.strumento {
+  min-height: 64px;
+  border-radius: 14px;
+  background: var(--sfondo-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.strumento span { font-size: 21px; line-height: 1; color: var(--accento); }
+.strumento.rosso, .strumento.rosso span { color: var(--rosso); }
+.strumento:disabled { opacity: 0.4; }
+.nome-selezionato {
+  grid-column: 1 / -1;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 600;
+}
+.nome-selezionato .btn-testo { min-height: 36px; font-size: 15px; }
+.strumenti.disegno { grid-template-columns: 1fr; }
+.strumenti.disegno .filtri { padding: 0; }
+.aiuto-editor { margin: 10px 16px 0; text-align: center; font-size: 13px; color: var(--testo-secondario); }
+.banner .btn-testo { min-height: 0; margin-left: 8px; font-weight: 600; }
+
+/* Pedine da aggiungere: colorate come in campo */
+.pedine { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 16px; }
+.pedina {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--colore-ruolo);
+  color: #0F1412;
+  font-weight: 800;
+  font-size: 17px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s var(--curva), opacity 0.2s;
+}
+.pedina:active { transform: scale(0.9); }
+.pedina.spenta { opacity: 0.3; }
+
+/* Tracce pronte */
+.griglia-tracce { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 16px; }
+.voce-traccia {
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--sfondo-card);
+  text-align: left;
+  font-size: 15px;
+  font-weight: 500;
+}
+.spunta { color: var(--accento); font-weight: 700; }
+#foglio-formazioni .riga, #foglio-tracce .riga { --rientro: 16px; }
+
+/* Telefono girato nell'editor: campo grande, strumenti sotto scorrendo */
+@media (orientation: landscape) and (max-height: 520px) {
+  #schermata-editor .contenitore-campo {
+    margin: 0 auto;
+    width: min(100% - 16px, (100vh - 70px) * 1.524);
+  }
+}
