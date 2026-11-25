@@ -742,7 +742,7 @@ textarea::placeholder { color: var(--testo-secondario); }
 /* ---------- Account in fondo alla barra laterale ---------- */
 .account {
   position: sticky;
-  bottom: 0;
+  bottom: 26px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1327,4 +1327,16 @@ body.schema-bloccato .campo-cornice::after {
   font-weight: 700;
   pointer-events: none;
   animation: appari 0.3s 0.5s var(--curva) both;
+}
+
+/* Numero di versione in fondo alla barra laterale */
+.versione {
+  margin: 0 -12px;
+  padding: 0 16px 10px;
+  background: var(--sfondo-laterale);
+  font-size: 11px;
+  color: var(--testo-secondario);
+  opacity: 0.7;
+  position: sticky;
+  bottom: 0;
 }
