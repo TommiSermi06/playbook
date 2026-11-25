@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.23 — note in orizzontale
+
+- Il riquadro «Note» del call sheet è una fascia larga quanto il foglio, in fondo all'ultima pagina.
+  Se lo spazio è poco la fascia si abbassa (fino a un minimo); se non basta, le note vanno su un foglio a parte.
+
 ## Versione 0.22 — note sul call sheet
 
 - Call sheet: riquadro **«Note»** con le righe per scrivere a pennarello (opzione già attiva).

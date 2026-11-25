@@ -2524,3 +2524,6 @@ body.sola-lettura #btn-squadra { pointer-events: none; }
   margin: 0 3mm;
   background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(9mm - 0.3mm), #B4BCB8 calc(9mm - 0.3mm), #B4BCB8 9mm);
 }
+/* La fascia delle note: in fondo alla pagina, larga quanto il foglio */
+.fascia-note { flex: none; margin: 3mm 0 0; }
+.fascia-note .righe-note { margin: 0 4mm; }
