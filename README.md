@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.10 — le tue formazioni
+- Con «Crea da zero» e 11 giocatori in campo si salva la formazione con un nome
+- Le formazioni salvate sono solo del coach (account) e compaiono in «Le tue formazioni» in ogni nuovo schema
+- Eliminabili (con Annulla); sincronizzate online nella tabella `formazioni`
+
 ## Versione 0.9.1
 - Interruttore «Linea morbida» rifatto in stile iPhone: forma a pillola, pallino fino in fondo, scatto animato anche con il tasto C
 

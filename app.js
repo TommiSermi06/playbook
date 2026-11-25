@@ -310,6 +310,8 @@ let giocatoreSelezionato = null; // id del giocatore selezionato
 function nomeFormazione(schema) {
   if (!schema.formazione) return "Nessuna formazione";
   if (schema.formazione === "libera") return "Formazione libera";
+  const mia = FormazioniMie.trova(schema.formazione);
+  if (mia) return mia.nome;
   const f = FORMAZIONI[schema.lato].find((f) => f.id === schema.formazione);
   return f ? f.nome : "Personalizzata";
 }
@@ -511,6 +513,32 @@ function mostraFormazioni() {
     scelta.addEventListener("click", () => cambiaFormazione(f.id));
     contenitore.appendChild(scelta);
   }
+  // Le formazioni salvate dal coach (solo sue)
+  const mie = FormazioniMie.perLato(schemaCorrente.lato);
+  if (mie.length) {
+    contenitore.appendChild(Object.assign(document.createElement("div"), {
+      className: "titolo-scelte", textContent: "Le tue formazioni",
+    }));
+    for (const f of mie) {
+      const scelta = document.createElement("div");
+      scelta.className = "scelta mia" + (f.id === schemaCorrente.formazione ? " attiva" : "") +
+        (f.id === formazioneAppenaSalvata ? " appena-salvata" : "");
+      scelta.tabIndex = 0;
+      scelta.innerHTML = `<span class="stella">★</span><span class="nome-mia"></span>
+        <svg class="spunta" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        <button class="elimina-mia" title="Elimina questa formazione" aria-label="Elimina">×</button>`;
+      scelta.querySelector(".nome-mia").textContent = f.nome;
+      scelta.addEventListener("click", () => cambiaFormazione(f.id));
+      scelta.addEventListener("keydown", (e) => { if (e.key === "Enter") cambiaFormazione(f.id); });
+      scelta.querySelector(".elimina-mia").addEventListener("click", (e) => {
+        e.stopPropagation();
+        eliminaFormazioneMia(f);
+      });
+      contenitore.appendChild(scelta);
+    }
+    formazioneAppenaSalvata = null;
+  }
+
   // Ultima voce: crea la formazione da zero
   const daZero = document.createElement("button");
   daZero.className = "scelta da-zero" + (schemaCorrente.formazione === "libera" ? " attiva" : "");

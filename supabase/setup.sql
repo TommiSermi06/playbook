@@ -7,6 +7,7 @@
 -- Cosa crea:
 --   1. profili  → nome e logo della squadra di ogni allenatore
 --   2. schemi   → gli schemi del playbook (uno per riga, in formato JSON)
+--   2b. formazioni → le formazioni create e salvate da ogni coach
 --   3. loghi    → cartella (bucket) per le immagini dei loghi
 -- E le REGOLE DI SICUREZZA (Row Level Security): ogni allenatore può
 -- leggere e modificare SOLO i propri dati.
@@ -46,6 +47,24 @@ create policy "schemi: solo il proprietario" on public.schemi
   using (utente = auth.uid())
   with check (utente = auth.uid());
 
+-- 2b. FORMAZIONI SALVATE DAL COACH ------------------------------------------
+create table if not exists public.formazioni (
+  id         text primary key,
+  utente     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  dati       jsonb not null,
+  modificato timestamptz not null default now()
+);
+
+create index if not exists formazioni_utente_idx on public.formazioni (utente);
+
+alter table public.formazioni enable row level security;
+
+drop policy if exists "formazioni: solo il proprietario" on public.formazioni;
+create policy "formazioni: solo il proprietario" on public.formazioni
+  for all to authenticated
+  using (utente = auth.uid())
+  with check (utente = auth.uid());
+
 -- PERMESSI -------------------------------------------------------------------
 -- Nei progetti Supabase recenti le tabelle create a mano non sono
 -- accessibili all'app finché non lo si dice esplicitamente.
@@ -55,6 +74,7 @@ create policy "schemi: solo il proprietario" on public.schemi
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on public.profili to authenticated;
 grant select, insert, update, delete on public.schemi  to authenticated;
+grant select, insert, update, delete on public.formazioni to authenticated;
 
 -- 3. LOGHI (Storage) ---------------------------------------------------------
 -- Bucket pubblico in lettura: i loghi devono comparire nell'app e nelle stampe.

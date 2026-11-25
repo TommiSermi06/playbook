@@ -61,6 +61,25 @@ function mostraTavolozza() {
       <span class="contatore${inCampo >= MAX_GIOCATORI ? " pieno" : ""}">${inCampo}/${MAX_GIOCATORI}</span>
     </div>`;
 
+  // Con 11 giocatori in campo: si può salvare la formazione con un nome
+  if (inCampo === MAX_GIOCATORI) {
+    const salva = document.createElement("form");
+    salva.className = "salva-formazione";
+    salva.innerHTML = `
+      <p class="salva-titolo">✓ Formazione completa</p>
+      <p class="salva-testo">Dalle un nome: la ritroverai tra «Le tue formazioni» in ogni nuovo schema.</p>
+      <div class="salva-riga">
+        <input id="nome-formazione" type="text" maxlength="30" placeholder="Es. Trips Bunch" autocomplete="off">
+        <button type="submit" class="btn-pieno">Salva formazione</button>
+      </div>
+      <p class="messaggio-errore" id="errore-formazione"></p>`;
+    salva.addEventListener("submit", (e) => {
+      e.preventDefault();
+      salvaFormazioneCorrente($("#nome-formazione").value);
+    });
+    box.appendChild(salva);
+  }
+
   for (const { gruppo, sigle } of PEDINE[schemaCorrente.lato]) {
     const riga = document.createElement("div");
     riga.className = "tavolozza-gruppo";

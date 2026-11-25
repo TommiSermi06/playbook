@@ -1676,3 +1676,72 @@ body.schema-bloccato .campo-cornice::after {
 .interruttore:checked:active::after { transform: translateX(12px); }
 .interruttore:focus-visible { box-shadow: 0 0 0 3px var(--accento-tenue); }
 .riga-campo kbd { margin-left: 4px; }
+
+/* ==========================================================================
+   LE TUE FORMAZIONI
+   ========================================================================== */
+.titolo-scelte {
+  padding: 10px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--testo-secondario);
+  border-top: 1px solid var(--separatore);
+}
+.scelta.mia { cursor: pointer; gap: 8px; }
+.scelta.mia .stella { color: var(--accento); font-size: 12px; }
+.scelta.mia .nome-mia { flex: 1; }
+.titolo-scelte + .scelta::before { display: none; }
+.elimina-mia {
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--testo-secondario);
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.scelta.mia:hover .elimina-mia,
+.scelta.mia:focus-within .elimina-mia { opacity: 1; }
+.elimina-mia:hover { background: rgba(255, 90, 78, 0.18); color: var(--rosso); }
+.scelta.mia .spunta { order: 0; }
+
+/* La formazione appena salvata "brilla" un attimo nell'elenco */
+.scelta.appena-salvata { animation: brilla 1.4s var(--curva); }
+@keyframes brilla {
+  0%, 100% { background: transparent; }
+  20%, 55% { background: var(--accento-tenue); }
+}
+
+/* Riquadro "Formazione completa" nella tavolozza */
+.salva-formazione {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--accento-tenue);
+  border: 1px solid rgba(255, 159, 28, 0.35);
+  animation: comparsa 0.4s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+.salva-titolo { margin: 0; font-weight: 800; color: var(--accento); }
+.salva-testo { margin: 0; font-size: 12px; color: var(--testo-secondario); line-height: 1.4; }
+.salva-riga { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; } /* casella larga, pulsante sotto */
+.salva-riga input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--separatore);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--testo);
+  font: inherit;
+  outline: none;
+}
+.salva-riga input:focus { border-color: var(--accento); box-shadow: 0 0 0 3px var(--accento-tenue); }
+.salva-riga input.scuoti { animation: scuoti 0.4s var(--curva); border-color: var(--rosso); }
+.salva-riga .btn-pieno { width: 100%; }
+.salva-formazione .messaggio-errore:empty { display: none; }

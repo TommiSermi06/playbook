@@ -122,12 +122,14 @@ $("#accesso").addEventListener("submit", async (e) => {
 /* Entra nell'app: prepara i dati dell'utente e fa sparire l'introduzione */
 async function entra(utente) {
   Dati.imposta(utente.id);
+  FormazioniMie.imposta(utente.id);
   $("#email-utente").textContent = utente.email || "Solo su questo computer";
   $("#btn-esci").textContent = utente.email ? "Esci" : "Cambia";
 
   const [profilo] = await Promise.all([
     Cloud.caricaProfilo().catch(() => ({})),
     Dati.sincronizza(),
+    FormazioniMie.sincronizza(),
   ]);
   Squadra.imposta(profilo);
   avviaApp();

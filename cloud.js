@@ -144,6 +144,30 @@ const Cloud = {
     if (error) throw new Error(traduciErrore(error));
   },
 
+  /* ---------------- Formazioni salvate dal coach ---------------- */
+
+  async scaricaFormazioni() {
+    const { data, error } = await this.client.from("formazioni").select("dati");
+    if (error) throw new Error(traduciErrore(error));
+    return data.map((riga) => riga.dati);
+  },
+
+  async salvaFormazioni(formazioni) {
+    const righe = formazioni.map((f) => ({
+      id: f.id,
+      utente: this.utente.id,
+      dati: f,
+      modificato: new Date(f.modificato).toISOString(),
+    }));
+    const { error } = await this.client.from("formazioni").upsert(righe);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
+  async eliminaFormazione(id) {
+    const { error } = await this.client.from("formazioni").delete().eq("id", id);
+    if (error) throw new Error(traduciErrore(error));
+  },
+
   async eliminaSchema(id) {
     const { error } = await this.client.from("schemi").delete().eq("id", id);
     if (error) throw new Error(traduciErrore(error));

@@ -136,7 +136,9 @@ const FORMAZIONI = {
    Serve una copia perché, spostando i giocatori, non vogliamo modificare
    la formazione originale. */
 function giocatoriDaFormazione(lato, idFormazione) {
-  const formazione = FORMAZIONI[lato].find((f) => f.id === idFormazione) || FORMAZIONI[lato][0];
+  // Prima cerchiamo tra le formazioni salvate dal coach, poi tra quelle pronte
+  const mia = typeof FormazioniMie !== "undefined" ? FormazioniMie.trova(idFormazione) : null;
+  const formazione = mia || FORMAZIONI[lato].find((f) => f.id === idFormazione) || FORMAZIONI[lato][0];
   return formazione.giocatori.map((g, i) => ({
     id: "g" + i,
     etichetta: g.etichetta,
