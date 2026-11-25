@@ -1,25 +1,28 @@
 /* ==========================================================================
-   STILE — ispirato alle app native iOS
+   STILE — app per computer, con l'eleganza delle app Apple (macOS)
    Tutti i colori sono variabili: cambiano da soli tra modalità chiara e scura.
    ========================================================================== */
 
 :root {
   --sfondo: #F2F2F7;
+  --sfondo-laterale: #EBEBF0;
   --sfondo-card: #FFFFFF;
   --sfondo-grigio: rgba(118, 118, 128, 0.12);
+  --sfondo-hover: rgba(118, 118, 128, 0.10);
   --testo: #000000;
   --testo-secondario: rgba(60, 60, 67, 0.6);
-  --separatore: rgba(60, 60, 67, 0.29);
+  --separatore: rgba(60, 60, 67, 0.18);
   --blu: #007AFF;
-  --verde: #34C759;
-  --arancione: #FF9500;
+  --blu-tenue: rgba(0, 122, 255, 0.12);
   --rosso: #FF3B30;
   --ombra: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --ombra-dialogo: 0 20px 60px rgba(0, 0, 0, 0.3);
 
   /* Colori del campo */
   --prato: #2F7D3B;
   --linee-campo: rgba(255, 255, 255, 0.85);
   --tacche-campo: rgba(255, 255, 255, 0.55);
+  --numeri-campo: rgba(255, 255, 255, 0.55);
   --linea-scrimmage: #4DA3FF;
   --linea-primo-down: #FFD60A;
   --pallone: #8B4A1E;
@@ -28,22 +31,25 @@
   --attacco-testo: #0B1F3A;
   --difesa-testo: #FFFFFF;
   --difesa-contorno: #8E1B12;
+  --selezione: #FFD60A;
 
   --curva: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --larghezza-max: 820px;
+  --larghezza-laterale: 280px;
+  --larghezza-pannello: 300px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --sfondo: #000000;
-    --sfondo-card: #1C1C1E;
+    --sfondo: #1E1E1E;
+    --sfondo-laterale: #282828;
+    --sfondo-card: #2C2C2E;
     --sfondo-grigio: rgba(118, 118, 128, 0.24);
+    --sfondo-hover: rgba(255, 255, 255, 0.06);
     --testo: #FFFFFF;
     --testo-secondario: rgba(235, 235, 245, 0.6);
     --separatore: rgba(84, 84, 88, 0.6);
     --blu: #0A84FF;
-    --verde: #30D158;
-    --arancione: #FF9F0A;
+    --blu-tenue: rgba(10, 132, 255, 0.25);
     --rosso: #FF453A;
     --ombra: none;
     --prato: #24622E;
@@ -51,18 +57,16 @@
 }
 
 /* ---------- Base ---------- */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   height: 100%;
-  overflow: hidden; /* scorrono le singole schermate, non la pagina */
   background: var(--sfondo);
   color: var(--testo);
-  font-family: -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", sans-serif;
-  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", "Helvetica Neue", sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
-  -webkit-text-size-adjust: 100%;
 }
 
 button {
@@ -73,99 +77,68 @@ button {
   padding: 0;
   cursor: pointer;
 }
-button:active { opacity: 0.6; }
+button:disabled { opacity: 0.35; cursor: default; }
 
-/* ---------- Schermate e passaggio tra una e l'altra ---------- */
-.vista {
-  position: fixed;
-  inset: 0;
+kbd {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--sfondo-grigio);
+  color: var(--testo-secondario);
+}
+
+[hidden] { display: none !important; }
+
+/* ---------- Layout a tre colonne ---------- */
+.app {
+  display: grid;
+  grid-template-columns: var(--larghezza-laterale) 1fr var(--larghezza-pannello);
+  height: 100vh;
+}
+
+/* ---------- Colonna 1: barra laterale ---------- */
+.laterale {
+  background: var(--sfondo-laterale);
+  border-right: 1px solid var(--separatore);
+  padding: 16px 12px;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: var(--sfondo);
-  padding-bottom: calc(32px + env(safe-area-inset-bottom));
-  transition: transform 0.35s var(--curva), opacity 0.35s var(--curva);
 }
 
-/* L'editor entra da destra, come nelle app iOS */
-#vista-editor { transform: translateX(100%); }
-#vista-editor.attiva { transform: translateX(0); }
-
-/* L'elenco si sposta un po' a sinistra quando l'editor è aperto */
-#vista-elenco.sotto { transform: translateX(-25%); opacity: 0.6; pointer-events: none; }
-
-/* ---------- Barra in alto ---------- */
-.barra,
-.contenuto {
-  max-width: var(--larghezza-max);
-  margin: 0 auto;
-  padding-left: calc(16px + env(safe-area-inset-left));
-  padding-right: calc(16px + env(safe-area-inset-right));
-}
-
-.barra { padding-top: env(safe-area-inset-top); }
-
-.barra-azioni {
+.laterale-testa {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 44px;
+  margin: 0 4px 14px;
+}
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
 }
 
-.btn-testo {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  min-height: 44px;
-  min-width: 44px;
+.btn-icona {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   color: var(--blu);
-  font-size: 17px;
+  transition: background 0.15s;
 }
-.btn-icona { justify-content: center; }
-#btn-indietro { margin-left: -8px; }
+.btn-icona:hover { background: var(--sfondo-hover); }
 
-.titolo-grande {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  margin: 2px 0 12px;
-}
-
-.sottotitolo {
-  margin: 2px 0 8px;
-  font-size: 15px;
-  color: var(--testo-secondario);
-}
-
-.stato-salvataggio {
-  font-size: 13px;
-  color: var(--testo-secondario);
-}
-
-/* Nome dello schema: sembra un titolo, ma si può scrivere */
-.nome-schema {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--testo);
-  font: inherit;
-  font-size: 28px;
-  font-weight: 700;
-  padding: 0;
-  outline: none;
-}
-.nome-schema::placeholder { color: var(--testo-secondario); }
-
-/* ---------- Controllo segmentato ---------- */
+/* Controllo segmentato */
 .segmentato {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: var(--sfondo-grigio);
-  border-radius: 9px;
+  border-radius: 8px;
   padding: 2px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-/* La "pillola" bianca che scorre sotto l'opzione scelta */
+/* La "pillola" che scorre sotto l'opzione scelta */
 .segmentato::before {
   content: "";
   position: absolute;
@@ -174,9 +147,9 @@ button:active { opacity: 0.6; }
   left: 2px;
   width: calc(50% - 2px);
   background: var(--sfondo-card);
-  border-radius: 7px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
-  transition: transform 0.3s var(--curva);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s var(--curva);
 }
 .segmentato[data-scelto="difesa"]::before { transform: translateX(100%); }
 @media (prefers-color-scheme: dark) {
@@ -184,200 +157,337 @@ button:active { opacity: 0.6; }
 }
 .segmento {
   position: relative;
-  min-height: 32px;
+  height: 28px;
   font-size: 13px;
   font-weight: 500;
 }
 .segmento.attivo { font-weight: 600; }
-.segmento:active { opacity: 1; }
 
-/* ---------- Titoli delle sezioni ---------- */
-.titolo-sezione {
-  font-size: 13px;
-  text-transform: uppercase;
+/* Campo di ricerca */
+.cerca {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--sfondo-grigio);
   color: var(--testo-secondario);
-  margin: 24px 16px 8px;
-  letter-spacing: 0.02em;
 }
-.titolo-sezione:empty { margin: 12px 0 0; }
+.cerca input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--testo);
+  font: inherit;
+}
 
-/* ---------- Lista degli schemi ---------- */
-.lista,
-.card {
+.titolo-sezione {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--testo-secondario);
+  margin: 18px 8px 6px;
+}
+.titolo-sezione:empty { margin: 10px 0 0; }
+
+/* Righe degli schemi */
+.lista {
   list-style: none;
   margin: 0;
   padding: 0;
-  background: var(--sfondo-card);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--ombra);
 }
-
 .riga {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 72px;
-  padding: 10px 16px;
-  position: relative;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 8px;
   cursor: pointer;
-  animation: appari 0.3s var(--curva) both;
+  outline: none;
+  animation: appari 0.25s var(--curva) both;
 }
-.riga:active { background: var(--sfondo-grigio); }
-/* Separatore sottile che parte dopo la miniatura, come in iOS */
-.riga + .riga::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 100px;
-  border-top: 0.5px solid var(--separatore);
-}
+.riga:hover { background: var(--sfondo-hover); }
+.riga:focus-visible { box-shadow: 0 0 0 2px var(--blu); }
+.riga.attiva { background: var(--blu); color: #FFFFFF; }
+.riga.attiva .riga-sotto,
+.riga.attiva .riga-titolo.senza-nome { color: rgba(255, 255, 255, 0.8); }
 
 .miniatura {
   flex: none;
-  width: 72px;
-  height: 47px;
-  border-radius: 6px;
+  width: 58px;
+  height: 38px;
+  border-radius: 5px;
   overflow: hidden;
 }
-
 .riga-testi {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 .riga-titolo {
-  font-size: 17px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.riga-titolo.senza-nome { color: var(--testo-secondario); }
-.riga-sotto {
-  font-size: 15px;
-  color: var(--testo-secondario);
-}
-.freccia { color: var(--testo-secondario); opacity: 0.6; display: flex; }
+.riga-titolo.senza-nome { color: var(--testo-secondario); font-weight: 500; }
+.riga-sotto { font-size: 12px; color: var(--testo-secondario); }
 
-/* ---------- Stato vuoto ---------- */
+.lista-vuota {
+  margin: 16px 8px;
+  color: var(--testo-secondario);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* ---------- Colonna 2: il campo ---------- */
+.centro {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 20px 28px;
+}
+
 .vuoto {
+  margin: auto;
   text-align: center;
-  padding: 64px 24px;
 }
 .vuoto-icona { font-size: 56px; }
-.vuoto-titolo { font-size: 22px; font-weight: 700; margin: 12px 0 4px; }
-.vuoto-testo { color: var(--testo-secondario); margin: 0 0 24px; }
+.vuoto-titolo { font-size: 20px; font-weight: 700; margin: 12px 0 4px; }
+.vuoto-testo { color: var(--testo-secondario); margin: 0 0 20px; }
 
 .btn-pieno {
   background: var(--blu);
   color: #FFFFFF;
   font-weight: 600;
-  height: 50px;
-  padding: 0 28px;
-  border-radius: 12px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+}
+.btn-pieno:hover { filter: brightness(1.08); }
+.btn-pieno.distruttivo { background: var(--rosso); }
+.btn-secondario {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--sfondo-grigio);
+  font-weight: 500;
+}
+.btn-secondario:hover { background: var(--separatore); }
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
-/* ---------- Campo da gioco ---------- */
-.campo-contenitore {
-  margin-top: 8px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+.editor-testa {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.editor-titoli { flex: 1; min-width: 0; }
+
+/* Nome dello schema: sembra un titolo, ma si può scrivere */
+.nome-schema {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--testo);
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  padding: 2px 6px;
+  margin-left: -6px;
+  outline: none;
+  transition: background 0.15s;
+}
+.nome-schema:hover { background: var(--sfondo-hover); }
+.nome-schema:focus { background: var(--sfondo-card); box-shadow: 0 0 0 3px var(--blu-tenue); }
+.nome-schema::placeholder { color: var(--testo-secondario); }
+
+.sottotitolo {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--testo-secondario);
+}
+
+.gruppo-pulsanti { display: flex; gap: 4px; }
+.btn-strumento {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 7px;
+  color: var(--testo);
+  background: var(--sfondo-card);
+  box-shadow: var(--ombra);
+}
+.btn-strumento:not(:disabled):hover { background: var(--sfondo-grigio); }
+
+/* Il campo si adatta allo spazio: il più grande possibile senza deformarsi */
+.campo-area {
+  flex: 1;
+  max-height: calc((100vw - 640px) * 35 / 53.33);
+  min-height: 0;
+  display: flex;
+  align-items: flex-start; /* campo in alto, subito sotto il titolo */
+  justify-content: center;
+  container-type: size; /* serve per misurare lo spazio disponibile */
 }
 .campo {
   display: block;
-  width: 100%;
+  width: min(100cqw, 100cqh * 53.33 / 35);
   height: auto;
   aspect-ratio: 53.33 / 35;
-  touch-action: none; /* il dito trascina i giocatori invece di scorrere la pagina */
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
+.campo.sopra-giocatore { cursor: grab; }
+body.trascinando,
+body.trascinando .campo { cursor: grabbing; }
 
 .prato { fill: var(--prato); }
-.linea-yarde { stroke: var(--linee-campo); stroke-width: 0.12; opacity: 0.6; }
-.linea-yarde.forte { stroke-width: 0.18; opacity: 0.9; }
-.tacca { stroke: var(--tacche-campo); stroke-width: 0.12; }
-.linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.25; }
-.linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.2; opacity: 0.75; }
+.linea-yarde { stroke: var(--linee-campo); stroke-width: 0.1; opacity: 0.6; }
+.linea-yarde.forte { stroke-width: 0.16; opacity: 0.9; }
+.tacca { stroke: var(--tacche-campo); stroke-width: 0.1; }
+.numero-yarde { fill: var(--numeri-campo); font-size: 0.85px; font-weight: 600; }
+.linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.2; }
+.linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.16; opacity: 0.75; }
 .pallone { fill: var(--pallone); stroke: #FFFFFF; stroke-width: 0.06; }
 
 /* Giocatori dell'attacco: cerchi (e quadrato per il centro) */
-/* Le sagome si ingrandiscono dal proprio centro */
 .giocatore .sagoma,
-.giocatore .etichetta { transform-box: fill-box; transform-origin: center; }
+.giocatore .etichetta { transform-box: fill-box; transform-origin: center; transition: transform 0.15s var(--curva); }
 .giocatore .sagoma {
   fill: var(--attacco-riempimento);
   stroke: var(--attacco-bordo);
-  stroke-width: 0.16;
+  stroke-width: 0.14;
 }
 .giocatore .sagoma-invisibile { fill: transparent; }
 .giocatore .etichetta {
-  font-size: 1.2px;
+  font-size: 1.05px;
   font-weight: 700;
   fill: var(--attacco-testo);
   pointer-events: none;
 }
-.giocatore .etichetta.lunga { font-size: 0.95px; }
+.giocatore .etichetta.lunga { font-size: 0.8px; }
 
 /* Giocatori della difesa: lettere bianche con contorno rosso scuro */
 .forma-lettera .etichetta {
   fill: var(--difesa-testo);
   stroke: var(--difesa-contorno);
-  stroke-width: 0.3;
+  stroke-width: 0.28;
   paint-order: stroke;
-  font-size: 1.7px;
+  font-size: 1.6px;
   font-weight: 800;
 }
-.forma-lettera .etichetta.lunga { font-size: 1.3px; }
+.forma-lettera .etichetta.lunga { font-size: 1.2px; }
 
-/* Il giocatore preso col dito diventa un po' più grande */
-.giocatore.trascinato .sagoma,
-.giocatore.trascinato .etichetta {
-  transform: scale(1.3);
-  transition: transform 0.15s var(--curva);
+/* Selezione: alone giallo attorno al giocatore */
+.giocatore .alone {
+  fill: none;
+  stroke: var(--selezione);
+  stroke-width: 0.18;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
-.giocatore.trascinato .sagoma { filter: drop-shadow(0 0.3px 0.4px rgba(0, 0, 0, 0.5)); }
+.giocatore.selezionato .alone { opacity: 1; }
 
-/* Nelle miniature le linee del campo sono più leggere */
+/* Il giocatore trascinato diventa un po' più grande */
+body.trascinando .giocatore.selezionato .sagoma,
+body.trascinando .giocatore.selezionato .etichetta { transform: scale(1.2); }
+
 .miniatura .linea-yarde { opacity: 0.35; }
 
 .suggerimento {
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--testo-secondario);
-  margin: 8px 0 0;
+  margin: 14px 0 0;
 }
 
-/* ---------- Formazioni (pillole orizzontali) ---------- */
-.chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
+/* ---------- Colonna 3: pannello dei dettagli ---------- */
+.pannello {
+  background: var(--sfondo-laterale);
+  border-left: 1px solid var(--separatore);
+  padding: 4px 14px 20px;
+  overflow-y: auto;
 }
-.chips::-webkit-scrollbar { display: none; }
-.chip {
-  flex: none;
-  min-height: 36px;
-  padding: 0 16px;
-  border-radius: 18px;
+
+.card,
+.lista-scelte {
   background: var(--sfondo-card);
-  font-size: 15px;
+  border-radius: 10px;
+  overflow: hidden;
   box-shadow: var(--ombra);
-  transition: background 0.25s var(--curva), color 0.25s var(--curva);
-}
-.chip.attivo {
-  background: var(--blu);
-  color: #FFFFFF;
-  font-weight: 600;
 }
 
-/* ---------- Note ---------- */
+/* Elenco delle formazioni con la spunta su quella scelta */
+.scelta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 12px;
+  text-align: left;
+  position: relative;
+}
+.scelta:hover { background: var(--sfondo-hover); }
+.scelta + .scelta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 0;
+  border-top: 1px solid var(--separatore);
+}
+.scelta .spunta { color: var(--blu); opacity: 0; }
+.scelta.attiva { font-weight: 600; }
+.scelta.attiva .spunta { opacity: 1; }
+
+.info-giocatore { padding: 4px 0; }
+.info-giocatore .testo-secondario { margin: 8px 12px; color: var(--testo-secondario); }
+.riga-campo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 0 12px;
+  gap: 12px;
+}
+.riga-campo + .riga-campo { border-top: 1px solid var(--separatore); }
+.riga-campo .valore { color: var(--testo-secondario); }
+.riga-campo input {
+  width: 64px;
+  text-align: right;
+  border: 0;
+  border-radius: 5px;
+  padding: 3px 6px;
+  background: var(--sfondo-grigio);
+  color: var(--testo);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+.riga-campo input:focus { box-shadow: 0 0 0 3px var(--blu-tenue); }
+
 textarea {
   display: block;
   width: 100%;
@@ -387,100 +497,78 @@ textarea {
   background: transparent;
   color: var(--testo);
   font: inherit;
-  padding: 12px 16px;
-  min-height: 96px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  min-height: 110px;
 }
 textarea::placeholder { color: var(--testo-secondario); }
 
-/* ---------- Azioni in fondo all'editor ---------- */
-.azioni-card { margin-top: 24px; }
+.azioni-card { margin-top: 20px; }
 .riga-azione {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
-  min-height: 44px;
-  padding: 11px 16px;
+  min-height: 34px;
+  padding: 0 12px;
   text-align: left;
   color: var(--blu);
   position: relative;
 }
-.riga-azione + .riga-azione::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 16px;
-  right: 0;
-  border-top: 0.5px solid var(--separatore);
-}
+.riga-azione:hover { background: var(--sfondo-hover); }
+.riga-azione + .riga-azione { border-top: 1px solid var(--separatore); }
 .riga-azione.distruttiva { color: var(--rosso); }
 
-/* ---------- Foglio di conferma (action sheet) ---------- */
+/* ---------- Finestra di conferma ---------- */
 .velo {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.25);
   opacity: 0;
-  transition: opacity 0.3s var(--curva);
+  transition: opacity 0.2s var(--curva);
   z-index: 10;
 }
 .velo.visibile { opacity: 1; }
 
-.foglio-azioni {
+.dialogo {
   position: fixed;
-  left: 8px;
-  right: 8px;
-  bottom: calc(8px + env(safe-area-inset-bottom));
-  max-width: 420px;
-  margin: 0 auto;
-  z-index: 11;
-  transform: translateY(120%);
-  transition: transform 0.3s var(--curva);
-}
-.foglio-azioni.visibile { transform: translateY(0); }
-
-.foglio-gruppo,
-.foglio-annulla {
-  background: var(--sfondo-card);
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  padding: 20px;
   border-radius: 14px;
-  overflow: hidden;
-}
-.foglio-messaggio {
-  margin: 0;
-  padding: 14px 16px;
+  background: var(--sfondo-card);
+  box-shadow: var(--ombra-dialogo);
   text-align: center;
-  font-size: 13px;
-  color: var(--testo-secondario);
-  border-bottom: 0.5px solid var(--separatore);
+  z-index: 11;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.95);
+  transition: opacity 0.2s var(--curva), transform 0.2s var(--curva);
 }
-.foglio-btn {
-  display: block;
-  width: 100%;
-  height: 57px;
-  font-size: 20px;
-  color: var(--blu);
-}
-.foglio-btn.distruttiva { color: var(--rosso); }
-.foglio-annulla { margin-top: 8px; font-weight: 600; }
+.dialogo.visibile { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.dialogo-titolo { font-weight: 700; font-size: 15px; margin: 0 0 6px; }
+.dialogo-testo { color: var(--testo-secondario); margin: 0 0 18px; font-size: 13px; }
+.dialogo-pulsanti { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 /* ---------- Avviso in basso (toast) ---------- */
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(24px + env(safe-area-inset-bottom));
+  bottom: 24px;
   transform: translate(-50%, 20px);
   opacity: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 8px 0 18px;
-  min-height: 48px;
-  max-width: calc(100% - 32px);
-  border-radius: 14px;
+  gap: 14px;
+  padding: 0 6px 0 16px;
+  min-height: 40px;
+  border-radius: 10px;
   background: rgba(30, 30, 32, 0.92);
   color: #FFFFFF;
-  font-size: 15px;
+  font-size: 13px;
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  transition: opacity 0.3s var(--curva), transform 0.3s var(--curva);
+  transition: opacity 0.25s var(--curva), transform 0.25s var(--curva);
   z-index: 12;
   white-space: nowrap;
 }
@@ -488,13 +576,15 @@ textarea::placeholder { color: var(--testo-secondario); }
 .toast button {
   color: #64B5FF;
   font-weight: 600;
-  min-height: 44px;
+  height: 32px;
   padding: 0 10px;
+  border-radius: 6px;
 }
+.toast button:hover { background: rgba(255, 255, 255, 0.1); }
 
 /* ---------- Animazioni ---------- */
 @keyframes appari {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(3px); }
   to   { opacity: 1; transform: none; }
 }
 
@@ -506,8 +596,18 @@ textarea::placeholder { color: var(--testo-secondario); }
   }
 }
 
-/* ---------- iPad e schermi grandi ---------- */
-@media (min-width: 700px) {
-  .titolo-grande { font-size: 40px; }
-  .segmentato { max-width: 320px; }
+/* ---------- Finestre più strette (portatili piccoli) ----------
+   Il pannello dei dettagli scende sotto il campo.
+   La versione vera per telefono e tablet la faremo più avanti. */
+@media (max-width: 1100px) {
+  .app {
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 1fr 36vh;
+  }
+  .laterale { grid-row: 1 / 3; }
+  .pannello {
+    grid-column: 2;
+    border-left: 0;
+    border-top: 1px solid var(--separatore);
+  }
 }

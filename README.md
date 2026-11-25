@@ -1,6 +1,15 @@
 # Playbook
 
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
+Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
+
+## Versione 0.2 — per computer
+- Layout a tre colonne: elenco schemi con ricerca, campo grande, pannello dettagli
+- Clic per selezionare un giocatore, trascina per spostarlo (Maiusc = aggancio alla mezza yarda)
+- Frecce per spostare il selezionato di mezza yarda (Maiusc = 2 yarde)
+- Annulla / Ripeti (Ctrl/⌘+Z, Ctrl/⌘+Maiusc+Z), N = nuovo schema, Ctrl/⌘+D = duplica
+- Ruolo del giocatore modificabile e profondità rispetto alla linea
+- Distanze dalla linea scritte a bordo campo
 
 ## Versione 0.1
 - Campo con yarde, hash mark, linea di scrimmage e primo down

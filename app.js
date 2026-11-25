@@ -1,10 +1,13 @@
 /* ==========================================================================
-   APP PLAYBOOK — logica delle schermate
+   APP PLAYBOOK — logica (versione per computer)
    --------------------------------------------------------------------------
    1. Disegno del campo e dei giocatori (SVG)
-   2. Schermata elenco
-   3. Schermata editor (trascinamento, formazioni, note)
-   4. Fogli di conferma e avvisi
+   2. Barra laterale: elenco degli schemi
+   3. Editor: apertura, salvataggio automatico, formazioni, note
+   4. Mouse: selezione e trascinamento dei giocatori
+   5. Annulla / Ripeti
+   6. Scorciatoie da tastiera
+   7. Finestra di conferma e avvisi
    ========================================================================== */
 
 /* ---------- Misure del campo (in yarde) ---------- */
@@ -14,9 +17,11 @@ const YARDE_AVANTI = 23;       // quanto campo si vede oltre la linea (difesa)
 const ALTEZZA_CAMPO = YARDE_DIETRO + YARDE_AVANTI;
 const HASH_SINISTRO = 20;      // hash mark regolamento NCAA (usato anche in Europa)
 const HASH_DESTRO = LARGHEZZA_CAMPO - 20;
-const RAGGIO_GIOCATORE = 1.1;
+const RAGGIO_GIOCATORE = 0.95;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+const SU_MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const TASTO_CMD = SU_MAC ? "⌘" : "Ctrl+";
 
 /* Converte la "y" dello schema (yarde dalla linea) nella "y" del disegno.
    Nel disegno lo 0 è in alto: la difesa sta sopra, l'attacco sotto e
@@ -33,10 +38,12 @@ function crea(tag, attributi = {}, genitore = null) {
   return el;
 }
 
+const $ = (sel) => document.querySelector(sel);
+
 /* ==========================================================================
    1. DISEGNO DEL CAMPO
    ========================================================================== */
-function disegnaCampo(svg, schema, { miniatura = false } = {}) {
+function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {}) {
   svg.innerHTML = "";
   svg.setAttribute("viewBox", `0 0 ${LARGHEZZA_CAMPO} ${ALTEZZA_CAMPO}`);
 
@@ -54,8 +61,8 @@ function disegnaCampo(svg, schema, { miniatura = false } = {}) {
     }, linee);
   }
 
-  // Tacche di ogni yarda: sugli hash e vicino alle linee laterali
   if (!miniatura) {
+    // Tacche di ogni yarda: sugli hash e vicino alle linee laterali
     for (let y = -YARDE_DIETRO + 1; y < YARDE_AVANTI; y++) {
       if (y % 5 === 0) continue;
       const yy = yDisegno(y);
@@ -64,6 +71,13 @@ function disegnaCampo(svg, schema, { miniatura = false } = {}) {
       }
       crea("line", { x1: 0.3, x2: 1.1, y1: yy, y2: yy, class: "tacca" }, linee);
       crea("line", { x1: LARGHEZZA_CAMPO - 1.1, x2: LARGHEZZA_CAMPO - 0.3, y1: yy, y2: yy, class: "tacca" }, linee);
+    }
+
+    // Distanza dalla linea scritta a bordo campo (+5, +10, -5…)
+    for (let y = -10; y <= 20; y += 5) {
+      if (y === 0) continue;
+      const t = crea("text", { x: 2.2, y: yDisegno(y) - 0.35, class: "numero-yarde" }, linee);
+      t.textContent = (y > 0 ? "+" : "−") + Math.abs(y);
     }
   }
 
@@ -76,7 +90,10 @@ function disegnaCampo(svg, schema, { miniatura = false } = {}) {
 
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
-  for (const g of schema.giocatori) disegnaGiocatore(gruppo, g);
+  for (const g of schema.giocatori) {
+    const el = disegnaGiocatore(gruppo, g);
+    if (g.id === selezionato) el.classList.add("selezionato");
+  }
 }
 
 function disegnaGiocatore(genitore, g) {
@@ -86,14 +103,17 @@ function disegnaGiocatore(genitore, g) {
     transform: `translate(${g.x} ${yDisegno(g.y)})`,
   }, genitore);
 
+  // Alone che compare quando il giocatore è selezionato
+  crea("circle", { r: RAGGIO_GIOCATORE * 1.55, class: "alone" }, el);
+
   if (g.forma === "quadrato") {
     const lato = RAGGIO_GIOCATORE * 1.8;
     crea("rect", { x: -lato / 2, y: -lato / 2, width: lato, height: lato, rx: 0.15, class: "sagoma" }, el);
   } else if (g.forma === "cerchio") {
     crea("circle", { r: RAGGIO_GIOCATORE, class: "sagoma" }, el);
   } else {
-    // Difesa: solo la lettera, con un cerchio trasparente per facilitare il tocco
-    crea("circle", { r: RAGGIO_GIOCATORE, class: "sagoma-invisibile" }, el);
+    // Difesa: solo la lettera, con un cerchio trasparente per prenderla col mouse
+    crea("circle", { r: RAGGIO_GIOCATORE * 1.2, class: "sagoma-invisibile" }, el);
   }
 
   const testo = crea("text", {
@@ -106,12 +126,11 @@ function disegnaGiocatore(genitore, g) {
 }
 
 /* ==========================================================================
-   2. SCHERMATA ELENCO
+   2. BARRA LATERALE: ELENCO DEGLI SCHEMI
    ========================================================================== */
-const $ = (sel) => document.querySelector(sel);
-
 let latoSelezionato = "attacco";
-let schemaCorrente = null;
+let schemaCorrente = null;     // lo schema aperto nell'editor
+let giocatoreSelezionato = null; // id del giocatore selezionato
 
 function nomeFormazione(schema) {
   const f = FORMAZIONI[schema.lato].find((f) => f.id === schema.formazione);
@@ -128,20 +147,33 @@ function dataBreve(ms) {
 }
 
 function mostraElenco() {
-  const schemi = Dati.tutti().filter((s) => s.lato === latoSelezionato);
+  const testoCerca = $("#cerca").value.trim().toLowerCase();
+  const delLato = Dati.tutti().filter((s) => s.lato === latoSelezionato);
+  const schemi = delLato.filter((s) =>
+    !testoCerca ||
+    (s.nome || "").toLowerCase().includes(testoCerca) ||
+    nomeFormazione(s).toLowerCase().includes(testoCerca)
+  );
+
   const lista = $("#lista-schemi");
   lista.innerHTML = "";
-
-  $("#vuoto").hidden = schemi.length > 0;
   lista.hidden = schemi.length === 0;
-  $("#conteggio").textContent = schemi.length
-    ? `${schemi.length} ${schemi.length === 1 ? "schema" : "schemi"}`
+
+  const vuota = $("#lista-vuota");
+  vuota.hidden = schemi.length > 0;
+  vuota.textContent = delLato.length
+    ? "Nessuno schema trovato."
+    : `Nessuno schema di ${latoSelezionato}. Premi + per crearne uno.`;
+
+  $("#conteggio").textContent = delLato.length
+    ? `${delLato.length} ${delLato.length === 1 ? "schema" : "schemi"}`
     : "";
 
   for (const schema of schemi) {
     const riga = document.createElement("li");
-    riga.className = "riga";
+    riga.className = "riga" + (schemaCorrente && schemaCorrente.id === schema.id ? " attiva" : "");
     riga.tabIndex = 0;
+    riga.dataset.id = schema.id;
 
     // Miniatura del campo
     const mini = document.createElementNS(SVG_NS, "svg");
@@ -158,26 +190,38 @@ function mostraElenco() {
     sotto.textContent = `${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
     testi.append(titolo, sotto);
 
-    const freccia = document.createElement("span");
-    freccia.className = "freccia";
-    freccia.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
-
-    riga.append(mini, testi, freccia);
+    riga.append(mini, testi);
     riga.addEventListener("click", () => apriEditor(schema.id));
     riga.addEventListener("keydown", (e) => { if (e.key === "Enter") apriEditor(schema.id); });
     lista.appendChild(riga);
   }
 }
 
-// Controllo segmentato Attacco / Difesa
+// Aggiorna solo la riga dello schema aperto (più leggero che ridisegnare tutto)
+function aggiornaRigaCorrente() {
+  if (!schemaCorrente) return;
+  const riga = document.querySelector(`.riga[data-id="${schemaCorrente.id}"]`);
+  if (!riga) return mostraElenco();
+  disegnaCampo(riga.querySelector(".miniatura"), schemaCorrente, { miniatura: true });
+  const titolo = riga.querySelector(".riga-titolo");
+  titolo.textContent = schemaCorrente.nome || "Senza nome";
+  titolo.classList.toggle("senza-nome", !schemaCorrente.nome);
+  riga.querySelector(".riga-sotto").textContent =
+    `${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
+}
+
+function scegliLato(lato) {
+  latoSelezionato = lato;
+  document.querySelectorAll("#filtro-lato .segmento").forEach((b) =>
+    b.classList.toggle("attivo", b.dataset.lato === lato));
+  $("#filtro-lato").dataset.scelto = lato;
+  mostraElenco();
+}
+
 document.querySelectorAll("#filtro-lato .segmento").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    latoSelezionato = btn.dataset.lato;
-    document.querySelectorAll("#filtro-lato .segmento").forEach((b) => b.classList.toggle("attivo", b === btn));
-    $("#filtro-lato").dataset.scelto = latoSelezionato;
-    mostraElenco();
-  });
+  btn.addEventListener("click", () => scegliLato(btn.dataset.lato));
 });
+$("#cerca").addEventListener("input", mostraElenco);
 
 function nuovoSchema() {
   const schema = Dati.crea(latoSelezionato);
@@ -187,44 +231,52 @@ $("#btn-nuovo").addEventListener("click", nuovoSchema);
 $("#btn-nuovo-vuoto").addEventListener("click", nuovoSchema);
 
 /* ==========================================================================
-   3. SCHERMATA EDITOR
+   3. EDITOR
    ========================================================================== */
 const svgCampo = $("#campo");
 
 function apriEditor(id, { focusNome = false } = {}) {
+  salvaSubito(); // salva lo schema che stavamo modificando
+  nascondiAvviso();
+
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
+  giocatoreSelezionato = null;
+  storia = { indietro: [], avanti: [] };
+  aggiornaPulsantiStoria();
+
+  // Se lo schema è dell'altro lato, cambiamo anche la barra laterale
+  if (schemaCorrente.lato !== latoSelezionato) scegliLato(schemaCorrente.lato);
 
   $("#nome-schema").value = schemaCorrente.nome;
   $("#note-schema").value = schemaCorrente.note || "";
   $("#stato-salvataggio").textContent = "";
-  aggiornaInfo();
-  mostraChipsFormazioni();
-  disegnaCampo(svgCampo, schemaCorrente);
+  $("#vuoto").hidden = true;
+  $("#editor").hidden = false;
+  $("#pannello").hidden = false;
 
-  $("#vista-elenco").classList.remove("attiva");
-  $("#vista-elenco").classList.add("sotto");
-  $("#vista-editor").classList.add("attiva");
-  $("#vista-editor").scrollTop = 0;
-
-  if (focusNome) setTimeout(() => $("#nome-schema").focus(), 350);
+  ridisegna();
+  mostraElenco();
+  if (focusNome) $("#nome-schema").focus();
 }
 
 function chiudiEditor() {
   salvaSubito();
-  nascondiAvviso(); // l'eventuale "Annulla" riguarda l'editor appena chiuso
   schemaCorrente = null;
-  $("#nome-schema").blur();
+  giocatoreSelezionato = null;
+  $("#editor").hidden = true;
+  $("#pannello").hidden = true;
+  $("#vuoto").hidden = false;
   mostraElenco();
-  $("#vista-editor").classList.remove("attiva");
-  $("#vista-elenco").classList.remove("sotto");
-  $("#vista-elenco").classList.add("attiva");
 }
-$("#btn-indietro").addEventListener("click", chiudiEditor);
 
-function aggiornaInfo() {
+// Ridisegna campo, pannello e intestazione dello schema aperto
+function ridisegna() {
+  disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
   const lato = schemaCorrente.lato === "attacco" ? "Attacco" : "Difesa";
-  $("#info-schema").textContent = `${lato} · ${nomeFormazione(schemaCorrente)}`;
+  $("#info-schema").textContent = `${lato} · ${nomeFormazione(schemaCorrente)} ·`;
+  mostraFormazioni();
+  mostraInfoGiocatore();
 }
 
 /* ---------- Salvataggio automatico ----------
@@ -233,7 +285,7 @@ function aggiornaInfo() {
 let timerSalvataggio = null;
 function salvaTraPoco() {
   clearTimeout(timerSalvataggio);
-  $("#stato-salvataggio").textContent = "";
+  $("#stato-salvataggio").textContent = "Modificato";
   timerSalvataggio = setTimeout(salvaSubito, 400);
 }
 function salvaSubito() {
@@ -241,6 +293,7 @@ function salvaSubito() {
   if (!schemaCorrente) return;
   const ok = Dati.salva(schemaCorrente);
   $("#stato-salvataggio").textContent = ok ? "Salvato" : "Errore nel salvataggio";
+  aggiornaRigaCorrente();
 }
 
 $("#nome-schema").addEventListener("input", (e) => {
@@ -256,48 +309,74 @@ $("#note-schema").addEventListener("input", (e) => {
 });
 
 /* ---------- Scelta della formazione ---------- */
-function mostraChipsFormazioni() {
-  const contenitore = $("#chips-formazioni");
+function mostraFormazioni() {
+  const contenitore = $("#lista-formazioni");
   contenitore.innerHTML = "";
   for (const f of FORMAZIONI[schemaCorrente.lato]) {
-    const chip = document.createElement("button");
-    chip.className = "chip" + (f.id === schemaCorrente.formazione ? " attivo" : "");
-    chip.textContent = f.nome;
-    chip.addEventListener("click", () => cambiaFormazione(f.id));
-    contenitore.appendChild(chip);
+    const scelta = document.createElement("button");
+    scelta.className = "scelta" + (f.id === schemaCorrente.formazione ? " attiva" : "");
+    scelta.innerHTML = `<span></span><svg class="spunta" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+    scelta.querySelector("span").textContent = f.nome;
+    scelta.addEventListener("click", () => cambiaFormazione(f.id));
+    contenitore.appendChild(scelta);
   }
 }
 
 function cambiaFormazione(idFormazione) {
-  // Teniamo da parte le posizioni attuali per poter annullare
-  const prima = {
-    formazione: schemaCorrente.formazione,
-    giocatori: JSON.parse(JSON.stringify(schemaCorrente.giocatori)),
-  };
+  if (idFormazione === schemaCorrente.formazione) return;
+  ricordaStato();
   schemaCorrente.formazione = idFormazione;
   schemaCorrente.giocatori = giocatoriDaFormazione(schemaCorrente.lato, idFormazione);
-  disegnaCampo(svgCampo, schemaCorrente);
-  mostraChipsFormazioni();
-  aggiornaInfo();
+  giocatoreSelezionato = null;
+  ridisegna();
   salvaSubito();
-
-  mostraAvviso(`Formazione: ${nomeFormazione(schemaCorrente)}`, () => {
-    if (!schemaCorrente) return;
-    schemaCorrente.formazione = prima.formazione;
-    schemaCorrente.giocatori = prima.giocatori;
-    disegnaCampo(svgCampo, schemaCorrente);
-    mostraChipsFormazioni();
-    aggiornaInfo();
-    salvaSubito();
-  });
+  mostraAvviso(`Formazione: ${nomeFormazione(schemaCorrente)}`, annulla);
 }
 
-/* ---------- Trascinamento dei giocatori ----------
-   Usiamo i "pointer events", che funzionano allo stesso modo con il dito,
-   la Apple Pencil e il mouse. */
-let trascinamento = null; // { giocatore, elemento, scostX, scostY }
+/* ---------- Pannello del giocatore selezionato ---------- */
+function descriviPosizione(g) {
+  const dist = Math.abs(g.y).toLocaleString("it-IT", { maximumFractionDigits: 1 });
+  if (Math.abs(g.y) < 0.05) return "sulla linea di scrimmage";
+  return g.y < 0 ? `${dist} yd dietro la linea` : `${dist} yd oltre la linea`;
+}
 
-// Converte la posizione del dito sullo schermo in coordinate del campo (yarde)
+function mostraInfoGiocatore() {
+  const box = $("#info-giocatore");
+  const g = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
+  if (!g) {
+    box.innerHTML = '<p class="testo-secondario">Clicca un giocatore sul campo.</p>';
+    return;
+  }
+  box.innerHTML = `
+    <label class="riga-campo">
+      <span>Ruolo</span>
+      <input id="etichetta-giocatore" type="text" maxlength="3" autocomplete="off">
+    </label>
+    <div class="riga-campo">
+      <span>Profondità</span>
+      <span class="valore" id="pos-giocatore"></span>
+    </div>`;
+  const input = $("#etichetta-giocatore");
+  input.value = g.etichetta;
+  $("#pos-giocatore").textContent = descriviPosizione(g);
+
+  input.addEventListener("focus", () => ricordaStato());
+  input.addEventListener("input", () => {
+    g.etichetta = input.value.toUpperCase().trim() || "?";
+    disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
+    salvaTraPoco();
+  });
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === "Escape") input.blur(); });
+}
+
+/* ==========================================================================
+   4. MOUSE: SELEZIONE E TRASCINAMENTO
+   Usiamo i "pointer events": funzionano col mouse, col trackpad e
+   (più avanti) anche col dito sugli schermi touch.
+   ========================================================================== */
+let trascinamento = null; // { giocatore, elemento, scostX, scostY, mosso }
+
+// Converte la posizione del mouse sullo schermo in coordinate del campo (yarde)
 function puntoNelCampo(evento) {
   const punto = svgCampo.createSVGPoint();
   punto.x = evento.clientX;
@@ -305,131 +384,266 @@ function puntoNelCampo(evento) {
   return punto.matrixTransform(svgCampo.getScreenCTM().inverse());
 }
 
-svgCampo.addEventListener("pointerdown", (evento) => {
-  if (!schemaCorrente) return;
-  const p = puntoNelCampo(evento);
-
-  // Cerchiamo il giocatore più vicino al dito (entro 2,5 yarde):
-  // così è facile prenderlo anche se è piccolo sullo schermo.
+// Trova il giocatore più vicino al punto, entro una certa distanza
+function giocatoreVicino(p, raggio = 1.6) {
   let piuVicino = null;
-  let distanzaMinima = 2.5;
+  let distanzaMinima = raggio;
   for (const g of schemaCorrente.giocatori) {
     const d = Math.hypot(g.x - p.x, yDisegno(g.y) - p.y);
     if (d < distanzaMinima) { distanzaMinima = d; piuVicino = g; }
   }
-  if (!piuVicino) return;
+  return piuVicino;
+}
+
+function selezionaGiocatore(id) {
+  giocatoreSelezionato = id;
+  svgCampo.querySelectorAll(".giocatore").forEach((el) =>
+    el.classList.toggle("selezionato", el.dataset.id === id));
+  mostraInfoGiocatore();
+}
+
+svgCampo.addEventListener("pointerdown", (evento) => {
+  if (!schemaCorrente || evento.button > 0) return;
+  const p = puntoNelCampo(evento);
+  const g = giocatoreVicino(p);
+
+  // Clic sul prato vuoto: togli la selezione
+  if (!g) { selezionaGiocatore(null); return; }
 
   evento.preventDefault();
   svgCampo.setPointerCapture(evento.pointerId);
-  const elemento = svgCampo.querySelector(`.giocatore[data-id="${piuVicino.id}"]`);
-  elemento.classList.add("trascinato");
+  selezionaGiocatore(g.id);
+  const elemento = svgCampo.querySelector(`.giocatore[data-id="${g.id}"]`);
   elemento.parentNode.appendChild(elemento); // portalo sopra gli altri
+  document.body.classList.add("trascinando");
   trascinamento = {
-    giocatore: piuVicino,
+    giocatore: g,
     elemento,
-    scostX: piuVicino.x - p.x,
-    scostY: yDisegno(piuVicino.y) - p.y,
+    scostX: g.x - p.x,
+    scostY: yDisegno(g.y) - p.y,
+    prima: istantanea(), // per Annulla, salvata solo se il giocatore si muove davvero
+    mosso: false,
   };
 });
 
 svgCampo.addEventListener("pointermove", (evento) => {
-  if (!trascinamento) return;
-  evento.preventDefault();
+  if (!trascinamento) {
+    // Cursore a "mano" quando passi sopra un giocatore
+    if (schemaCorrente) svgCampo.classList.toggle("sopra-giocatore", !!giocatoreVicino(puntoNelCampo(evento)));
+    return;
+  }
   const p = puntoNelCampo(evento);
   const g = trascinamento.giocatore;
 
-  // Nuova posizione, tenuta dentro i bordi del campo
-  const x = Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, p.x + trascinamento.scostX));
-  const yD = Math.min(ALTEZZA_CAMPO - 0.6, Math.max(0.6, p.y + trascinamento.scostY));
-  g.x = Math.round(x * 10) / 10;
-  g.y = Math.round((YARDE_AVANTI - yD) * 10) / 10;
+  // Nuova posizione, tenuta dentro i bordi del campo.
+  // Con Maiusc premuto si aggancia alla mezza yarda (più ordine).
+  let x = Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, p.x + trascinamento.scostX));
+  let y = YARDE_AVANTI - Math.min(ALTEZZA_CAMPO - 0.6, Math.max(0.6, p.y + trascinamento.scostY));
+  const passo = evento.shiftKey ? 0.5 : 0.1;
+  x = Math.round(x / passo) * passo;
+  y = Math.round(y / passo) * passo;
+  if (x === g.x && y === g.y) return;
 
+  g.x = +x.toFixed(1);
+  g.y = +y.toFixed(1);
+  trascinamento.mosso = true;
   trascinamento.elemento.setAttribute("transform", `translate(${g.x} ${yDisegno(g.y)})`);
+  $("#pos-giocatore") && ($("#pos-giocatore").textContent = descriviPosizione(g));
 });
 
 function fineTrascinamento() {
   if (!trascinamento) return;
-  trascinamento.elemento.classList.remove("trascinato");
+  document.body.classList.remove("trascinando");
+  if (trascinamento.mosso) {
+    ricordaStato(trascinamento.prima);
+    salvaTraPoco();
+  }
   trascinamento = null;
-  salvaTraPoco();
 }
 svgCampo.addEventListener("pointerup", fineTrascinamento);
 svgCampo.addEventListener("pointercancel", fineTrascinamento);
 
+/* ==========================================================================
+   5. ANNULLA / RIPETI
+   Prima di ogni modifica salviamo una "foto" di formazione e giocatori.
+   ========================================================================== */
+let storia = { indietro: [], avanti: [] };
+
+function istantanea() {
+  return JSON.stringify({ formazione: schemaCorrente.formazione, giocatori: schemaCorrente.giocatori });
+}
+
+function ricordaStato(foto = istantanea()) {
+  storia.indietro.push(foto);
+  if (storia.indietro.length > 100) storia.indietro.shift();
+  storia.avanti = [];
+  aggiornaPulsantiStoria();
+}
+
+function ripristina(foto) {
+  const { formazione, giocatori } = JSON.parse(foto);
+  schemaCorrente.formazione = formazione;
+  schemaCorrente.giocatori = giocatori;
+  if (!giocatori.some((g) => g.id === giocatoreSelezionato)) giocatoreSelezionato = null;
+  ridisegna();
+  salvaSubito();
+}
+
+function annulla() {
+  if (!schemaCorrente || !storia.indietro.length) return;
+  storia.avanti.push(istantanea());
+  ripristina(storia.indietro.pop());
+  aggiornaPulsantiStoria();
+}
+
+function ripeti() {
+  if (!schemaCorrente || !storia.avanti.length) return;
+  storia.indietro.push(istantanea());
+  ripristina(storia.avanti.pop());
+  aggiornaPulsantiStoria();
+}
+
+function aggiornaPulsantiStoria() {
+  $("#btn-annulla").disabled = !storia.indietro.length;
+  $("#btn-ripeti").disabled = !storia.avanti.length;
+}
+$("#btn-annulla").addEventListener("click", annulla);
+$("#btn-ripeti").addEventListener("click", ripeti);
+
+/* ==========================================================================
+   6. SCORCIATOIE DA TASTIERA
+   ========================================================================== */
+$("#suggerimento").innerHTML =
+  `Trascina per spostare · <kbd>Maiusc</kbd> aggancia alla mezza yarda · ` +
+  `<kbd>←↑↓→</kbd> sposta il selezionato · <kbd>${TASTO_CMD}Z</kbd> annulla`;
+$("#kbd-duplica").textContent = TASTO_CMD + "D";
+$("#btn-annulla").title = `Annulla (${TASTO_CMD}Z)`;
+$("#btn-ripeti").title = `Ripeti (${TASTO_CMD}${SU_MAC ? "⇧" : "Shift+"}Z)`;
+
+document.addEventListener("keydown", (e) => {
+  const staScrivendo = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+  const cmd = e.metaKey || e.ctrlKey;
+  if (!$("#dialogo").hidden) {
+    if (e.key === "Escape") chiudiDialogo();
+    return;
+  }
+
+  // Annulla / Ripeti (quando non si sta scrivendo un testo)
+  if (cmd && e.key.toLowerCase() === "z" && !staScrivendo) {
+    e.preventDefault();
+    e.shiftKey ? ripeti() : annulla();
+    return;
+  }
+  if (cmd && e.key.toLowerCase() === "y" && !staScrivendo) { e.preventDefault(); ripeti(); return; }
+
+  // Duplica
+  if (cmd && e.key.toLowerCase() === "d" && schemaCorrente) {
+    e.preventDefault();
+    duplica();
+    return;
+  }
+
+  if (staScrivendo || cmd || e.altKey) return;
+
+  // N = nuovo schema
+  if (e.key === "n" || e.key === "N") { e.preventDefault(); nuovoSchema(); return; }
+
+  if (!schemaCorrente) return;
+
+  // Esc = togli la selezione
+  if (e.key === "Escape") { selezionaGiocatore(null); return; }
+
+  // Frecce = sposta il giocatore selezionato di mezza yarda (2 yarde con Maiusc)
+  const direzioni = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+  const g = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
+  if (g && direzioni[e.key]) {
+    e.preventDefault();
+    if (!e.repeat) ricordaStato();
+    const passo = e.shiftKey ? 2 : 0.5;
+    const [dx, dy] = direzioni[e.key];
+    g.x = +Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, g.x + dx * passo)).toFixed(1);
+    g.y = +Math.min(YARDE_AVANTI - 0.6, Math.max(-YARDE_DIETRO + 0.6, g.y + dy * passo)).toFixed(1);
+    svgCampo.querySelector(`.giocatore[data-id="${g.id}"]`)
+      .setAttribute("transform", `translate(${g.x} ${yDisegno(g.y)})`);
+    $("#pos-giocatore").textContent = descriviPosizione(g);
+    salvaTraPoco();
+  }
+});
+
 /* ---------- Duplica / Elimina ---------- */
-$("#btn-duplica").addEventListener("click", () => {
+function duplica() {
   salvaSubito();
   const copia = Dati.duplica(schemaCorrente.id);
   if (copia) {
     apriEditor(copia.id);
     mostraAvviso("Schema duplicato");
   }
-});
+}
+$("#btn-duplica").addEventListener("click", duplica);
 
 $("#btn-elimina").addEventListener("click", () => {
-  const nome = schemaCorrente.nome || "questo schema";
-  chiediConferma(`Vuoi eliminare "${nome}"?`, "Elimina schema", () => {
+  const nome = schemaCorrente.nome || "Senza nome";
+  chiediConferma(`Eliminare "${nome}"?`, "Potrai annullare subito dopo.", "Elimina", () => {
     const eliminato = Dati.elimina(schemaCorrente.id);
     schemaCorrente = null;
-    $("#vista-editor").classList.remove("attiva");
-    $("#vista-elenco").classList.remove("sotto");
-    $("#vista-elenco").classList.add("attiva");
-    mostraElenco();
+    chiudiEditor();
     mostraAvviso("Schema eliminato", () => {
       Dati.salva(eliminato);
-      mostraElenco();
+      apriEditor(eliminato.id);
     });
   });
 });
 
 /* ==========================================================================
-   4. FOGLIO DI CONFERMA E AVVISI
+   7. FINESTRA DI CONFERMA E AVVISI
    ========================================================================== */
 let azioneConferma = null;
 
-function chiediConferma(messaggio, etichettaBottone, azione) {
-  $("#conferma-testo").textContent = messaggio;
-  $("#conferma-ok").textContent = etichettaBottone;
+function chiediConferma(titolo, testo, etichettaBottone, azione) {
+  $("#dialogo-titolo").textContent = titolo;
+  $("#dialogo-testo").textContent = testo;
+  $("#dialogo-ok").textContent = etichettaBottone;
   azioneConferma = azione;
   $("#velo").hidden = false;
-  $("#foglio-conferma").hidden = false;
+  $("#dialogo").hidden = false;
   // Un frame dopo aggiungiamo la classe, così parte l'animazione
   requestAnimationFrame(() => {
     $("#velo").classList.add("visibile");
-    $("#foglio-conferma").classList.add("visibile");
+    $("#dialogo").classList.add("visibile");
+    $("#dialogo-annulla").focus();
   });
 }
 
-function chiudiConferma() {
+function chiudiDialogo() {
   $("#velo").classList.remove("visibile");
-  $("#foglio-conferma").classList.remove("visibile");
+  $("#dialogo").classList.remove("visibile");
   setTimeout(() => {
     $("#velo").hidden = true;
-    $("#foglio-conferma").hidden = true;
-  }, 300);
+    $("#dialogo").hidden = true;
+  }, 200);
 }
 
-$("#conferma-ok").addEventListener("click", () => {
-  chiudiConferma();
+$("#dialogo-ok").addEventListener("click", () => {
+  chiudiDialogo();
   if (azioneConferma) azioneConferma();
   azioneConferma = null;
 });
-$("#conferma-annulla").addEventListener("click", chiudiConferma);
-$("#velo").addEventListener("click", chiudiConferma);
+$("#dialogo-annulla").addEventListener("click", chiudiDialogo);
+$("#velo").addEventListener("click", chiudiDialogo);
 
 // Avviso in basso, con pulsante "Annulla" opzionale
 let timerAvviso = null;
-function mostraAvviso(messaggio, annulla = null) {
+function mostraAvviso(messaggio, azioneAnnulla = null) {
   const toast = $("#toast");
   toast.innerHTML = "";
   const testo = document.createElement("span");
   testo.textContent = messaggio;
   toast.appendChild(testo);
-  if (annulla) {
+  if (azioneAnnulla) {
     const btn = document.createElement("button");
     btn.textContent = "Annulla";
     btn.addEventListener("click", () => {
-      annulla();
+      azioneAnnulla();
       nascondiAvviso();
     });
     toast.appendChild(btn);
@@ -446,10 +660,13 @@ function nascondiAvviso() {
   setTimeout(() => { if (!toast.classList.contains("visibile")) toast.hidden = true; }, 300);
 }
 
-// Salva anche se l'app viene chiusa o messa in background
+// Salva anche se la finestra viene chiusa o la scheda nascosta
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") salvaSubito();
 });
+window.addEventListener("beforeunload", salvaSubito);
 
-/* ---------- Avvio ---------- */
+/* ---------- Avvio: riapre l'ultimo schema modificato ---------- */
 mostraElenco();
+const ultimo = Dati.tutti()[0];
+if (ultimo) apriEditor(ultimo.id);
