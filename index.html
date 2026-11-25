@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Playbook</title>
+  <!-- Impostazioni per farla sembrare un'app nativa sull'iPhone/iPad -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Playbook">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/png" href="icon-180.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ SCHERMATA 1: elenco degli schemi ============ -->
+  <section id="vista-elenco" class="vista attiva">
+    <header class="barra">
+      <div class="barra-azioni">
+        <span></span>
+        <button id="btn-nuovo" class="btn-testo btn-icona" aria-label="Nuovo schema">
+          <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+      </div>
+      <h1 class="titolo-grande">Playbook</h1>
+
+      <!-- Controllo segmentato: Attacco / Difesa -->
+      <div class="segmentato" id="filtro-lato" role="tablist">
+        <button class="segmento attivo" data-lato="attacco" role="tab">Attacco</button>
+        <button class="segmento" data-lato="difesa" role="tab">Difesa</button>
+      </div>
+    </header>
+
+    <main class="contenuto">
+      <p class="titolo-sezione" id="conteggio"></p>
+      <ul class="lista" id="lista-schemi"></ul>
+
+      <!-- Messaggio quando non ci sono schemi -->
+      <div class="vuoto" id="vuoto" hidden>
+        <div class="vuoto-icona">🏈</div>
+        <p class="vuoto-titolo">Nessuno schema</p>
+        <p class="vuoto-testo">Tocca + per creare il tuo primo schema.</p>
+        <button class="btn-pieno" id="btn-nuovo-vuoto">Crea schema</button>
+      </div>
+    </main>
+  </section>
+
+  <!-- ============ SCHERMATA 2: editor dello schema ============ -->
+  <section id="vista-editor" class="vista">
+    <header class="barra barra-compatta">
+      <div class="barra-azioni">
+        <button id="btn-indietro" class="btn-testo">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          Playbook
+        </button>
+        <span class="stato-salvataggio" id="stato-salvataggio"></span>
+      </div>
+      <input id="nome-schema" class="nome-schema" type="text" maxlength="60" placeholder="Nome dello schema" autocomplete="off">
+      <p class="sottotitolo" id="info-schema"></p>
+    </header>
+
+    <main class="contenuto contenuto-editor">
+      <!-- Il campo da gioco: disegnato in SVG da app.js -->
+      <div class="campo-contenitore">
+        <svg id="campo" class="campo" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <p class="suggerimento">Trascina i giocatori per spostarli.</p>
+
+      <p class="titolo-sezione">Formazione</p>
+      <div class="chips" id="chips-formazioni"></div>
+
+      <p class="titolo-sezione">Note</p>
+      <div class="card">
+        <textarea id="note-schema" rows="4" placeholder="Chiamata, letture, compiti per ruolo…"></textarea>
+      </div>
+
+      <div class="card azioni-card">
+        <button class="riga-azione" id="btn-duplica">Duplica schema</button>
+        <button class="riga-azione distruttiva" id="btn-elimina">Elimina schema</button>
+      </div>
+    </main>
+  </section>
+
+  <!-- Foglio di conferma (stile action sheet iOS) -->
+  <div class="velo" id="velo" hidden></div>
+  <div class="foglio-azioni" id="foglio-conferma" hidden>
+    <div class="foglio-gruppo">
+      <p class="foglio-messaggio" id="conferma-testo"></p>
+      <button class="foglio-btn distruttiva" id="conferma-ok">Elimina</button>
+    </div>
+    <button class="foglio-btn foglio-annulla" id="conferma-annulla">Annulla</button>
+  </div>
+
+  <!-- Avviso breve in basso (es. "Schema eliminato") -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="formazioni.js"></script>
+  <script src="dati.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
