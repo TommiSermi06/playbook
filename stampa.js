@@ -108,14 +108,12 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
    ========================================================================== */
 const NOMI_LATO = { attacco: "Attacco", difesa: "Difesa" };
 
-// Ordine di stampa: prima l'attacco poi la difesa, ognuno in ordine alfabetico
+// Ordine di stampa: quello del playbook (come nell'elenco), prima l'attacco poi la difesa
 function schemiDaStampare(cosa) {
   let schemi = schemiDelPlaybook();
   if (cosa === "schema" && schemaCorrente) schemi = [Dati.trova(schemaCorrente.id)];
   else if (cosa === "attacco" || cosa === "difesa") schemi = schemi.filter((s) => s.lato === cosa);
-  const nome = (s) => (s.nome || "￿").toLocaleLowerCase("it"); // "Senza nome" in fondo
-  return schemi.sort((a, b) =>
-    a.lato === b.lato ? nome(a).localeCompare(nome(b), "it") : a.lato === "attacco" ? -1 : 1);
+  return [...schemi.filter((s) => s.lato === "attacco"), ...schemi.filter((s) => s.lato !== "attacco")];
 }
 
 function titoloStampa(cosa, schemi) {

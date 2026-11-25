@@ -103,6 +103,15 @@ const Dati = {
     return ok;
   },
 
+  // Importa molti schemi in una volta, mantenendo il loro ordine
+  importa(schemi) {
+    this._scrivi([...schemi, ...this.tutti()]);
+    schemi.forEach((s) => this.daInviare.add(s.id));
+    this._ricordaDaInviare();
+    clearTimeout(this.timerInvio);
+    this.timerInvio = setTimeout(() => this.invia(), 300);
+  },
+
   duplica(id) {
     const originale = this.trova(id);
     if (!originale) return null;

@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.13 — importa ed esporta
+- Pulsante «Importa» nella pagina dei playbook; «Esporta» nel menu ⋯ di ogni playbook (file .playbook.json)
+- Tracce con motion iniziale + route (come nei jet) e rami di opzione tratteggiati (es. hitch o seam)
+- La stampa segue l'ordine del playbook
+
 ## Versione 0.12 — più playbook
 - Pagina «I tuoi playbook» dopo il login: schede con anteprima, tipo, numero di schemi e data; filtri Tutti / Tackle / Flag
 - Nuovo playbook: nome, Tackle (11, 9 o 7 giocatori) o Flag (5); il formato è del playbook e vale per tutti i suoi schemi

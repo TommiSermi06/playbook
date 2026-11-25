@@ -219,6 +219,15 @@ function disegnaTraccia(genitore, g, { anima = false, idMaschera = "", scala = 1
   if (!t || !t.punti.length) return;
   const info = infoTipo(t.tipo);
   let punti = puntiDisegno(t);
+  /* Motion + route (come in Playmaker): i primi "t.motion" punti sono la
+     motion prima dello snap (linea ondulata), poi parte la route vera. */
+  let puntiMotion = null;
+  const nMotion = t.motion && t.tipo !== "motion" ? Math.min(t.motion, punti.length - 2) : 0;
+  if (nMotion > 0) {
+    puntiMotion = punti.slice(0, nMotion + 1);
+    punti = punti.slice(nMotion);
+  }
+  const tuttiIPunti = puntiMotion ? [...puntiMotion, ...punti.slice(1)] : punti;
   if (t.curva) punti = curvaMorbida(punti); // linea morbida: niente angoli netti
 
   const gruppo = crea("g", { class: `traccia tipo-${t.tipo}${t.curva ? " curva" : ""}` }, genitore);
@@ -238,11 +247,29 @@ function disegnaTraccia(genitore, g, { anima = false, idMaschera = "", scala = 1
   if (anima) {
     const defs = crea("defs", {}, gruppo);
     const maschera = crea("mask", { id: idMaschera, maskUnits: "userSpaceOnUse", x: -60, y: -60, width: 120, height: 120 }, defs);
-    crea("path", { d: percorso(punti), class: "maschera-traccia", pathLength: 1 }, maschera);
+    crea("path", { d: percorso(tuttiIPunti), class: "maschera-traccia", pathLength: 1 }, maschera);
     contenitore = crea("g", { mask: `url(#${idMaschera})` }, gruppo);
   }
 
+  if (puntiMotion) {
+    crea("path", { d: percorso(ondulata(puntiMotion)), class: "linea-traccia motion-iniziale" }, contenitore);
+  }
   crea("path", { d, class: "linea-traccia" + (info.tratteggio ? " tratteggiata" : "") }, contenitore);
+
+  // Rami di opzione: linee tratteggiate che partono da un punto della traccia
+  // (es. "hitch oppure seam"), sempre con la freccia
+  for (const ramo of t.rami || []) {
+    if (!ramo.punti || ramo.punti.length < 2) continue;
+    const pr = ramo.punti.map((p) => ({ x: p.dx, y: -p.dy }));
+    const fr = pr[pr.length - 1], pp = pr[pr.length - 2];
+    const angRamo = Math.atan2(fr.y - pp.y, fr.x - pp.x);
+    crea("path", { d: percorso(accorcia(pr, 0.7 * scala)), class: "linea-traccia tratteggiata ramo" }, contenitore);
+    const punta = crea("g", {
+      class: "finale-traccia" + (anima ? " anima" : ""),
+      transform: `translate(${fr.x.toFixed(2)} ${fr.y.toFixed(2)}) rotate(${(angRamo * 180) / Math.PI}) scale(${scala})`,
+    }, gruppo);
+    crea("path", { d: "M0 0 L-0.9 -0.48 L-0.9 0.48 Z", class: "punta" }, punta);
+  }
 
   // Finale della traccia
   const finale = crea("g", {

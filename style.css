@@ -1994,3 +1994,8 @@ body.in-home .app { display: none; }
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Importa nella pagina dei playbook */
+.home-azioni { display: flex; align-items: center; gap: 10px; }
+.btn-importa { display: inline-flex; align-items: center; gap: 6px; height: 32px; }
+.linea-traccia.motion-iniziale { opacity: 0.9; }

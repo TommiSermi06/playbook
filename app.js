@@ -644,7 +644,10 @@ function ribalta() {
   ricordaStato();
   for (const g of schemaCorrente.giocatori) {
     g.x = +(LARGHEZZA_CAMPO - g.x).toFixed(2);
-    if (g.traccia) g.traccia.punti.forEach((p) => { p.dx = -p.dx; }); // anche le tracce a specchio
+    if (g.traccia) {
+      g.traccia.punti.forEach((p) => { p.dx = -p.dx; }); // anche le tracce a specchio
+      (g.traccia.rami || []).forEach((r) => r.punti.forEach((p) => { p.dx = -p.dx; }));
+    }
   }
   schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
   ridisegna();

@@ -244,6 +244,7 @@ function apriMenuScheda(bottone, pb) {
     ["Apri", () => apriPlaybook(pb.id)],
     ["Rinomina…", () => apriFoglioPlaybook(pb)],
     ["Duplica", () => duplicaPlaybook(pb)],
+    ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
     ["Elimina…", () => eliminaPlaybook(pb), "distruttiva"],
   ];
   for (const [testo, azione, classe] of voci) {
@@ -414,3 +415,102 @@ function eliminaPlaybook(pb) {
     });
   });
 }
+
+/* ==========================================================================
+   ESPORTA E IMPORTA
+   Un playbook si può salvare in un file (copia di sicurezza, o per
+   passarlo a un altro coach) e reimportare. Lo stesso formato serve
+   per portare dentro l'app i playbook di altre app (es. Playmaker).
+   ========================================================================== */
+const TIPO_FILE = "playbook-app/esportazione";
+
+function esportaPlaybook(pb) {
+  const schemi = schemiDelPlaybook(pb.id);
+  const idFormazioni = new Set(schemi.map((s) => s.formazione));
+  const formazioni = FormazioniMie.tutte().filter((f) => idFormazioni.has(f.id));
+  const dati = {
+    tipo: TIPO_FILE,
+    versione: 1,
+    esportato: new Date().toISOString(),
+    playbook: { nome: pb.nome, formato: pb.formato },
+    formazioni: formazioni.map(({ nome, lato, formato, giocatori }) => ({ nome, lato, formato, giocatori })),
+    schemi: schemi.map((s) => {
+      const { id, playbook, creato, modificato, ...resto } = s;
+      const f = formazioni.find((x) => x.id === s.formazione);
+      return { ...resto, formazioneNome: f ? f.nome : null };
+    }),
+  };
+  const blob = new Blob([JSON.stringify(dati, null, 1)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${pb.nome.replace(/[\\/:*?"<>|]/g, "-")}.playbook.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+  mostraAvviso(`«${pb.nome}» esportato`);
+}
+
+async function importaDaFile(file) {
+  let dati;
+  try {
+    dati = JSON.parse(await file.text());
+  } catch {
+    mostraAvviso("Il file non è un playbook valido");
+    return;
+  }
+  if (!dati || dati.tipo !== TIPO_FILE || !dati.playbook || !Array.isArray(dati.schemi)) {
+    mostraAvviso("Il file non è un playbook di questa app");
+    return;
+  }
+  const formato = FORMATI[dati.playbook.formato] ? dati.playbook.formato : "11";
+
+  // Nome libero: se esiste già aggiungiamo un numero
+  let nome = (dati.playbook.nome || "Playbook importato").trim();
+  const nomi = new Set(Playbook.tutti().map((p) => p.nome.toLowerCase()));
+  if (nomi.has(nome.toLowerCase())) {
+    let n = 2;
+    while (nomi.has(`${nome} (${n})`.toLowerCase())) n++;
+    nome = `${nome} (${n})`;
+  }
+  const pb = Playbook.crea({ nome, formato });
+
+  // Formazioni: riusiamo quelle con lo stesso nome, le altre le creiamo
+  const idPerNome = {};
+  for (const f of dati.formazioni || []) {
+    const esistente = FormazioniMie.perLato(f.lato, f.formato || formato)
+      .find((x) => x.nome.toLowerCase() === f.nome.toLowerCase());
+    idPerNome[f.nome] = esistente
+      ? esistente.id
+      : FormazioniMie.crea(f.nome, f.lato, f.formato || formato, f.giocatori).id;
+  }
+
+  // Schemi: nell'ordine del file (il primo in cima all'elenco)
+  const adesso = Date.now();
+  const schemi = dati.schemi.map((s, i) => {
+    const { formazioneNome, numero, ...resto } = s;
+    return {
+      ...resto,
+      id: Dati.nuovoId() + i,
+      playbook: pb.id,
+      formato,
+      formazione: (formazioneNome && idPerNome[formazioneNome]) || "libera",
+      ribaltato: false,
+      bloccato: false,
+      note: s.note || "",
+      creato: adesso,
+      modificato: adesso - i, // così l'ordine resta quello originale
+    };
+  });
+  Dati.importa(schemi);
+  disegnaHome();
+  festeggiaStemma();
+  mostraAvviso(`Importato «${nome}»: ${schemi.length} schemi e ${(dati.formazioni || []).length} formazioni`);
+}
+
+$("#btn-importa").addEventListener("click", () => $("#file-importa").click());
+$("#file-importa").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (file) importaDaFile(file);
+});
