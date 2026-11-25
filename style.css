@@ -1012,6 +1012,9 @@ body.app-pronta .pannello { animation: daDestra 0.6s 0.16s var(--curva) both; }
 }
 .linea-traccia.tratteggiata { stroke-dasharray: 0.7 0.45; stroke-linecap: butt; }
 .punta { fill: var(--colore-ruolo); }
+.punto-finale { fill: var(--colore-ruolo); stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.06; }
+/* Nelle icone del menu il puntino va più grande, altrimenti sparisce nella linea */
+.icona-traccia .punto-finale { transform-box: fill-box; transform-origin: center; transform: scale(1.9); }
 .barra-blocco { stroke: var(--colore-ruolo); stroke-width: var(--spessore, 0.28); stroke-linecap: round; }
 .area-zona {
   fill: var(--colore-ruolo);

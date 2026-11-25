@@ -3,6 +3,10 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.8.2
+- QB: drop 3, 5, 7 passi e rollout destra/sinistra pronti (tasti 1–5), con animazione
+- Il movimento del QB finisce con un puntino invece della freccia
+
 ## Versione 0.8.1
 - QB: niente albero delle route, solo il movimento disegnato a mano (con la freccia)
 

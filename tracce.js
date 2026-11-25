@@ -19,6 +19,7 @@ const TIPI_TRACCIA = {
     { id: "blocco",  nome: "Blocco",            fine: "blocco" },
     { id: "motion",  nome: "Motion",            fine: "freccia", ondulata: true },
     { id: "opzione", nome: "Opzione / lettura", fine: "freccia", tratteggio: true },
+    { id: "qb",      nome: "Movimento QB",      fine: "punto" }, // drop e rollout: finisce con un puntino
   ],
   difesa: [
     { id: "blitz",   nome: "Blitz",             fine: "freccia" },
@@ -48,6 +49,25 @@ const ALBERO_ROUTE = [
 
 /* ---------- Tracce pronte per la difesa ----------
    "bersaglio" restituisce il punto d'arrivo in coordinate del campo. */
+/* ---------- Movimenti pronti del QB ----------
+   Punti in yarde: [verso destra, in avanti] (negativo = indietro).
+   Drop: arretra dritto. Rollout: arretra e si apre verso l'esterno. */
+const MOVIMENTI_QB = [
+  { nome: "Drop 3 passi",     punti: [[0, -3]] },
+  { nome: "Drop 5 passi",     punti: [[0, -5]] },
+  { nome: "Drop 7 passi",     punti: [[0, -7]] },
+  { nome: "Rollout destra",   punti: [[1.5, -2.5], [5, -4], [8.5, -3.5]] },
+  { nome: "Rollout sinistra", punti: [[-1.5, -2.5], [-5, -4], [-8.5, -3.5]] },
+];
+
+function tracciaDaQb(g, movimento) {
+  return {
+    tipo: "qb",
+    nome: movimento.nome,
+    punti: movimento.punti.map(([dx, dy]) => dentroCampo(g, dx, dy)),
+  };
+}
+
 const TRACCE_DIFESA = [
   { id: "blitz",  nome: "Blitz",           tipo: "blitz", bersaglio: (g) => ({ x: CENTRO + (g.x - CENTRO) * 0.2, y: -3 }) },
   { id: "flat",   nome: "Zona flat",       tipo: "zona",  bersaglio: (g) => ({ x: g.x < CENTRO ? 8 : LARGHEZZA_CAMPO - 8, y: 6 }) },
@@ -182,6 +202,8 @@ function disegnaTraccia(genitore, g, { anima = false, idMaschera = "", scala = 1
     crea("path", { d: "M0 0 L-0.9 -0.48 L-0.9 0.48 Z", class: "punta" }, finale);
   } else if (info.fine === "blocco") {
     crea("path", { d: "M0 -0.65 L0 0.65", class: "barra-blocco" }, finale);
+  } else if (info.fine === "punto") {
+    crea("circle", { r: 0.42, class: "punto-finale" }, finale); // dove il QB si ferma per lanciare
   } else if (info.fine === "zona") {
     crea("ellipse", { rx: 2.6, ry: 1.5, transform: `rotate(${(-ang * 180) / Math.PI})`, class: "area-zona" }, finale);
   }
@@ -223,7 +245,7 @@ const Tracce = {
       punti: [],
       // La linea disegna blocchi (con la T finale), gli altri route o blitz
       tipo: (g.traccia && g.traccia.tipo) ||
-        (eUomoDiLinea(g) ? "blocco" : schemaCorrente.lato === "attacco" ? "route" : "blitz"),
+        (eUomoDiLinea(g) ? "blocco" : eQuarterback(g) ? "qb" : schemaCorrente.lato === "attacco" ? "route" : "blitz"),
       prima: istantanea(),
     };
     document.body.classList.add("disegnando");
@@ -332,7 +354,14 @@ function apriMenuTracce(g) {
   const dentro = versoInterno(g);
 
   // Uomini di linea e QB: niente albero delle route
-  const voci = linea || qb ? [] : attacco
+  const voci = linea ? [] : qb
+    ? MOVIMENTI_QB.map((m, i) => ({
+        etichetta: m.nome,
+        tasto: String(i + 1),
+        icona: iconaTraccia(m.punti.map(([x, y]) => ({ x, y })), "qb"),
+        azione: () => Tracce.applica(g, tracciaDaQb(g, m)),
+      }))
+    : attacco
     ? ALBERO_ROUTE.map((r) => ({
         etichetta: `${r.n}-${r.nome}`,
         tasto: String(r.n),

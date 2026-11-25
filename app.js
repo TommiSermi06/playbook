@@ -954,6 +954,12 @@ document.addEventListener("keydown", (e) => {
   if (sel) {
     const attacco = schemaCorrente.lato === "attacco";
     const numero = parseInt(e.key, 10);
+    // QB: tasti 1–5 = drop e rollout
+    if (numero >= 1 && numero <= 9 && eQuarterback(sel)) {
+      const movimento = MOVIMENTI_QB[numero - 1];
+      if (movimento) Tracce.applica(sel, tracciaDaQb(sel, movimento));
+      return;
+    }
     if (numero >= 1 && numero <= 9 && !senzaAlbero(sel)) {
       if (attacco) Tracce.applica(sel, tracciaDaRoute(sel, ALBERO_ROUTE[numero - 1]));
       else if (TRACCE_DIFESA[numero - 1]) Tracce.applica(sel, tracciaDaDifesa(sel, TRACCE_DIFESA[numero - 1]));
