@@ -110,8 +110,21 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(0), y2: yDisegno(0), class: "linea-scrimmage" }, linee);
 
-  // Il pallone, al centro sulla linea di scrimmage
-  crea("ellipse", { cx: LARGHEZZA_CAMPO / 2, cy: yDisegno(0) - 0.05, rx: 0.32, ry: 0.5, class: "pallone" }, svg);
+  // Il pallone: in attacco compare solo quando c'è il centro (C) e sta
+  // sempre davanti a lui; in difesa resta al centro della linea come riferimento.
+  const palla = posizionePalla(schema);
+  if (palla) {
+    let sbuca = false;
+    if (!miniatura) {
+      // Animazione solo quando la palla appare (il C è appena entrato in campo)
+      sbuca = statoPalla.idSchema === schema.id && !statoPalla.visibile;
+      statoPalla = { idSchema: schema.id, visibile: true };
+    }
+    const gp = crea("g", { class: "palla" + (sbuca ? " sbuca" : ""), transform: `translate(${palla.x} ${yDisegno(palla.y)})` }, svg);
+    crea("ellipse", { cx: 0, cy: 0, rx: 0.32, ry: 0.5, class: "pallone" }, gp);
+  } else if (!miniatura) {
+    statoPalla = { idSchema: schema.id, visibile: false };
+  }
 
   // Tracce (sotto i giocatori): un gruppo per giocatore, spostato sulla
   // sua posizione, così quando lo trascini la traccia lo segue.
@@ -147,6 +160,27 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
       crea("circle", { cx: sel.x + p.dx, cy: yDisegno(sel.y + p.dy), r: 0.42, class: "maniglia", "data-indice": i }, maniglie);
     });
   }
+}
+
+/* ---------- Il pallone ---------- */
+let statoPalla = { idSchema: null, visibile: false }; // per sapere quando "sbuca"
+
+function centroDi(schema) {
+  return schema.lato === "attacco" ? schema.giocatori.find((g) => g.etichetta === "C") : null;
+}
+
+// Dove sta la palla (in yarde), oppure null se non va disegnata
+function posizionePalla(schema) {
+  if (schema.lato === "difesa") return { x: LARGHEZZA_CAMPO / 2, y: 0 };
+  const c = centroDi(schema);
+  return c ? { x: c.x, y: c.y + 1.2 } : null; // appena davanti al centro
+}
+
+// Sposta la palla mentre trascini il centro (senza ridisegnare tutto)
+function seguiPalla() {
+  const palla = posizionePalla(schemaCorrente);
+  const el = svgCampo.querySelector(".palla");
+  if (palla && el) el.setAttribute("transform", `translate(${palla.x} ${yDisegno(palla.y)})`);
 }
 
 /* Piccola animazione: i giocatori "entrano" sul campo uno dopo l'altro */
@@ -493,6 +527,16 @@ function ribalta() {
 $("#btn-ribalta").addEventListener("click", ribalta);
 
 /* ---------- Pannello del giocatore selezionato ---------- */
+// Mostra la profondità del giocatore nel pannello (se non la stai scrivendo)
+function aggiornaProfondita(g) {
+  const campoYd = $("#profondita-giocatore");
+  if (!campoYd) return;
+  if (document.activeElement !== campoYd) campoYd.value = +Math.abs(g.y).toFixed(1);
+  // Sulla linea (0) teniamo il verso naturale del lato
+  const versoNaturale = schemaCorrente.lato === "attacco" ? "-1" : "1";
+  $("#verso-profondita").value = g.y > 0.05 ? "1" : g.y < -0.05 ? "-1" : versoNaturale;
+}
+
 function descriviPosizione(g) {
   const dist = Math.abs(g.y).toLocaleString("it-IT", { maximumFractionDigits: 1 });
   if (Math.abs(g.y) < 0.05) return "sulla linea di scrimmage";
@@ -515,7 +559,14 @@ function mostraInfoGiocatore() {
     </label>
     <div class="riga-campo">
       <span>Profondità</span>
-      <span class="valore" id="pos-giocatore"></span>
+      <span class="campo-profondita">
+        <input id="profondita-giocatore" type="number" min="0" max="22" step="0.5" inputmode="decimal" title="Yarde dalla linea di scrimmage">
+        <span>yd</span>
+        <select id="verso-profondita" title="Dietro o oltre la linea">
+          <option value="-1">dietro</option>
+          <option value="1">oltre</option>
+        </select>
+      </span>
     </div>
     <div class="riga-campo">
       <span>Traccia</span>
@@ -550,7 +601,24 @@ function mostraInfoGiocatore() {
   $("#btn-traccia-via").addEventListener("click", () => Tracce.rimuovi(g));
   const input = $("#etichetta-giocatore");
   input.value = g.etichetta;
-  $("#pos-giocatore").textContent = descriviPosizione(g);
+  aggiornaProfondita(g);
+
+  // Scrivi le yarde (e scegli dietro/oltre): il giocatore si sposta da solo
+  const campoYd = $("#profondita-giocatore");
+  const verso = $("#verso-profondita");
+  const applicaProfondita = () => {
+    const yarde = parseFloat(String(campoYd.value).replace(",", "."));
+    if (Number.isNaN(yarde)) return;
+    const max = verso.value === "1" ? YARDE_AVANTI - 0.6 : YARDE_DIETRO - 0.6;
+    g.y = +(Math.min(max, Math.max(0, yarde)) * Number(verso.value)).toFixed(1);
+    disegnaCampo(svgCampo, schemaCorrente, { selezionato: g.id });
+    salvaTraPoco();
+  };
+  campoYd.addEventListener("focus", () => ricordaStato());
+  verso.addEventListener("focus", () => ricordaStato());
+  campoYd.addEventListener("input", applicaProfondita);
+  verso.addEventListener("change", applicaProfondita);
+  campoYd.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === "Escape") campoYd.blur(); });
 
   input.addEventListener("focus", () => ricordaStato());
   input.addEventListener("input", () => {
@@ -704,7 +772,8 @@ svgCampo.addEventListener("pointermove", (evento) => {
   if (livello) livello.setAttribute("transform", `translate(${g.x} ${yDisegno(g.y)})`);
   const maniglie = svgCampo.querySelector(".maniglie");
   if (maniglie) maniglie.remove();
-  $("#pos-giocatore") && ($("#pos-giocatore").textContent = descriviPosizione(g));
+  aggiornaProfondita(g);
+  if (g === centroDi(schemaCorrente)) seguiPalla(); // la palla segue il centro
 });
 
 function fineTrascinamento() {
@@ -847,7 +916,7 @@ document.addEventListener("keydown", (e) => {
   if (sel) {
     const attacco = schemaCorrente.lato === "attacco";
     const numero = parseInt(e.key, 10);
-    if (numero >= 1 && numero <= 9) {
+    if (numero >= 1 && numero <= 9 && !eUomoDiLinea(sel)) {
       if (attacco) Tracce.applica(sel, tracciaDaRoute(sel, ALBERO_ROUTE[numero - 1]));
       else if (TRACCE_DIFESA[numero - 1]) Tracce.applica(sel, tracciaDaDifesa(sel, TRACCE_DIFESA[numero - 1]));
       return;
@@ -878,7 +947,8 @@ document.addEventListener("keydown", (e) => {
     g.y = +Math.min(YARDE_AVANTI - 0.6, Math.max(-YARDE_DIETRO + 0.6, g.y + dy * passo)).toFixed(1);
     svgCampo.querySelector(`.giocatore[data-id="${g.id}"]`)
       .setAttribute("transform", `translate(${g.x} ${yDisegno(g.y)})`);
-    $("#pos-giocatore").textContent = descriviPosizione(g);
+    aggiornaProfondita(g);
+    if (g === centroDi(schemaCorrente)) seguiPalla();
     salvaTraPoco();
   }
 });

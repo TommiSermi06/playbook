@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.7 — ritocchi da allenatore
+- Profondità del giocatore modificabile: scrivi le yarde e scegli dietro/oltre la linea
+- Il pallone compare solo quando c'è il centro (C), con animazione, e lo segue
+- Uomini di linea (C, G, T): niente albero delle route, solo blocco dritto o disegnato a mano con la T finale
+
 ## Versione 0.6 — formazioni da zero e lucchetto
 - Un nuovo schema parte dal campo vuoto: si sceglie una formazione pronta oppure «Crea da zero»
 - Tavolozza con le pedine da trascinare in campo (clic = posizione tipica), massimo 11 giocatori

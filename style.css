@@ -1340,3 +1340,38 @@ body.schema-bloccato .campo-cornice::after {
   position: sticky;
   bottom: 0;
 }
+
+
+/* ---------- Profondità modificabile ---------- */
+.campo-profondita { display: inline-flex; align-items: center; gap: 6px; color: var(--testo-secondario); }
+.campo-profondita input {
+  width: 58px;
+  text-align: right;
+  border: 0;
+  border-radius: 5px;
+  padding: 3px 6px;
+  background: var(--sfondo-grigio);
+  color: var(--testo);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+.campo-profondita input:focus { box-shadow: 0 0 0 3px var(--accento-tenue); }
+.campo-profondita select {
+  border: 0;
+  border-radius: 5px;
+  padding: 3px 4px;
+  background: var(--sfondo-grigio);
+  color: var(--testo);
+  font: inherit;
+  outline: none;
+}
+
+/* ---------- Il pallone "sbuca" quando metti il centro ---------- */
+.palla .pallone { transform-box: fill-box; transform-origin: center; }
+.palla.sbuca .pallone { animation: sbucaPalla 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes sbucaPalla {
+  0%   { opacity: 0; transform: translateY(-1.2px) scale(0.2) rotate(-120deg); }
+  70%  { opacity: 1; transform: translateY(0.1px) scale(1.25) rotate(10deg); }
+  100% { opacity: 1; transform: none; }
+}

@@ -60,6 +60,11 @@ function piuVicino(x, valori) {
   return valori.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
 }
 
+// Vero per gli uomini di linea d'attacco (C, G, T…): fanno solo blocchi
+function eUomoDiLinea(g) {
+  return schemaCorrente.lato === "attacco" && ruoloDi("attacco", g.etichetta) === "linea";
+}
+
 // Verso l'interno: +1 se il giocatore è a sinistra del pallone, -1 se a destra
 function versoInterno(g) {
   return g.x <= CENTRO + 0.5 ? 1 : -1;
@@ -206,7 +211,9 @@ const Tracce = {
     this.disegno = {
       giocatore: g,
       punti: [],
-      tipo: (g.traccia && g.traccia.tipo) || (schemaCorrente.lato === "attacco" ? "route" : "blitz"),
+      // La linea disegna blocchi (con la T finale), gli altri route o blitz
+      tipo: (g.traccia && g.traccia.tipo) ||
+        (eUomoDiLinea(g) ? "blocco" : schemaCorrente.lato === "attacco" ? "route" : "blitz"),
       prima: istantanea(),
     };
     document.body.classList.add("disegnando");
@@ -304,14 +311,17 @@ function apriMenuTracce(g) {
   testa.className = "menu-testa";
   testa.innerHTML = `<span class="menu-sigla"></span><span class="menu-titolo"></span>`;
   testa.querySelector(".menu-sigla").textContent = g.etichetta;
-  testa.querySelector(".menu-titolo").textContent = attacco ? "Albero delle route" : "Compito difensivo";
+  const linea = eUomoDiLinea(g);
+  testa.querySelector(".menu-titolo").textContent =
+    linea ? "Blocco" : attacco ? "Albero delle route" : "Compito difensivo";
   menu.appendChild(testa);
 
   const griglia = document.createElement("div");
   griglia.className = "menu-griglia" + (attacco ? "" : " difesa");
   const dentro = versoInterno(g);
 
-  const voci = attacco
+  // Uomini di linea: niente albero delle route, solo blocchi
+  const voci = linea ? [] : attacco
     ? ALBERO_ROUTE.map((r) => ({
         etichetta: `${r.n}-${r.nome}`,
         tasto: String(r.n),
@@ -340,7 +350,7 @@ function apriMenuTracce(g) {
     b.addEventListener("click", v.azione);
     griglia.appendChild(b);
   });
-  menu.appendChild(griglia);
+  if (voci.length) menu.appendChild(griglia);
 
   // Azioni extra: blocco (attacco), disegno a mano, rimuovi
   const azioni = document.createElement("div");
@@ -353,9 +363,14 @@ function apriMenuTracce(g) {
     b.addEventListener("click", azione);
     azioni.appendChild(b);
   };
-  aggiungiAzione("✏️  Disegna a mano", "T", () => Tracce.iniziaDisegno(g));
-  if (attacco) {
-    aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
+  if (linea) {
+    aggiungiAzione("Blocco dritto", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
+    aggiungiAzione("✏️  Disegna il blocco a mano", "T", () => Tracce.iniziaDisegno(g));
+  } else {
+    aggiungiAzione("✏️  Disegna a mano", "T", () => Tracce.iniziaDisegno(g));
+    if (attacco) {
+      aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
+    }
   }
   if (g.traccia) aggiungiAzione("Rimuovi traccia", "Canc", () => Tracce.rimuovi(g), "distruttiva");
   else aggiungiAzione("Togli giocatore dal campo", "Canc", () => rimuoviGiocatore(g), "distruttiva");
