@@ -223,6 +223,8 @@ let schemaCorrente = null;     // lo schema aperto nell'editor
 let giocatoreSelezionato = null; // id del giocatore selezionato
 
 function nomeFormazione(schema) {
+  if (!schema.formazione) return "Nessuna formazione";
+  if (schema.formazione === "libera") return "Formazione libera";
   const f = FORMAZIONI[schema.lato].find((f) => f.id === schema.formazione);
   return f ? f.nome : "Personalizzata";
 }
@@ -275,6 +277,7 @@ function mostraElenco() {
     const titolo = document.createElement("span");
     titolo.className = "riga-titolo" + (schema.nome ? "" : " senza-nome");
     titolo.textContent = schema.nome || "Senza nome";
+    if (schema.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
     const sotto = document.createElement("span");
     sotto.className = "riga-sotto";
     sotto.textContent = `${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
@@ -295,6 +298,7 @@ function aggiornaRigaCorrente() {
   disegnaCampo(riga.querySelector(".miniatura"), schemaCorrente, { miniatura: true });
   const titolo = riga.querySelector(".riga-titolo");
   titolo.textContent = schemaCorrente.nome || "Senza nome";
+  if (schemaCorrente.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
   titolo.classList.toggle("senza-nome", !schemaCorrente.nome);
   riga.querySelector(".riga-sotto").textContent =
     `${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
@@ -334,6 +338,7 @@ function apriEditor(id, { focusNome = false } = {}) {
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
   giocatoreSelezionato = null;
+  tavolozzaAperta = schemaCorrente.formazione === "libera" && !schemaCorrente.bloccato;
   storia = { indietro: [], avanti: [] };
   aggiornaPulsantiStoria();
 
@@ -372,6 +377,8 @@ function ridisegna() {
   $("#btn-ribalta").classList.toggle("attivo", !!schemaCorrente.ribaltato);
   mostraFormazioni();
   mostraLegenda();
+  mostraCampoVuoto();
+  aggiornaLucchetto();
   mostraInfoGiocatore();
 }
 
@@ -417,10 +424,20 @@ function mostraFormazioni() {
     scelta.addEventListener("click", () => cambiaFormazione(f.id));
     contenitore.appendChild(scelta);
   }
+  // Ultima voce: crea la formazione da zero
+  const daZero = document.createElement("button");
+  daZero.className = "scelta da-zero" + (schemaCorrente.formazione === "libera" ? " attiva" : "");
+  daZero.innerHTML = `<span>＋ Crea da zero</span><svg class="spunta" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+  daZero.addEventListener("click", creaDaZero);
+  contenitore.appendChild(daZero);
+  contenitore.classList.toggle("disattivata", Boolean(schemaCorrente.bloccato));
+  mostraTavolozza();
 }
 
 function cambiaFormazione(idFormazione) {
+  if (schemaBloccato()) return;
   if (idFormazione === schemaCorrente.formazione) return;
+  tavolozzaAperta = false;
   chiudiMenuTracce();
   ricordaStato();
   schemaCorrente.formazione = idFormazione;
@@ -432,6 +449,20 @@ function cambiaFormazione(idFormazione) {
   salvaSubito();
   mostraAvviso(`Formazione: ${nomeFormazione(schemaCorrente)}`, annulla);
 }
+
+/* ---------- Campo vuoto: invito a scegliere o creare la formazione ---------- */
+function mostraCampoVuoto() {
+  const vuoto = !schemaCorrente.giocatori.length;
+  $("#campo-vuoto").hidden = !vuoto;
+  if (!vuoto) return;
+  const conTavolozza = tavolozzaAperta && schemaCorrente.formazione === "libera";
+  $("#campo-vuoto-titolo").textContent = conTavolozza ? "Trascina qui i giocatori" : "Campo libero";
+  $("#campo-vuoto-testo").textContent = conTavolozza
+    ? "Prendili dalla tavolozza a destra, oppure cliccali per metterli nella posizione tipica."
+    : "Scegli una formazione a destra oppure creane una tua.";
+  $("#btn-crea-da-zero-campo").hidden = conTavolozza || Boolean(schemaCorrente.bloccato);
+}
+$("#btn-crea-da-zero-campo").addEventListener("click", () => creaDaZero());
 
 /* ---------- Legenda dei colori sotto il campo ---------- */
 function mostraLegenda() {
@@ -448,7 +479,7 @@ function mostraLegenda() {
 
 /* ---------- Ribalta: lo schema diventa a specchio (destra <-> sinistra) ---------- */
 function ribalta() {
-  if (!schemaCorrente) return;
+  if (!schemaCorrente || schemaBloccato()) return;
   chiudiMenuTracce();
   ricordaStato();
   for (const g of schemaCorrente.giocatori) {
@@ -472,7 +503,9 @@ function mostraInfoGiocatore() {
   const box = $("#info-giocatore");
   const g = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
   if (!g) {
-    box.innerHTML = '<p class="testo-secondario">Clicca un giocatore sul campo.</p>';
+    box.innerHTML = schemaCorrente.bloccato
+      ? '<p class="testo-secondario">🔒 Schema bloccato. Sbloccalo con il lucchetto per modificarlo.</p>'
+      : '<p class="testo-secondario">Clicca un giocatore sul campo.</p>';
     return;
   }
   box.innerHTML = `
@@ -495,8 +528,10 @@ function mostraInfoGiocatore() {
     <div class="riga-pulsanti">
       <button class="btn-mini" id="btn-traccia-menu">Scegli traccia…</button>
       <button class="btn-mini" id="btn-traccia-mano">Disegna a mano</button>
-      <button class="btn-mini distruttiva" id="btn-traccia-via">Rimuovi</button>
+      <button class="btn-mini distruttiva" id="btn-traccia-via">Rimuovi traccia</button>
+      <button class="btn-mini distruttiva" id="btn-giocatore-via">Togli giocatore</button>
     </div>`;
+  $("#btn-giocatore-via").addEventListener("click", () => rimuoviGiocatore(g));
   // Traccia del giocatore
   $("#nome-traccia").textContent = g.traccia ? (g.traccia.nome || infoTipo(g.traccia.tipo).nome) : "Nessuna";
   $("#riga-tipo-traccia").hidden = !g.traccia;
@@ -573,6 +608,11 @@ function manigliaVicina(p) {
 
 svgCampo.addEventListener("pointerdown", (evento) => {
   if (!schemaCorrente || evento.button > 0) return;
+  if (schemaCorrente.bloccato) {
+    // Schema bloccato: il clic non cambia niente, solo un avviso se tocchi un giocatore
+    if (giocatoreVicino(puntoNelCampo(evento))) avvisaBloccato();
+    return;
+  }
   const p = puntoNelCampo(evento);
 
   // Disegno a mano in corso: ogni clic aggiunge un punto
@@ -625,7 +665,7 @@ svgCampo.addEventListener("pointermove", (evento) => {
   if (Tracce.disegno) { Tracce.anteprima(puntoNelCampo(evento), evento.shiftKey); return; }
   if (!trascinamento) {
     // Cursore a "mano" quando passi sopra un giocatore o una maniglia
-    if (schemaCorrente) {
+    if (schemaCorrente && !schemaCorrente.bloccato) {
       const p = puntoNelCampo(evento);
       svgCampo.classList.toggle("sopra-giocatore", !!(giocatoreVicino(p) || manigliaVicina(p)));
     }
@@ -718,22 +758,23 @@ function ripristina(foto) {
 
 function annulla() {
   if (Tracce.disegno) { Tracce.annullaDisegno(); return; } // durante il disegno annulla il disegno
-  if (!schemaCorrente || !storia.indietro.length) return;
+  if (!schemaCorrente || schemaBloccato() || !storia.indietro.length) return;
   storia.avanti.push(istantanea());
   ripristina(storia.indietro.pop());
   aggiornaPulsantiStoria();
 }
 
 function ripeti() {
-  if (!schemaCorrente || !storia.avanti.length) return;
+  if (!schemaCorrente || schemaBloccato() || !storia.avanti.length) return;
   storia.indietro.push(istantanea());
   ripristina(storia.avanti.pop());
   aggiornaPulsantiStoria();
 }
 
 function aggiornaPulsantiStoria() {
-  $("#btn-annulla").disabled = !storia.indietro.length;
-  $("#btn-ripeti").disabled = !storia.avanti.length;
+  const bloccato = Boolean(schemaCorrente && schemaCorrente.bloccato);
+  $("#btn-annulla").disabled = bloccato || !storia.indietro.length;
+  $("#btn-ripeti").disabled = bloccato || !storia.avanti.length;
 }
 $("#btn-annulla").addEventListener("click", annulla);
 $("#btn-ripeti").addEventListener("click", ripeti);
@@ -782,6 +823,9 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // L = blocca / sblocca lo schema
+  if ((e.key === "l" || e.key === "L") && schemaCorrente) { e.preventDefault(); commutaBlocco(); return; }
+
   // R = ribalta lo schema aperto
   if ((e.key === "r" || e.key === "R") && schemaCorrente) { e.preventDefault(); ribalta(); return; }
 
@@ -798,6 +842,7 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Scorciatoie delle tracce sul giocatore selezionato
+  if (schemaCorrente.bloccato) return;
   const sel = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
   if (sel) {
     const attacco = schemaCorrente.lato === "attacco";
@@ -812,7 +857,13 @@ document.addEventListener("keydown", (e) => {
       Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, 1.5)] });
       return;
     }
-    if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); Tracce.rimuovi(sel); return; }
+    // Canc: prima toglie la traccia, poi (se non c'è) il giocatore
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      if (sel.traccia) Tracce.rimuovi(sel);
+      else rimuoviGiocatore(sel);
+      return;
+    }
   }
 
   // Frecce = sposta il giocatore selezionato di mezza yarda (2 yarde con Maiusc)

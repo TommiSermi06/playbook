@@ -14,7 +14,8 @@
      id: "s_...",            identificativo unico
      nome: "Inside Zone",
      lato: "attacco" | "difesa",
-     formazione: "pro-i",    id della formazione di partenza
+     formazione: "pro-i",    formazione di partenza (null = nessuna, "libera" = da zero)
+     bloccato: false,        vero se lo schema è chiuso col lucchetto
      ribaltato: false,       vero se lo schema è a specchio
      giocatori: [ { id, etichetta, x, y, forma } ],  posizioni in yarde
      note: "",
@@ -72,17 +73,17 @@ const Dati = {
     return "s_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   },
 
-  // Crea un nuovo schema con la prima formazione del lato scelto
+  // Crea un nuovo schema: campo vuoto, il coach sceglie o crea la formazione
   crea(lato) {
-    const formazione = FORMAZIONI[lato][0];
     const adesso = Date.now();
     const schema = {
       id: this.nuovoId(),
       nome: "",
       lato,
-      formazione: formazione.id,
+      formazione: null,       // null = nessuna, "libera" = creata da zero
       ribaltato: false,
-      giocatori: giocatoriDaFormazione(lato, formazione.id),
+      bloccato: false,
+      giocatori: [],
       note: "",
       creato: adesso,
       modificato: adesso,
@@ -106,6 +107,7 @@ const Dati = {
     const copia = JSON.parse(JSON.stringify(originale));
     copia.id = this.nuovoId();
     copia.nome = (originale.nome || "Schema") + " (copia)";
+    copia.bloccato = false; // la copia nasce sbloccata, pronta da modificare
     copia.creato = Date.now();
     this.salva(copia);
     return copia;

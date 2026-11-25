@@ -356,9 +356,15 @@ kbd {
   justify-content: center;
   container-type: size; /* serve per misurare lo spazio disponibile */
 }
+/* Cornice del campo: contiene il disegno e gli strati sopra (campo vuoto, lucchetto) */
+.campo-cornice {
+  position: relative;
+  width: min(100cqw, 100cqh * 53.33 / 35);
+  aspect-ratio: 53.33 / 35;
+}
 .campo {
   display: block;
-  width: min(100cqw, 100cqh * 53.33 / 35);
+  width: 100%;
   height: auto;
   aspect-ratio: 53.33 / 35;
   border-radius: 6px;
@@ -1153,4 +1159,172 @@ body.disegnando .campo.sopra-giocatore { cursor: crosshair; }
   color: var(--testo);
   font: inherit;
   outline: none;
+}
+
+
+/* ==========================================================================
+   CAMPO VUOTO E "CREA DA ZERO"
+   ========================================================================== */
+.campo-vuoto {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  pointer-events: none; /* le pedine si possono lasciare anche qui sopra */
+  animation: appari 0.4s var(--curva) both;
+}
+.campo-vuoto .btn-pieno { pointer-events: auto; margin-top: 10px; }
+.campo-vuoto-titolo { margin: 0; font-size: 20px; font-weight: 800; }
+.campo-vuoto-testo { margin: 0; max-width: 320px; color: var(--testo-secondario); line-height: 1.4; }
+
+/* Il campo si illumina quando ci passi sopra con una pedina */
+.campo.bersaglio { outline: 2px dashed var(--accento); outline-offset: 3px; }
+
+.scelta.da-zero { color: var(--accento); font-weight: 600; }
+.lista-scelte.disattivata { opacity: 0.45; pointer-events: none; }
+
+/* Tavolozza con le pedine */
+.tavolozza {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--sfondo-card);
+  border: 1px solid var(--accento-tenue);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: dalBasso 0.3s var(--curva) both;
+}
+.tavolozza-testa {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--testo-secondario);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.contatore { color: var(--accento); }
+.contatore.pieno { color: var(--rosso); }
+.tavolozza-gruppo { display: flex; flex-direction: column; gap: 6px; }
+.tavolozza-titolo { font-size: 11px; color: var(--testo-secondario); }
+.pedine { display: flex; flex-wrap: wrap; gap: 8px; }
+.tavolozza .btn-mini { align-self: flex-start; }
+
+.pedina {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 4px;
+  border-radius: 50%;
+  background: var(--colore-ruolo);
+  color: var(--testo-giocatore);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s var(--curva);
+  animation: salta 0.35s var(--curva) both;
+  animation-delay: calc(var(--i) * 30ms);
+}
+.pedina:hover { transform: translateY(-2px) scale(1.06); }
+.pedina.forma-quadrato { border-radius: 6px; }
+.pedina.forma-lettera {
+  background: transparent;
+  color: var(--colore-ruolo);
+  font-size: 17px;
+  box-shadow: inset 0 0 0 1.5px var(--colore-ruolo);
+}
+/* La pedina che segue il mouse */
+.pedina-volante {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.25);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  animation: none;
+}
+
+/* Pedina appena messa in campo: piccolo salto */
+.giocatore.appena-aggiunto .sagoma,
+.giocatore.appena-aggiunto .etichetta { animation: entraGiocatore 0.45s var(--curva) both; }
+
+.mini-lucchetto { font-size: 11px; }
+
+/* ==========================================================================
+   LUCCHETTO
+   ========================================================================== */
+/* Arco del lucchetto: aperto (ruotato) o chiuso */
+.icona-lucchetto .arco {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  transform: rotate(-32deg) translate(1px, -1px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.btn-lucchetto.chiuso .icona-lucchetto .arco,
+.sigillo.chiudi .icona-lucchetto .arco { transform: none; }
+.btn-lucchetto.chiuso { background: var(--accento-tenue); color: var(--accento); }
+.btn-lucchetto.salta { animation: saltoLucchetto 0.5s var(--curva); }
+.btn-lucchetto.scuoti { animation: scuoti 0.4s var(--curva); }
+@keyframes saltoLucchetto {
+  30% { transform: scale(1.18) rotate(-6deg); }
+  60% { transform: scale(0.95) rotate(3deg); }
+}
+
+/* Lucchetto grande sul campo durante l'animazione */
+.sigillo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--accento);
+  opacity: 0;
+}
+.sigillo svg { filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.6)); }
+.sigillo.apri { color: var(--testo); }
+.sigillo.anima { animation: sigillo 1.1s var(--curva) both; }
+/* Si chiude (o si apre) DURANTE la comparsa */
+.sigillo.anima.chiudi .icona-lucchetto .arco { animation: chiudiArco 0.45s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.sigillo.anima.apri .icona-lucchetto .arco { animation: apriArco 0.45s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes sigillo {
+  0%   { opacity: 0; transform: scale(0.6); }
+  25%  { opacity: 1; transform: scale(1.05); }
+  65%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+@keyframes chiudiArco {
+  from { transform: rotate(-32deg) translate(1px, -1px); }
+  to   { transform: none; }
+}
+@keyframes apriArco {
+  from { transform: none; }
+  to   { transform: rotate(-32deg) translate(1px, -1px); }
+}
+
+/* Schema bloccato: il campo ha un bordo ambra e un piccolo lucchetto */
+body.schema-bloccato .campo { border-color: var(--accento-tenue); cursor: not-allowed; }
+body.schema-bloccato .campo-cornice::after {
+  content: "🔒 Bloccato";
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  width: max-content;
+  margin: 0 auto; /* centrata in alto, dove non copre i numeri */
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(15, 20, 18, 0.75);
+  color: var(--accento);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+  animation: appari 0.3s 0.5s var(--curva) both;
 }

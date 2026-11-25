@@ -181,6 +181,7 @@ const Tracce = {
 
   // Applica una traccia pronta (route dell'albero o difesa) con animazione
   applica(g, traccia) {
+    if (schemaBloccato()) return;
     ricordaStato();
     g.traccia = traccia;
     this.daAnimare = g.id;
@@ -190,7 +191,7 @@ const Tracce = {
   },
 
   rimuovi(g) {
-    if (!g || !g.traccia) return;
+    if (!g || !g.traccia || schemaBloccato()) return;
     ricordaStato();
     delete g.traccia;
     chiudiMenuTracce();
@@ -200,6 +201,7 @@ const Tracce = {
 
   /* ---------- Disegno a mano ---------- */
   iniziaDisegno(g) {
+    if (schemaBloccato()) return;
     chiudiMenuTracce();
     this.disegno = {
       giocatore: g,
@@ -356,6 +358,7 @@ function apriMenuTracce(g) {
     aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
   }
   if (g.traccia) aggiungiAzione("Rimuovi traccia", "Canc", () => Tracce.rimuovi(g), "distruttiva");
+  else aggiungiAzione("Togli giocatore dal campo", "Canc", () => rimuoviGiocatore(g), "distruttiva");
   menu.appendChild(azioni);
 
   // Posizione: accanto al giocatore, dentro la finestra
@@ -401,7 +404,7 @@ function aggiornaSuggerimento() {
     s.classList.remove("in-disegno");
     s.innerHTML = `Clic su un giocatore per le tracce · trascina per spostare · ` +
       `<kbd>Maiusc</kbd> aggancia alla mezza yarda · <kbd>←↑↓→</kbd> sposta · ` +
-      `<kbd>R</kbd> ribalta · <kbd>${TASTO_CMD}Z</kbd> annulla`;
+      `<kbd>R</kbd> ribalta · <kbd>L</kbd> blocca · <kbd>${TASTO_CMD}Z</kbd> annulla`;
   }
 }
 aggiornaSuggerimento();

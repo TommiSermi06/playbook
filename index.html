@@ -78,8 +78,13 @@
             <input id="nome-schema" class="nome-schema" type="text" maxlength="60" placeholder="Nome dello schema" autocomplete="off">
             <p class="sottotitolo"><span id="info-schema"></span> <span class="stato-salvataggio" id="stato-salvataggio"></span></p>
           </div>
-          <!-- Strumenti: Ribalta, Annulla, Ripeti -->
+          <!-- Strumenti: Lucchetto, Ribalta, Annulla, Ripeti -->
           <div class="gruppo-pulsanti">
+            <button class="btn-strumento btn-lucchetto" id="btn-lucchetto" title="Blocca lo schema (L)">
+              <svg class="icona-lucchetto" viewBox="0 0 24 24" width="18" height="18"><path class="arco" d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><rect class="corpo" x="5" y="11" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2" fill="none"/><circle class="foro" cx="12" cy="16" r="1.4" fill="currentColor"/></svg>
+              <span class="testo-lucchetto">Blocca</span>
+            </button>
+            <span class="divisore"></span>
             <button class="btn-strumento" id="btn-ribalta" title="Ribalta destra/sinistra (R)">
               <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3v18" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2" fill="none"/><path d="M9 7L3 17h6zM15 7l6 10h-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
               Ribalta
@@ -96,7 +101,19 @@
 
         <!-- Il campo da gioco: disegnato in SVG da app.js -->
         <div class="campo-area">
-          <svg id="campo" class="campo" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="campo-cornice">
+            <svg id="campo" class="campo" xmlns="http://www.w3.org/2000/svg"></svg>
+
+            <!-- Campo vuoto: invito a scegliere o creare una formazione -->
+            <div class="campo-vuoto" id="campo-vuoto" hidden>
+              <p class="campo-vuoto-titolo" id="campo-vuoto-titolo">Campo libero</p>
+              <p class="campo-vuoto-testo" id="campo-vuoto-testo"></p>
+              <button class="btn-pieno" id="btn-crea-da-zero-campo">Crea da zero</button>
+            </div>
+
+            <!-- Lucchetto grande che compare quando blocchi/sblocchi -->
+            <div class="sigillo" id="sigillo" aria-hidden="true"><svg class="icona-lucchetto" viewBox="0 0 24 24" width="110" height="110"><path class="arco" d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><rect class="corpo" x="5" y="11" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2" fill="none"/><circle class="foro" cx="12" cy="16" r="1.4" fill="currentColor"/></svg></div>
+          </div>
         </div>
 
         <div class="legenda" id="legenda"></div>
@@ -108,6 +125,8 @@
     <aside class="pannello" id="pannello" hidden>
       <p class="titolo-sezione">Formazione</p>
       <div class="lista lista-scelte" id="lista-formazioni"></div>
+      <!-- Tavolozza delle pedine per "Crea da zero" -->
+      <div class="tavolozza" id="tavolozza" hidden></div>
 
       <p class="titolo-sezione">Giocatore selezionato</p>
       <div class="card info-giocatore" id="info-giocatore">
@@ -226,6 +245,8 @@
   <script src="dati.js"></script>
   <script src="app.js"></script>
   <script src="tracce.js"></script>
+  <script src="costruttore.js"></script>
+  <script src="lucchetto.js"></script>
   <script src="squadra.js"></script>
   <script src="accesso.js"></script>
 </body>
