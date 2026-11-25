@@ -94,11 +94,15 @@ const Dati = {
     return schema;
   },
 
-  // Salva (nuovo o aggiornato). Lo schema modificato finisce in cima.
+  // Salva: uno schema già esistente resta al suo posto nell'elenco
+  // (così l'ordine del playbook non cambia), uno nuovo va in cima.
   salva(schema) {
     schema.modificato = Date.now();
-    const altri = this.tutti().filter((s) => s.id !== schema.id);
-    const ok = this._scrivi([schema, ...altri]);
+    const tutti = this.tutti();
+    const i = tutti.findIndex((s) => s.id === schema.id);
+    if (i >= 0) tutti[i] = schema;
+    else tutti.unshift(schema);
+    const ok = this._scrivi(tutti);
     this.programmaInvio(schema.id);
     return ok;
   },

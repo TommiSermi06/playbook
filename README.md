@@ -3,6 +3,17 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.16 — wristband e call sheet
+
+- Nuova sezione **Partita** nel pannello di ogni schema: numero di chiamata
+  (con avviso se è già usato) e situazioni (1° & 10, 3° & corto, Red zone, Goal line, 2 minuti, Apertura…).
+- **Numera in automatico**: dà un numero agli schemi che non ce l'hanno, nell'ordine del playbook (si può annullare).
+- Il numero compare nell'elenco degli schemi (`#7 · GOLD`).
+- Nella finestra di stampa si sceglie **Playbook**, **Wristband** o **Call sheet**:
+  - Wristband: inserti 12 × 7 cm da ritagliare, 12 schemi con mini-disegno o 24 solo testo, da 1 a 10 copie.
+  - Call sheet: A4 orizzontale con un riquadro per situazione, mini-schemi facoltativi,
+    «Altri schemi» per quelli senza situazione; continua sulla pagina dopo se serve.
+
 ## Versione 0.15 — rinomina un ruolo
 - Menu ⋯ del playbook → «Rinomina un ruolo…»: cambia una sigla (es. H → RB) in tutti gli schemi del playbook e nelle formazioni salvate dello stesso formato, con anteprima e Annulla
 

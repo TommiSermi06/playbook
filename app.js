@@ -367,7 +367,7 @@ function mostraElenco() {
     if (schema.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
     const sotto = document.createElement("span");
     sotto.className = "riga-sotto";
-    sotto.textContent = `${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
+    sotto.textContent = `${schema.chiamata ? "#" + schema.chiamata + " · " : ""}${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
     testi.append(titolo, sotto);
 
     riga.append(mini, testi);
@@ -388,7 +388,7 @@ function aggiornaRigaCorrente() {
   if (schemaCorrente.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
   titolo.classList.toggle("senza-nome", !schemaCorrente.nome);
   riga.querySelector(".riga-sotto").textContent =
-    `${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
+    `${schemaCorrente.chiamata ? "#" + schemaCorrente.chiamata + " · " : ""}${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
 }
 
 function scegliLato(lato) {
@@ -468,6 +468,7 @@ function ridisegna() {
   mostraLegenda();
   mostraCampoVuoto();
   aggiornaLucchetto();
+  mostraPartita();
   mostraInfoGiocatore();
 }
 

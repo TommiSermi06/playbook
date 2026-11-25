@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=0.15">
+  <link rel="stylesheet" href="style.css?v=0.16">
 </head>
 <body>
   <!-- ======================================================================
@@ -73,7 +73,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.15</p>
+      <p class="versione" id="versione">Versione 0.16</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -156,6 +156,10 @@
       <div class="card info-giocatore" id="info-giocatore">
         <p class="testo-secondario">Clicca un giocatore sul campo.</p>
       </div>
+
+      <!-- Dati per la partita: numero di chiamata e situazioni -->
+      <p class="titolo-sezione">Partita</p>
+      <div class="card pannello-partita" id="pannello-partita"></div>
 
       <p class="titolo-sezione">Note</p>
       <div class="card">
@@ -306,9 +310,34 @@
     <p class="dialogo-titolo">Stampa il playbook</p>
     <p class="dialogo-testo">Con il logo e il nome della squadra su ogni pagina.</p>
 
+    <!-- Tipo di stampa: playbook, wristband del QB o call sheet -->
+    <div class="segmentato segmentato-3" id="stampa-tipo">
+      <button type="button" class="segmento" data-valore="playbook">📘 Playbook</button>
+      <button type="button" class="segmento" data-valore="wristband">⌚ Wristband</button>
+      <button type="button" class="segmento" data-valore="callsheet">📋 Call sheet</button>
+    </div>
+    <p class="info-tipo" id="info-tipo"></p>
+
     <p class="etichetta-stampa">Cosa stampare</p>
     <div class="lista-stampa" id="stampa-cosa"></div>
 
+    <!-- Opzioni del wristband -->
+    <div class="opzioni-tipo" id="opzioni-wristband">
+      <p class="etichetta-stampa">Contenuto dell'inserto</p>
+      <div class="segmentato segmentato-2" id="stampa-wristband">
+        <button type="button" class="segmento" data-valore="schemi">Con mini-schemi · 12</button>
+        <button type="button" class="segmento" data-valore="testo">Solo testo · 24</button>
+      </div>
+      <label class="riga-copie">Copie <input type="number" id="stampa-copie" min="1" max="10" value="1"></label>
+    </div>
+
+    <!-- Opzioni del call sheet -->
+    <div class="opzioni-tipo" id="opzioni-callsheet">
+      <label class="spunta-stampa"><input type="checkbox" id="stampa-mini-schemi"> Mini-schemi accanto alle chiamate</label>
+      <label class="spunta-stampa"><input type="checkbox" id="stampa-senza-situazione"> Aggiungi «Altri schemi» (senza situazione)</label>
+    </div>
+
+    <div class="opzioni-tipo" id="opzioni-playbook">
     <p class="etichetta-stampa">Schemi per pagina</p>
     <div class="segmentato segmentato-4" id="stampa-per-pagina">
       <button type="button" class="segmento" data-valore="1">1</button>
@@ -333,6 +362,7 @@
 
     <label class="spunta-stampa"><input type="checkbox" id="stampa-copertina"> Copertina con logo e indice</label>
     <label class="spunta-stampa"><input type="checkbox" id="stampa-note"> Note di ogni schema</label>
+    </div>
 
     <p class="messaggio-errore" id="errore-stampa"></p>
     <p class="suggerimento-stampa">Nella finestra che si apre scegli la stampante oppure <b>«Salva come PDF»</b>.</p>
@@ -407,20 +437,21 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.15"></script>
+  <script src="config.js?v=0.16"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.15"></script>
-  <script src="regole.js?v=0.15"></script>
-  <script src="cloud.js?v=0.15"></script>
-  <script src="dati.js?v=0.15"></script>
-  <script src="formazioni-personali.js?v=0.15"></script>
-  <script src="app.js?v=0.15"></script>
-  <script src="tracce.js?v=0.15"></script>
-  <script src="costruttore.js?v=0.15"></script>
-  <script src="lucchetto.js?v=0.15"></script>
-  <script src="stampa.js?v=0.15"></script>
-  <script src="playbook.js?v=0.15"></script>
-  <script src="squadra.js?v=0.15"></script>
-  <script src="accesso.js?v=0.15"></script>
+  <script src="formazioni.js?v=0.16"></script>
+  <script src="regole.js?v=0.16"></script>
+  <script src="cloud.js?v=0.16"></script>
+  <script src="dati.js?v=0.16"></script>
+  <script src="formazioni-personali.js?v=0.16"></script>
+  <script src="app.js?v=0.16"></script>
+  <script src="tracce.js?v=0.16"></script>
+  <script src="costruttore.js?v=0.16"></script>
+  <script src="lucchetto.js?v=0.16"></script>
+  <script src="stampa.js?v=0.16"></script>
+  <script src="partita.js?v=0.16"></script>
+  <script src="playbook.js?v=0.16"></script>
+  <script src="squadra.js?v=0.16"></script>
+  <script src="accesso.js?v=0.16"></script>
 </body>
 </html>

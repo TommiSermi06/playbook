@@ -13,6 +13,7 @@
 const OPZIONI_STAMPA_DEFAULT = {
   cosa: "tutto", perPagina: 4, campo: "chiaro", copertina: true, note: true,
   perFormazione: true, formazioneVuota: true,
+  tipo: "playbook", wristband: "schemi", copie: 1, miniSchemi: false, senzaSituazione: false,
 };
 
 /* ==========================================================================
@@ -102,9 +103,15 @@ function apriFoglioStampa() {
     lista.appendChild(riga);
   }
 
+  impostaSegmentato("#stampa-tipo", opzioniStampa.tipo || "playbook");
+  impostaSegmentato("#stampa-wristband", opzioniStampa.wristband || "schemi");
+  $("#stampa-copie").value = opzioniStampa.copie || 1;
+  $("#stampa-mini-schemi").checked = Boolean(opzioniStampa.miniSchemi);
+  $("#stampa-senza-situazione").checked = Boolean(opzioniStampa.senzaSituazione);
   $("#stampa-per-formazione").checked = opzioniStampa.perFormazione !== false;
   $("#stampa-formazione-vuota").checked = opzioniStampa.formazioneVuota !== false;
   mostraOrdineFormazioni();
+  aggiornaOpzioniTipo();
 
   impostaSegmentato("#stampa-per-pagina", String(opzioniStampa.perPagina));
   impostaSegmentato("#stampa-campo", opzioniStampa.campo);
@@ -230,10 +237,49 @@ function impostaSegmentato(selettore, valore) {
   gruppo.style.setProperty("--indice", indice);
   gruppo.dataset.valore = bottoni[indice].dataset.valore;
 }
-["#stampa-per-pagina", "#stampa-campo"].forEach((sel) => {
+["#stampa-per-pagina", "#stampa-campo", "#stampa-tipo", "#stampa-wristband"].forEach((sel) => {
   $(sel).querySelectorAll(".segmento").forEach((b) =>
-    b.addEventListener("click", () => impostaSegmentato(sel, b.dataset.valore)));
+    b.addEventListener("click", () => {
+      impostaSegmentato(sel, b.dataset.valore);
+      if (sel === "#stampa-tipo") aggiornaOpzioniTipo();
+    }));
 });
+
+/* Mostra le opzioni giuste per il tipo di stampa e un riepilogo
+   (es. "12 schemi con il numero di chiamata") */
+function aggiornaOpzioniTipo() {
+  const tipo = $("#stampa-tipo").dataset.valore || "playbook";
+  $("#opzioni-playbook").hidden = tipo !== "playbook";
+  $("#opzioni-wristband").hidden = tipo !== "wristband";
+  $("#opzioni-callsheet").hidden = tipo !== "callsheet";
+  const info = $("#info-tipo");
+  info.innerHTML = "";
+  info.className = "info-tipo";
+  if (tipo === "playbook") return;
+  const schemi = schemiDaStampare(cosaScelta());
+  if (tipo === "wristband") {
+    const numerati = schemi.filter((s) => s.chiamata).length;
+    if (numerati) {
+      info.textContent = `${numerati} ${numerati === 1 ? "schema" : "schemi"} con il numero di chiamata`;
+      if (numerati < schemi.length) info.textContent += ` (${schemi.length - numerati} senza numero restano fuori)`;
+    } else {
+      info.classList.add("da-fare");
+      info.textContent = "Nessuno schema ha ancora un numero di chiamata. ";
+    }
+    if (numerati < schemi.length) {
+      const b = Object.assign(document.createElement("button"), { type: "button", className: "btn-link", textContent: "Numera in automatico" });
+      b.addEventListener("click", () => numeraInAutomatico(cosaScelta() === "difesa" ? "difesa" : "attacco"));
+      info.appendChild(b);
+    }
+  } else {
+    const conSituazione = schemi.filter((s) => (s.situazioni || []).length).length;
+    info.textContent = conSituazione
+      ? `${conSituazione} ${conSituazione === 1 ? "schema" : "schemi"} con almeno una situazione`
+      : "Nessuno schema ha ancora una situazione: aprili e scegli 1° & 10, 3° & corto, Red zone… nella sezione «Partita».";
+    if (!conSituazione) info.classList.add("da-fare");
+  }
+}
+$("#stampa-cosa").addEventListener("change", aggiornaOpzioniTipo);
 
 $("#btn-stampa").addEventListener("click", apriFoglioStampa);
 $("#btn-stampa-annulla").addEventListener("click", chiudiFoglioStampa);
@@ -248,7 +294,17 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
     note: $("#stampa-note").checked,
     perFormazione: $("#stampa-per-formazione").checked,
     formazioneVuota: $("#stampa-formazione-vuota").checked,
+    tipo: $("#stampa-tipo").dataset.valore || "playbook",
+    wristband: $("#stampa-wristband").dataset.valore || "schemi",
+    copie: Math.max(1, Math.min(10, parseInt($("#stampa-copie").value, 10) || 1)),
+    miniSchemi: $("#stampa-mini-schemi").checked,
+    senzaSituazione: $("#stampa-senza-situazione").checked,
   };
+  // Un wristband senza numeri di chiamata sarebbe vuoto
+  if (opzioniStampa.tipo === "wristband" && !schemiNumerati(schemiDaStampare(opzioniStampa.cosa)).length) {
+    $("#errore-stampa").textContent = "Dai prima un numero di chiamata agli schemi (o usa «Numera in automatico»).";
+    return;
+  }
   scriviLocale("playbook.opzioni-stampa", opzioniStampa);
   chiudiFoglioStampa();
   setTimeout(() => stampaPlaybook(opzioniStampa), 250); // dopo la chiusura della finestra
@@ -383,7 +439,30 @@ function copertina(titolo, schemi, paginaDi, gruppi = null) {
   return pag;
 }
 
+// Formato del foglio (A4 verticale o orizzontale) per la stampa
+function impostaPagina(orizzontale) {
+  let stilePagina = $("#stile-pagina");
+  if (!stilePagina) {
+    stilePagina = document.createElement("style");
+    stilePagina.id = "stile-pagina";
+    document.head.appendChild(stilePagina);
+  }
+  $("#stampa").classList.toggle("orizzontale", orizzontale);
+  stilePagina.textContent = `@page { size: A4 ${orizzontale ? "landscape" : "portrait"}; margin: 0; }`;
+}
+
 function costruisciStampa(opzioni) {
+  // Wristband e call sheet hanno una loro impaginazione (partita.js)
+  if (opzioni.tipo === "wristband" || opzioni.tipo === "callsheet") {
+    const contenitore = $("#stampa");
+    contenitore.innerHTML = "";
+    contenitore.className = `stampa campo-${opzioni.campo} tipo-${opzioni.tipo}`;
+    const esito = opzioni.tipo === "wristband"
+      ? costruisciWristband(opzioni, contenitore)
+      : costruisciCallSheet(opzioni, contenitore);
+    impostaPagina(opzioni.tipo === "callsheet");
+    return esito;
+  }
   const schemiTutti = schemiDaStampare(opzioni.cosa);
   const titolo = titoloStampa(opzioni.cosa, schemiTutti);
   const perPagina = opzioni.perPagina;
