@@ -5,7 +5,7 @@
    Supabase → il progetto → Project Settings → API (o "Data API").
 
    - URL:  "Project URL", tipo https://abcdefgh.supabase.co
-   - KEY:  la chiave "anon" / "publishable". È FATTA per stare nel codice
+   - KEY:  la chiave "publishable" (o "anon" nei progetti più vecchi). È FATTA per stare nel codice
            di un'app web: i dati restano protetti dalle regole di sicurezza
            (Row Level Security) definite in supabase/setup.sql.
            NON mettere mai qui la chiave "service_role" / "secret".
@@ -15,6 +15,6 @@
    ========================================================================== */
 
 const CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_KEY: "",
+  SUPABASE_URL: "https://mphofpbnbfizfuslqrjn.supabase.co",
+  SUPABASE_KEY: "sb_publishable_ki0cHnYNCxSdLc_DWMWVuw_-SSTcXvf",
 };

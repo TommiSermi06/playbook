@@ -46,6 +46,16 @@ create policy "schemi: solo il proprietario" on public.schemi
   using (utente = auth.uid())
   with check (utente = auth.uid());
 
+-- PERMESSI -------------------------------------------------------------------
+-- Nei progetti Supabase recenti le tabelle create a mano non sono
+-- accessibili all'app finché non lo si dice esplicitamente.
+-- Le diamo SOLO agli utenti collegati ("authenticated"): le regole qui sopra
+-- fanno comunque vedere a ognuno solo le proprie righe.
+-- Gli utenti non collegati ("anon") restano senza accesso.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.profili to authenticated;
+grant select, insert, update, delete on public.schemi  to authenticated;
+
 -- 3. LOGHI (Storage) ---------------------------------------------------------
 -- Bucket pubblico in lettura: i loghi devono comparire nell'app e nelle stampe.
 -- Ognuno può scrivere solo nella propria cartella: loghi/<id utente>/...
