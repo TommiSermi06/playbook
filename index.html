@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=0.14">
+  <link rel="stylesheet" href="style.css?v=0.15">
 </head>
 <body>
   <!-- ======================================================================
@@ -73,7 +73,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.14</p>
+      <p class="versione" id="versione">Versione 0.15</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -242,6 +242,31 @@
   </section>
 
   <!-- ======================================================================
+       FINESTRA "RINOMINA UN RUOLO" (es. H -> RB in tutto il playbook)
+       ====================================================================== -->
+  <form class="dialogo dialogo-ruolo" id="foglio-ruolo" role="dialog" aria-modal="true" hidden>
+    <p class="dialogo-titolo">Rinomina un ruolo</p>
+    <p class="dialogo-testo" id="testo-ruolo"></p>
+    <div class="riga-ruolo">
+      <label class="campo-testo">
+        <span>Ruolo attuale</span>
+        <select id="ruolo-da"></select>
+      </label>
+      <span class="freccia-ruolo">→</span>
+      <label class="campo-testo">
+        <span>Nuovo nome</span>
+        <input id="ruolo-a" type="text" maxlength="3" placeholder="Es. RB" autocomplete="off">
+      </label>
+    </div>
+    <p class="anteprima-ruolo" id="anteprima-ruolo"></p>
+    <p class="messaggio-errore" id="errore-ruolo"></p>
+    <div class="dialogo-pulsanti">
+      <button type="button" class="btn-secondario" id="btn-ruolo-annulla">Annulla</button>
+      <button type="submit" class="btn-pieno" id="btn-ruolo-ok">Rinomina</button>
+    </div>
+  </form>
+
+  <!-- ======================================================================
        FINESTRA "NUOVO PLAYBOOK" / "RINOMINA"
        ====================================================================== -->
   <form class="dialogo dialogo-playbook" id="foglio-playbook" role="dialog" aria-modal="true" hidden>
@@ -382,20 +407,20 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.14"></script>
+  <script src="config.js?v=0.15"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.14"></script>
-  <script src="regole.js?v=0.14"></script>
-  <script src="cloud.js?v=0.14"></script>
-  <script src="dati.js?v=0.14"></script>
-  <script src="formazioni-personali.js?v=0.14"></script>
-  <script src="app.js?v=0.14"></script>
-  <script src="tracce.js?v=0.14"></script>
-  <script src="costruttore.js?v=0.14"></script>
-  <script src="lucchetto.js?v=0.14"></script>
-  <script src="stampa.js?v=0.14"></script>
-  <script src="playbook.js?v=0.14"></script>
-  <script src="squadra.js?v=0.14"></script>
-  <script src="accesso.js?v=0.14"></script>
+  <script src="formazioni.js?v=0.15"></script>
+  <script src="regole.js?v=0.15"></script>
+  <script src="cloud.js?v=0.15"></script>
+  <script src="dati.js?v=0.15"></script>
+  <script src="formazioni-personali.js?v=0.15"></script>
+  <script src="app.js?v=0.15"></script>
+  <script src="tracce.js?v=0.15"></script>
+  <script src="costruttore.js?v=0.15"></script>
+  <script src="lucchetto.js?v=0.15"></script>
+  <script src="stampa.js?v=0.15"></script>
+  <script src="playbook.js?v=0.15"></script>
+  <script src="squadra.js?v=0.15"></script>
+  <script src="accesso.js?v=0.15"></script>
 </body>
 </html>

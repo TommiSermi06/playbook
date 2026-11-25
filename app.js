@@ -1003,6 +1003,10 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") chiudiFoglioPlaybook();
     return;
   }
+  if (!$("#foglio-ruolo").hidden) {
+    if (e.key === "Escape") chiudiFoglioRuolo();
+    return;
+  }
   // Pagina «I tuoi playbook»: N crea un nuovo playbook, niente altro
   if (document.body.classList.contains("in-home")) {
     const staScrivendoHome = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
@@ -1181,6 +1185,7 @@ $("#velo").addEventListener("click", () => {
   if (!$("#foglio-squadra").hidden) chiudiFoglioSquadra();
   else if (!$("#foglio-stampa").hidden) chiudiFoglioStampa();
   else if (!$("#foglio-playbook").hidden) chiudiFoglioPlaybook();
+  else if (!$("#foglio-ruolo").hidden) chiudiFoglioRuolo();
   else chiudiDialogo();
 });
 

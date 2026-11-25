@@ -3,6 +3,9 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.15 — rinomina un ruolo
+- Menu ⋯ del playbook → «Rinomina un ruolo…»: cambia una sigla (es. H → RB) in tutti gli schemi del playbook e nelle formazioni salvate dello stesso formato, con anteprima e Annulla
+
 ## Versione 0.14 — stampa divisa per formazioni
 - «Dividi per formazioni»: gli schemi vengono raggruppati per formazione, ognuna da una pagina nuova
 - Ordine delle formazioni scelto dal coach (trascina o frecce), ricordato per ogni playbook

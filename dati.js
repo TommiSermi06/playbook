@@ -103,6 +103,18 @@ const Dati = {
     return ok;
   },
 
+  // Aggiorna molti schemi in una volta, lasciandoli al loro posto nell'elenco
+  aggiornaMolti(schemi) {
+    const perId = new Map(schemi.map((s) => [s.id, s]));
+    const adesso = Date.now();
+    schemi.forEach((s) => { s.modificato = adesso; });
+    this._scrivi(this.tutti().map((s) => perId.get(s.id) || s));
+    schemi.forEach((s) => this.daInviare.add(s.id));
+    this._ricordaDaInviare();
+    clearTimeout(this.timerInvio);
+    this.timerInvio = setTimeout(() => this.invia(), 300);
+  },
+
   // Importa molti schemi in una volta, mantenendo il loro ordine
   importa(schemi) {
     this._scrivi([...schemi, ...this.tutti()]);

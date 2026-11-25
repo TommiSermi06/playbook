@@ -244,6 +244,7 @@ function apriMenuScheda(bottone, pb) {
     ["Apri", () => apriPlaybook(pb.id)],
     ["Rinomina…", () => apriFoglioPlaybook(pb)],
     ["Duplica", () => duplicaPlaybook(pb)],
+    ["Rinomina un ruolo…", () => apriRinominaRuolo(pb)],
     ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
     ["Elimina…", () => eliminaPlaybook(pb), "distruttiva"],
   ];
@@ -514,3 +515,126 @@ $("#file-importa").addEventListener("change", (e) => {
   e.target.value = "";
   if (file) importaDaFile(file);
 });
+
+/* ==========================================================================
+   RINOMINA UN RUOLO in tutto il playbook (es. H -> RB)
+   Cambia la sigla in tutti gli schemi e nelle formazioni salvate usate
+   dal playbook. Si può annullare subito dopo.
+   ========================================================================== */
+let playbookRuolo = null;
+
+// Sigle presenti nel playbook, per lato, con quanti schemi le usano
+function ruoliDelPlaybook(pb) {
+  const conta = new Map();
+  for (const s of schemiDelPlaybook(pb.id)) {
+    for (const sigla of new Set(s.giocatori.map((g) => g.etichetta))) {
+      const k = `${s.lato}|${sigla}`;
+      conta.set(k, (conta.get(k) || 0) + 1);
+    }
+  }
+  return [...conta.entries()]
+    .map(([k, n]) => ({ chiave: k, lato: k.split("|")[0], sigla: k.split("|")[1], schemi: n }))
+    .sort((a, b) => (a.lato === b.lato ? a.sigla.localeCompare(b.sigla) : a.lato === "attacco" ? -1 : 1));
+}
+
+// Cosa cambierebbe: schemi e formazioni che contengono la sigla
+function daRinominare(pb, lato, sigla) {
+  const schemi = schemiDelPlaybook(pb.id).filter((s) => s.lato === lato && s.giocatori.some((g) => g.etichetta === sigla));
+  // tutte le tue formazioni salvate dello stesso formato e lato (anche quelle non ancora usate)
+  const formazioni = FormazioniMie.perLato(lato, pb.formato).filter((f) =>
+    f.giocatori.some((g) => g.etichetta === sigla));
+  return { schemi, formazioni };
+}
+
+function apriRinominaRuolo(pb) {
+  playbookRuolo = pb;
+  const ruoli = ruoliDelPlaybook(pb);
+  const scelta = $("#ruolo-da");
+  scelta.innerHTML = "";
+  const dueLati = new Set(ruoli.map((r) => r.lato)).size > 1;
+  for (const r of ruoli) {
+    const testo = `${r.sigla}${dueLati ? ` · ${NOMI_LATO[r.lato]}` : ""} (${r.schemi} ${r.schemi === 1 ? "schema" : "schemi"})`;
+    scelta.add(new Option(testo, r.chiave));
+  }
+  $("#testo-ruolo").textContent = `In tutti gli schemi di «${pb.nome}» e nelle tue formazioni ${descriviPlaybook(pb)}.`;
+  $("#ruolo-a").value = "";
+  $("#errore-ruolo").textContent = ruoli.length ? "" : "Questo playbook non ha ancora giocatori.";
+  aggiornaAnteprimaRuolo();
+  $("#velo").hidden = false;
+  $("#foglio-ruolo").hidden = false;
+  requestAnimationFrame(() => {
+    $("#velo").classList.add("visibile");
+    $("#foglio-ruolo").classList.add("visibile");
+    $("#ruolo-a").focus();
+  });
+}
+
+function chiudiFoglioRuolo() {
+  $("#velo").classList.remove("visibile");
+  $("#foglio-ruolo").classList.remove("visibile");
+  setTimeout(() => {
+    $("#velo").hidden = true;
+    $("#foglio-ruolo").hidden = true;
+  }, 220);
+}
+
+function aggiornaAnteprimaRuolo() {
+  const valore = $("#ruolo-da").value;
+  const nuovo = $("#ruolo-a").value.trim().toUpperCase();
+  const box = $("#anteprima-ruolo");
+  if (!valore || !playbookRuolo) { box.textContent = ""; return; }
+  const [lato, sigla] = valore.split("|");
+  const { schemi, formazioni } = daRinominare(playbookRuolo, lato, sigla);
+  const parti = [`${schemi.length} ${schemi.length === 1 ? "schema" : "schemi"}`];
+  if (formazioni.length) parti.push(`${formazioni.length} ${formazioni.length === 1 ? "formazione" : "formazioni"}`);
+  box.innerHTML = "";
+  const da = Object.assign(document.createElement("b"), { textContent: sigla });
+  const a = Object.assign(document.createElement("b"), { textContent: nuovo || "…" });
+  box.append(da, " → ", a, ` in ${parti.join(" e ")}`);
+}
+$("#ruolo-da").addEventListener("change", aggiornaAnteprimaRuolo);
+$("#ruolo-a").addEventListener("input", (e) => {
+  e.target.value = e.target.value.toUpperCase();
+  aggiornaAnteprimaRuolo();
+});
+$("#btn-ruolo-annulla").addEventListener("click", chiudiFoglioRuolo);
+
+$("#foglio-ruolo").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const valore = $("#ruolo-da").value;
+  const nuovo = $("#ruolo-a").value.trim().toUpperCase();
+  if (!valore) return;
+  const [lato, sigla] = valore.split("|");
+  if (!nuovo) { $("#errore-ruolo").textContent = "Scrivi il nuovo nome del ruolo."; return; }
+  if (nuovo === sigla) { $("#errore-ruolo").textContent = "Il nuovo nome è uguale a quello attuale."; return; }
+
+  const { schemi, formazioni } = daRinominare(playbookRuolo, lato, sigla);
+  // Copia di prima, per "Annulla"
+  const primaSchemi = JSON.parse(JSON.stringify(schemi));
+  const primaFormazioni = JSON.parse(JSON.stringify(formazioni));
+  for (const s of schemi) s.giocatori.forEach((g) => { if (g.etichetta === sigla) g.etichetta = nuovo; });
+  Dati.aggiornaMolti(schemi);
+  for (const f of formazioni) {
+    f.giocatori.forEach((g) => { if (g.etichetta === sigla) g.etichetta = nuovo; });
+    f.modificato = Date.now();
+    FormazioniMie.ripristina(f);
+  }
+  dopoModificaRuoli();
+  chiudiFoglioRuolo();
+  festeggiaStemma();
+  mostraAvviso(`${sigla} → ${nuovo} in ${schemi.length} ${schemi.length === 1 ? "schema" : "schemi"}`, () => {
+    Dati.aggiornaMolti(primaSchemi);
+    for (const f of primaFormazioni) FormazioniMie.ripristina(f);
+    dopoModificaRuoli();
+  });
+});
+
+// Ridisegna quello che è a schermo dopo il cambio dei ruoli
+function dopoModificaRuoli() {
+  if (schemaCorrente) {
+    const aggiornato = Dati.trova(schemaCorrente.id);
+    if (aggiornato) { schemaCorrente = aggiornato; ridisegna(); }
+  }
+  if (playbookCorrente) mostraElenco();
+  if (!$("#home").hidden) disegnaHome();
+}
