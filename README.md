@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.14 — stampa divisa per formazioni
+- «Dividi per formazioni»: gli schemi vengono raggruppati per formazione, ognuna da una pagina nuova
+- Ordine delle formazioni scelto dal coach (trascina o frecce), ricordato per ogni playbook
+- Opzione «Formazione vuota» come prima scheda di ogni gruppo; indice in copertina diviso per formazione
+
 ## Versione 0.13 — importa ed esporta
 - Pulsante «Importa» nella pagina dei playbook; «Esporta» nel menu ⋯ di ogni playbook (file .playbook.json)
 - Tracce con motion iniziale + route (come nei jet) e rami di opzione tratteggiati (es. hitch o seam)

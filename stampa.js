@@ -10,7 +10,61 @@
       a qualsiasi dimensione.
    ========================================================================== */
 
-const OPZIONI_STAMPA_DEFAULT = { cosa: "tutto", perPagina: 4, campo: "chiaro", copertina: true, note: true };
+const OPZIONI_STAMPA_DEFAULT = {
+  cosa: "tutto", perPagina: 4, campo: "chiaro", copertina: true, note: true,
+  perFormazione: true, formazioneVuota: true,
+};
+
+/* ==========================================================================
+   GRUPPI PER FORMAZIONE
+   Gli schemi da stampare vengono divisi per formazione; l'ordine dei
+   gruppi lo sceglie il coach e viene ricordato per ogni playbook.
+   ========================================================================== */
+function chiaveFormazione(schema) {
+  return schema.formazione || "nessuna";
+}
+
+// Giocatori "puliti" della formazione (per la scheda della formazione vuota)
+function giocatoriFormazione(chiave, lato) {
+  if (chiave === "nessuna" || chiave === "libera") return null;
+  const mia = FormazioniMie.trova(chiave);
+  if (mia) return mia.giocatori;
+  const pronta = FORMAZIONI[lato] && FORMAZIONI[lato].find((f) => f.id === chiave);
+  return pronta ? pronta.giocatori : null;
+}
+
+function nomeGruppo(chiave, schemaEsempio) {
+  if (chiave === "nessuna") return "Senza formazione";
+  if (chiave === "libera") return "Formazioni libere";
+  return nomeFormazione(schemaEsempio);
+}
+
+function chiaveOrdine() {
+  return "playbook.ordine-formazioni." + (playbookCorrente ? playbookCorrente.id : "");
+}
+
+/* Restituisce i gruppi [{ chiave, nome, lato, schemi }] nell'ordine scelto dal coach.
+   Prima l'attacco, poi la difesa; le formazioni nuove finiscono in fondo. */
+function gruppiPerFormazione(schemi) {
+  const mappa = new Map();
+  for (const s of schemi) {
+    const k = `${s.lato}|${chiaveFormazione(s)}`;
+    if (!mappa.has(k)) mappa.set(k, { chiave: k, formazione: chiaveFormazione(s), lato: s.lato, nome: nomeGruppo(chiaveFormazione(s), s), schemi: [] });
+    mappa.get(k).schemi.push(s);
+  }
+  const ordine = leggiLocale(chiaveOrdine()) || [];
+  const posizione = (g) => {
+    const i = ordine.indexOf(g.chiave);
+    return i === -1 ? 10000 : i;
+  };
+  const gruppi = [...mappa.values()];
+  // a parità (formazioni mai ordinate) resta l'ordine in cui compaiono nel playbook
+  return gruppi
+    .map((g, i) => ({ g, i }))
+    .sort((a, b) => (a.g.lato === b.g.lato ? 0 : a.g.lato === "attacco" ? -1 : 1) ||
+      posizione(a.g) - posizione(b.g) || a.i - b.i)
+    .map(({ g }) => g);
+}
 let opzioniStampa = { ...OPZIONI_STAMPA_DEFAULT, ...(leggiLocale("playbook.opzioni-stampa") || {}) };
 
 /* ---------- Finestra delle opzioni ---------- */
@@ -48,6 +102,10 @@ function apriFoglioStampa() {
     lista.appendChild(riga);
   }
 
+  $("#stampa-per-formazione").checked = opzioniStampa.perFormazione !== false;
+  $("#stampa-formazione-vuota").checked = opzioniStampa.formazioneVuota !== false;
+  mostraOrdineFormazioni();
+
   impostaSegmentato("#stampa-per-pagina", String(opzioniStampa.perPagina));
   impostaSegmentato("#stampa-campo", opzioniStampa.campo);
   $("#stampa-copertina").checked = opzioniStampa.copertina;
@@ -62,6 +120,97 @@ function apriFoglioStampa() {
     $("#foglio-stampa").classList.add("visibile");
   });
 }
+
+/* ---------- Lista "Ordine delle formazioni" (trascina o frecce) ---------- */
+function cosaScelta() {
+  const scelta = document.querySelector('input[name="stampa-cosa"]:checked');
+  return scelta ? scelta.value : opzioniStampa.cosa;
+}
+
+function mostraOrdineFormazioni() {
+  const attivo = $("#stampa-per-formazione").checked;
+  $("#blocco-formazioni").hidden = !attivo;
+  if (!attivo) return;
+  const lista = $("#ordine-formazioni");
+  lista.innerHTML = "";
+  const gruppi = gruppiPerFormazione(schemiDaStampare(cosaScelta()));
+  gruppi.forEach((g, i) => {
+    const riga = document.createElement("li");
+    riga.className = "riga-ordine";
+    riga.draggable = true;
+    riga.dataset.chiave = g.chiave;
+    riga.innerHTML = `
+      <span class="maniglia-ordine" aria-hidden="true">⋮⋮</span>
+      <span class="numero-ordine"></span>
+      <span class="nome-ordine"></span>
+      <span class="conteggio-ordine"></span>
+      <button type="button" class="freccia-ordine" data-verso="-1" title="Sposta su">↑</button>
+      <button type="button" class="freccia-ordine" data-verso="1" title="Sposta giù">↓</button>`;
+    riga.querySelector(".numero-ordine").textContent = i + 1;
+    riga.querySelector(".nome-ordine").textContent =
+      g.nome + (gruppi.some((x) => x.lato !== g.lato) ? ` · ${NOMI_LATO[g.lato]}` : "");
+    riga.querySelector(".conteggio-ordine").textContent = g.schemi.length === 1 ? "1 schema" : `${g.schemi.length} schemi`;
+    riga.querySelector('[data-verso="-1"]').disabled = i === 0;
+    riga.querySelector('[data-verso="1"]').disabled = i === gruppi.length - 1;
+    riga.querySelectorAll(".freccia-ordine").forEach((b) =>
+      b.addEventListener("click", () => spostaGruppo(g.chiave, Number(b.dataset.verso))));
+    // Trascina e rilascia
+    riga.addEventListener("dragstart", (e) => {
+      riga.classList.add("trascinata");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", g.chiave);
+    });
+    riga.addEventListener("dragend", () => riga.classList.remove("trascinata"));
+    riga.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const sopra = e.offsetY < riga.offsetHeight / 2;
+      riga.classList.toggle("sopra", sopra);
+      riga.classList.toggle("sotto", !sopra);
+    });
+    riga.addEventListener("dragleave", () => riga.classList.remove("sopra", "sotto"));
+    riga.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const prima = riga.classList.contains("sopra");
+      riga.classList.remove("sopra", "sotto");
+      const chiave = e.dataTransfer.getData("text/plain");
+      if (chiave && chiave !== g.chiave) mettiGruppo(chiave, g.chiave, prima);
+    });
+    lista.appendChild(riga);
+  });
+}
+
+function ordineAttuale() {
+  return [...document.querySelectorAll("#ordine-formazioni .riga-ordine")].map((r) => r.dataset.chiave);
+}
+
+function salvaOrdine(ordine) {
+  // teniamo anche le formazioni non presenti in questa stampa, in coda
+  const vecchio = (leggiLocale(chiaveOrdine()) || []).filter((k) => !ordine.includes(k));
+  scriviLocale(chiaveOrdine(), [...ordine, ...vecchio]);
+  mostraOrdineFormazioni();
+  const riga = document.querySelector(`#ordine-formazioni [data-chiave="${CSS.escape(ordine.__mossa || "")}"]`);
+  if (riga) riga.classList.add("appena-spostata");
+}
+
+function spostaGruppo(chiave, verso) {
+  const ordine = ordineAttuale();
+  const i = ordine.indexOf(chiave), j = i + verso;
+  if (i < 0 || j < 0 || j >= ordine.length) return;
+  [ordine[i], ordine[j]] = [ordine[j], ordine[i]];
+  ordine.__mossa = chiave;
+  salvaOrdine(ordine);
+}
+
+function mettiGruppo(chiave, vicino, prima) {
+  const ordine = ordineAttuale().filter((k) => k !== chiave);
+  const i = ordine.indexOf(vicino);
+  ordine.splice(prima ? i : i + 1, 0, chiave);
+  ordine.__mossa = chiave;
+  salvaOrdine(ordine);
+}
+
+$("#stampa-per-formazione").addEventListener("change", mostraOrdineFormazioni);
+$("#stampa-cosa").addEventListener("change", mostraOrdineFormazioni);
 
 function chiudiFoglioStampa() {
   $("#velo").classList.remove("visibile");
@@ -97,6 +246,8 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
     campo: $("#stampa-campo").dataset.valore,
     copertina: $("#stampa-copertina").checked,
     note: $("#stampa-note").checked,
+    perFormazione: $("#stampa-per-formazione").checked,
+    formazioneVuota: $("#stampa-formazione-vuota").checked,
   };
   scriviLocale("playbook.opzioni-stampa", opzioniStampa);
   chiudiFoglioStampa();
@@ -169,7 +320,32 @@ function schedaSchema(schema, numero, conNote) {
   return scheda;
 }
 
-function copertina(titolo, schemi, paginaDi) {
+// Scheda con la sola formazione (giocatori schierati, nessuna traccia)
+function schedaFormazione(gruppo) {
+  const giocatori = giocatoriFormazione(gruppo.formazione, gruppo.lato);
+  const scheda = elemento("article", "scheda-schema scheda-formazione");
+  const titolo = elemento("div", "scheda-titolo");
+  titolo.appendChild(elemento("span", "scheda-etichetta-formazione", "Formazione"));
+  titolo.appendChild(elemento("strong", "", gruppo.nome));
+  titolo.appendChild(elemento("span", "scheda-info", `${NOMI_LATO[gruppo.lato]} · ${gruppo.schemi.length} ${gruppo.schemi.length === 1 ? "schema" : "schemi"}`));
+  scheda.appendChild(titolo);
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", "campo-stampa");
+  const esempio = gruppo.schemi[0];
+  disegnaCampo(svg, {
+    lato: gruppo.lato,
+    formato: esempio.formato,
+    // senza tracce: solo i giocatori della formazione
+    giocatori: (giocatori || esempio.giocatori).map((g, i) => ({
+      id: "f" + i, etichetta: g.etichetta, x: g.x, y: g.y,
+      forma: g.forma || (gruppo.lato === "attacco" ? (g.etichetta === "C" ? "quadrato" : "cerchio") : "lettera"),
+    })),
+  }, { stampa: true });
+  scheda.appendChild(svg);
+  return scheda;
+}
+
+function copertina(titolo, schemi, paginaDi, gruppi = null) {
   const pag = elemento("section", "pagina-stampa copertina");
   const centro = elemento("div", "copertina-centro");
   if (Squadra.logo) {
@@ -191,6 +367,8 @@ function copertina(titolo, schemi, paginaDi) {
     indice.appendChild(elemento("h2", "", "Indice"));
     const lista = elemento("ol", "indice-lista");
     schemi.forEach((s, i) => {
+      const gruppo = gruppi && gruppi.find((g) => g.inizio === i);
+      if (gruppo) lista.appendChild(elemento("li", "indice-gruppo", gruppo.nome));
       const voce = elemento("li");
       voce.appendChild(elemento("span", "indice-numero", String(i + 1)));
       voce.appendChild(elemento("span", "indice-nome", s.nome || "Senza nome"));
@@ -206,32 +384,62 @@ function copertina(titolo, schemi, paginaDi) {
 }
 
 function costruisciStampa(opzioni) {
-  const schemi = schemiDaStampare(opzioni.cosa);
-  const titolo = titoloStampa(opzioni.cosa, schemi);
+  const schemiTutti = schemiDaStampare(opzioni.cosa);
+  const titolo = titoloStampa(opzioni.cosa, schemiTutti);
   const perPagina = opzioni.perPagina;
-  const pagineSchemi = Math.ceil(schemi.length / perPagina);
   const conCopertina = opzioni.copertina;
-  const totale = pagineSchemi + (conCopertina ? 1 : 0);
-  const paginaDi = (i) => Math.floor(i / perPagina) + 1 + (conCopertina ? 1 : 0);
+  const dividi = opzioni.perFormazione && opzioni.cosa !== "schema";
+
+  /* Ogni "blocco" diventa una o più pagine: con la divisione per formazioni
+     c'è un blocco per formazione (che parte sempre da una pagina nuova). */
+  const gruppi = dividi
+    ? gruppiPerFormazione(schemiTutti)
+    : [{ nome: null, schemi: schemiTutti, formazione: null, lato: null }];
+  const schemi = gruppi.flatMap((g) => g.schemi); // ordine finale, per numeri e indice
+  const blocchi = [];
+  let numero = 0;
+  for (const g of gruppi) {
+    const elementi = [];
+    if (dividi && opzioni.formazioneVuota && g.formazione !== "nessuna" && g.formazione !== "libera") {
+      elementi.push({ tipo: "formazione", gruppo: g });
+    }
+    g.inizio = numero;
+    for (const s of g.schemi) elementi.push({ tipo: "schema", schema: s, numero: ++numero });
+    blocchi.push({ gruppo: g, elementi });
+  }
+
+  // Pagine: ogni blocco viene diviso in pagine da "perPagina" schede
+  const pagine = [];
+  for (const b of blocchi) {
+    for (let i = 0; i < b.elementi.length; i += perPagina) {
+      pagine.push({ gruppo: b.gruppo, elementi: b.elementi.slice(i, i + perPagina) });
+    }
+  }
+  const primaPagina = conCopertina ? 2 : 1;
+  const totale = pagine.length + (conCopertina ? 1 : 0);
+  const paginaDi = (indiceSchema) =>
+    primaPagina + pagine.findIndex((p) => p.elementi.some((e) => e.tipo === "schema" && e.numero === indiceSchema + 1));
 
   const contenitore = $("#stampa");
   contenitore.innerHTML = "";
   contenitore.className = `stampa campo-${opzioni.campo} per-pagina-${perPagina}`;
 
-  if (conCopertina) contenitore.appendChild(copertina(titolo, schemi, paginaDi));
+  if (conCopertina) contenitore.appendChild(copertina(titolo, schemi, paginaDi, dividi ? gruppi : null));
 
-  for (let p = 0; p < pagineSchemi; p++) {
-    const numeroPagina = p + 1 + (conCopertina ? 1 : 0);
+  pagine.forEach((p, i) => {
     const pag = elemento("section", "pagina-stampa");
-    pag.appendChild(intestazione(titolo, numeroPagina, totale));
+    const titoloPagina = dividi && p.gruppo.nome ? `${titolo} · ${p.gruppo.nome}` : titolo;
+    pag.appendChild(intestazione(titoloPagina, primaPagina + i, totale));
     const griglia = elemento("div", "griglia-stampa");
-    schemi.slice(p * perPagina, (p + 1) * perPagina).forEach((s, i) => {
-      griglia.appendChild(schedaSchema(s, p * perPagina + i + 1, opzioni.note));
-    });
+    for (const e of p.elementi) {
+      griglia.appendChild(e.tipo === "formazione"
+        ? schedaFormazione(e.gruppo)
+        : schedaSchema(e.schema, e.numero, opzioni.note));
+    }
     pag.appendChild(griglia);
     pag.appendChild(elemento("p", "pagina-piede", "Creato con Playbook"));
     contenitore.appendChild(pag);
-  }
+  });
 
   // Formato della pagina: 1 schema per pagina in orizzontale, gli altri in verticale
   let stilePagina = $("#stile-pagina");
