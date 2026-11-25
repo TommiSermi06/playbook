@@ -3,6 +3,14 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.19 — invito via mail
+
+- Corretto l'errore «infinite recursion detected in policy» dello script dei co-allenatori:
+  i controlli ora stanno in funzioni `security definer` (rilanciare `supabase/coallenatori.sql`).
+- Quando inviti un coach gli arriva una mail con il link per entrare; se non ha un account
+  il link glielo crea e al primo accesso sceglie la password. Pulsante «Rimanda mail» per gli inviti in attesa.
+- Per mandare mail a indirizzi esterni al team Supabase serve un servizio SMTP (gratuito) nelle impostazioni di Supabase.
+
 ## Versione 0.18 — co-allenatori
 
 - Menu ⋯ del playbook → **Condividi e co-allenatori…**: il proprietario invita un coach con la sua email.

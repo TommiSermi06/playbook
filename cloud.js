@@ -44,7 +44,7 @@ const Cloud = {
     }
     const { data } = await this.client.auth.getSession();
     const u = data.session && data.session.user;
-    this.utente = u ? { id: u.id, email: u.email } : null;
+    this.utente = u ? { id: u.id, email: u.email, metadati: u.user_metadata || {} } : null;
     return this.utente;
   },
 
@@ -77,7 +77,8 @@ const Cloud = {
   },
 
   async aggiornaPassword(password) {
-    const { error } = await this.client.auth.updateUser({ password });
+    // password_scelta: chi è entrato dal link d'invito non la richiede più
+    const { error } = await this.client.auth.updateUser({ password, data: { password_scelta: true } });
     if (error) throw new Error(traduciErrore(error));
   },
 
@@ -237,6 +238,25 @@ const Cloud = {
     if (error) throw new Error(traduciErrore(error));
   },
 
+  /* Manda al coach invitato una mail con il link per entrare in Playbook.
+     Se non ha un account, il link glielo crea (poi sceglie la password).
+     Usa un "client" separato, così l'account del proprietario non cambia. */
+  async mandaInvito(email) {
+    const invii = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false,
+              flowType: "implicit", storageKey: "playbook-invito" },
+    });
+    const { error } = await invii.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: location.origin + location.pathname,
+        data: { invitato: true },
+      },
+    });
+    if (error) throw new Error(traduciErrore(error));
+  },
+
   async rimuoviCollaboratore(idPlaybook, email) {
     const { error } = await this.client.from("collaboratori")
       .delete().eq("playbook", idPlaybook).eq("email", email);
@@ -311,12 +331,14 @@ function traduciErrore(errore) {
   const m = (errore && errore.message) || String(errore);
   if (/Invalid login credentials/i.test(m)) return "Email o password non corretti.";
   if (/Email not confirmed/i.test(m)) return "Devi ancora confermare la mail: controlla la posta (anche lo spam).";
-  if (/already registered|already been registered/i.test(m)) return "Esiste già un account con questa mail. Prova ad accedere.";
+  if (/already registered|already been registered/i.test(m)) return "Esiste già un account con questa mail. Prova ad accedere: se ti hanno invitato e non hai ancora una password, apri il link nella mail o usa «Password dimenticata?».";
   if (/Password should be at least/i.test(m)) return "La password deve avere almeno 6 caratteri.";
   if (/valid email|invalid format|Unable to validate email/i.test(m)) return "Controlla l'indirizzo email.";
   if (/rate limit|too many/i.test(m)) return "Troppi tentativi ravvicinati. Riprova tra qualche minuto.";
   if (/collaboratori|accetta_inviti/i.test(m) && /does not exist|Could not find|schema cache/i.test(m))
     return "Manca un passaggio su Supabase: esegui lo script «coallenatori.sql» nell'SQL Editor.";
+  if (/not authorized|not allowed to send/i.test(m))
+    return "Supabase per ora manda mail solo agli indirizzi del tuo team: serve collegare un servizio mail (gratuito).";
   if (/collaboratori_pkey/i.test(m)) return "Questa email è già stata invitata.";
   if (/condivisioni|playbook_condiviso/i.test(m) && /does not exist|Could not find|schema cache/i.test(m))
     return "Manca un passaggio su Supabase: esegui lo script «condivisione.sql» nell'SQL Editor.";

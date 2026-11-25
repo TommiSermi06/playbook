@@ -189,6 +189,12 @@ async function caricaCoach(pb) {
       testi.appendChild(elemento("span", "coach-stato" + (c.utente ? " attivo" : ""),
         c.utente ? "Attivo · può modificare" : "In attesa del primo accesso"));
       riga.appendChild(testi);
+      if (!c.utente) {
+        const rimanda = elemento("button", "btn-link coach-rimanda", "Rimanda mail");
+        rimanda.type = "button";
+        rimanda.addEventListener("click", () => spedisciInvito(c.email, rimanda));
+        riga.appendChild(rimanda);
+      }
       const togli = elemento("button", "coach-togli", "×");
       togli.type = "button";
       togli.title = "Togli l'accesso";
@@ -221,13 +227,26 @@ $("#form-invita").addEventListener("submit", async (e) => {
     $("#email-invito").value = "";
     await caricaCoach(pb);
     festeggiaStemma();
-    mostraAvviso(`Invitato ${email}: digli di accedere con questa mail`);
+    await spedisciInvito(email);
   } catch (errore) {
     $("#errore-invito").textContent = errore.message;
   } finally {
     bottone.disabled = false;
   }
 });
+
+// La mail con il link per entrare (crea l'account se non c'è)
+async function spedisciInvito(email, bottone = null) {
+  if (bottone) { bottone.disabled = true; bottone.textContent = "Invio…"; }
+  try {
+    await Cloud.mandaInvito(email);
+    mostraAvviso(`Mail d'invito mandata a ${email}`);
+    if (bottone) bottone.textContent = "Mandata ✓";
+  } catch (errore) {
+    $("#errore-invito").textContent = `Invito salvato, ma la mail non è partita: ${errore.message}`;
+    if (bottone) { bottone.disabled = false; bottone.textContent = "Rimanda mail"; }
+  }
+}
 
 async function togliCoach(pb, email, riga) {
   riga.classList.add("in-uscita");

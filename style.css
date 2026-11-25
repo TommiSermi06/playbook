@@ -2404,3 +2404,5 @@ body.sola-lettura .nome-schema { pointer-events: none; }
 }
 .badge-staff[hidden] { display: none; }
 .scheda-corpo .badge-staff { margin-top: 4px; }
+.coach-rimanda { flex: none; font-size: 12px; }
+.coach-rimanda:disabled { opacity: 0.6; cursor: default; text-decoration: none; }

@@ -37,6 +37,13 @@ async function avvio() {
     new Promise((ok) => setTimeout(ok, DURATA_INTRO)),
   ]);
 
+  // Entrato dal link d'invito di un altro coach: prima sceglie la password
+  const m = (utente && utente.metadati) || {};
+  if (utente && m.invitato && !m.password_scelta && modoAccesso !== "nuova-password") {
+    mostraAccesso();
+    impostaModo("benvenuto");
+    return;
+  }
   if (utente && modoAccesso !== "nuova-password") await entra(utente);
   else mostraAccesso();
 }
@@ -56,6 +63,7 @@ function impostaModo(modo) {
     registrati:      ["Crea il tuo account", "Un account per ogni allenatore: i tuoi schemi restano tuoi, su ogni computer.", "Crea account"],
     recupera:        ["Password dimenticata", "Ti mandiamo una mail con il link per sceglierne una nuova.", "Invia il link"],
     "nuova-password":["Nuova password", "Scegli la nuova password per il tuo account.", "Salva password"],
+    benvenuto:       ["Benvenuto nello staff", "Un altro coach ti ha invitato nel suo playbook. Scegli una password per i prossimi accessi.", "Salva ed entra"],
     "vista-errore":  ["Link non disponibile", "Il coach ha disattivato questo link, oppure non è scritto giusto. Chiedigliene uno nuovo.", "Vai a Playbook"],
     locale:          ["Modalità locale", "Gli account online non sono ancora attivi: puoi usare l'app su questo computer.", "Continua"],
   }[modo];
@@ -70,7 +78,8 @@ function impostaModo(modo) {
   document.querySelectorAll("#accesso-schede .segmento").forEach((b) =>
     b.classList.toggle("attivo", b.dataset.modo === modo));
   const senzaCampi = modo === "locale" || modo === "vista-errore";
-  $("#campo-email").hidden = modo === "nuova-password" || senzaCampi;
+  const soloPassword = modo === "nuova-password" || modo === "benvenuto";
+  $("#campo-email").hidden = soloPassword || senzaCampi;
   $("#campo-password").hidden = modo === "recupera" || senzaCampi;
   $("#accesso-password").autocomplete = modo === "accedi" ? "current-password" : "new-password";
   $("#link-dimenticata").hidden = modo !== "accedi";
@@ -118,7 +127,7 @@ $("#accesso").addEventListener("submit", async (e) => {
     } else if (modoAccesso === "recupera") {
       await Cloud.recuperaPassword(email);
       messaggioAccesso("Fatto! Controlla la posta (anche lo spam) e apri il link.", "ok");
-    } else if (modoAccesso === "nuova-password") {
+    } else if (modoAccesso === "nuova-password" || modoAccesso === "benvenuto") {
       await Cloud.aggiornaPassword(password);
       await entra(await Cloud.sessione());
     }
