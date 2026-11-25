@@ -3,6 +3,9 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.8.1
+- QB: niente albero delle route, solo il movimento disegnato a mano (con la freccia)
+
 ## Versione 0.8 — regola della linea di scrimmage
 - L'attacco non supera mai la linea, la difesa non la supera mai dall'altra parte (mouse, frecce, pedine, profondità)
 - Se un giocatore ci prova si ferma sulla linea e la linea si illumina

@@ -954,13 +954,13 @@ document.addEventListener("keydown", (e) => {
   if (sel) {
     const attacco = schemaCorrente.lato === "attacco";
     const numero = parseInt(e.key, 10);
-    if (numero >= 1 && numero <= 9 && !eUomoDiLinea(sel)) {
+    if (numero >= 1 && numero <= 9 && !senzaAlbero(sel)) {
       if (attacco) Tracce.applica(sel, tracciaDaRoute(sel, ALBERO_ROUTE[numero - 1]));
       else if (TRACCE_DIFESA[numero - 1]) Tracce.applica(sel, tracciaDaDifesa(sel, TRACCE_DIFESA[numero - 1]));
       return;
     }
     if (e.key === "t" || e.key === "T") { e.preventDefault(); Tracce.iniziaDisegno(sel); return; }
-    if ((e.key === "b" || e.key === "B") && attacco) {
+    if ((e.key === "b" || e.key === "B") && attacco && !eQuarterback(sel)) {
       Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, 1.5)] });
       return;
     }

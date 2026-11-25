@@ -65,6 +65,16 @@ function eUomoDiLinea(g) {
   return schemaCorrente.lato === "attacco" && ruoloDi("attacco", g.etichetta) === "linea";
 }
 
+// Vero per il quarterback: niente albero delle route, solo il suo movimento a mano
+function eQuarterback(g) {
+  return schemaCorrente.lato === "attacco" && ruoloDi("attacco", g.etichetta) === "qb";
+}
+
+// Giocatori che non usano l'albero delle route (linea e QB)
+function senzaAlbero(g) {
+  return eUomoDiLinea(g) || eQuarterback(g);
+}
+
 // Verso l'interno: +1 se il giocatore è a sinistra del pallone, -1 se a destra
 function versoInterno(g) {
   return g.x <= CENTRO + 0.5 ? 1 : -1;
@@ -312,16 +322,17 @@ function apriMenuTracce(g) {
   testa.innerHTML = `<span class="menu-sigla"></span><span class="menu-titolo"></span>`;
   testa.querySelector(".menu-sigla").textContent = g.etichetta;
   const linea = eUomoDiLinea(g);
+  const qb = eQuarterback(g);
   testa.querySelector(".menu-titolo").textContent =
-    linea ? "Blocco" : attacco ? "Albero delle route" : "Compito difensivo";
+    linea ? "Blocco" : qb ? "Movimento del QB" : attacco ? "Albero delle route" : "Compito difensivo";
   menu.appendChild(testa);
 
   const griglia = document.createElement("div");
   griglia.className = "menu-griglia" + (attacco ? "" : " difesa");
   const dentro = versoInterno(g);
 
-  // Uomini di linea: niente albero delle route, solo blocchi
-  const voci = linea ? [] : attacco
+  // Uomini di linea e QB: niente albero delle route
+  const voci = linea || qb ? [] : attacco
     ? ALBERO_ROUTE.map((r) => ({
         etichetta: `${r.n}-${r.nome}`,
         tasto: String(r.n),
@@ -363,7 +374,9 @@ function apriMenuTracce(g) {
     b.addEventListener("click", azione);
     azioni.appendChild(b);
   };
-  if (linea) {
+  if (qb) {
+    aggiungiAzione("✏️  Disegna il movimento a mano", "T", () => Tracce.iniziaDisegno(g));
+  } else if (linea) {
     aggiungiAzione("Blocco dritto", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
     aggiungiAzione("✏️  Disegna il blocco a mano", "T", () => Tracce.iniziaDisegno(g));
   } else {
