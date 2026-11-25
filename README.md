@@ -3,6 +3,9 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.9.1
+- Interruttore «Linea morbida» rifatto in stile iPhone: forma a pillola, pallino fino in fondo, scatto animato anche con il tasto C
+
 ## Versione 0.9 — stampa / PDF e linee morbide
 - Pulsante Stampa (o Ctrl+P): schema aperto, attacco, difesa o tutto il playbook
 - 1, 2, 4 o 6 schemi per pagina A4, campo chiaro (meno inchiostro) o scuro

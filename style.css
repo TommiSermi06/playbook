@@ -1631,30 +1631,48 @@ body.schema-bloccato .campo-cornice::after {
   body.in-stampa .stampa { display: block; }
 }
 
-/* Interruttore (sì/no) in stile iOS, usato per "Linea morbida" */
+/* Interruttore (sì/no) in stile iOS, usato per "Linea morbida".
+   ".riga-campo .interruttore" vince sullo stile generico dei campi del pannello. */
+.riga-campo .interruttore,
 .interruttore {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
-  width: 38px;
-  height: 22px;
+  flex: none;
+  width: 46px;
+  height: 28px;
   margin: 0;
-  border-radius: 11px;
-  background: var(--sfondo-grigio);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;          /* pillola perfetta: metà dell'altezza */
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: background 0.2s var(--curva);
+  outline: none;
+  transition: background 0.3s var(--curva), box-shadow 0.3s var(--curva);
 }
+/* Il pallino */
 .interruttore::after {
   content: "";
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
   background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s var(--curva);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.3);
+  /* scatto con un piccolo rimbalzo, e allungamento quando lo premi */
+  transition: transform 0.38s cubic-bezier(0.34, 1.45, 0.64, 1), width 0.2s var(--curva);
 }
-.interruttore:checked { background: var(--accento); }
-.interruttore:checked::after { transform: translateX(16px); }
+.interruttore:checked {
+  background: var(--accento);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 0 12px rgba(255, 159, 28, 0.35);
+}
+/* Acceso: il pallino arriva in fondo (46 - 24 - 2·2 = 18px) */
+.interruttore:checked::after { transform: translateX(18px); }
+/* Mentre premi il pallino si allunga, come su iPhone */
+.interruttore:active::after { width: 30px; }
+.interruttore:checked:active::after { transform: translateX(12px); }
+.interruttore:focus-visible { box-shadow: 0 0 0 3px var(--accento-tenue); }
+.riga-campo kbd { margin-left: 4px; }

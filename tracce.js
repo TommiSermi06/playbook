@@ -361,6 +361,7 @@ const Tracce = {
     if (!g || !g.traccia || schemaBloccato()) return;
     ricordaStato();
     g.traccia.curva = !g.traccia.curva;
+    this.animaInterruttore = true; // il pannello mostrerà lo scatto dell'interruttore
     chiudiMenuTracce();
     ridisegna();
     salvaTraPoco();

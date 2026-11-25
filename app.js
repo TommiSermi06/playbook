@@ -637,7 +637,17 @@ function mostraInfoGiocatore() {
   $("#nome-traccia").textContent = g.traccia ? (g.traccia.nome || infoTipo(g.traccia.tipo).nome) : "Nessuna";
   $("#riga-tipo-traccia").hidden = !g.traccia;
   $("#riga-curva").hidden = !g.traccia;
-  $("#curva-traccia").checked = Boolean(g.traccia && g.traccia.curva);
+  // Se l'interruttore è appena cambiato (clic o tasto C), lo facciamo partire
+  // dalla posizione vecchia e scorrere fino a quella nuova: così si vede l'animazione
+  const curva = Boolean(g.traccia && g.traccia.curva);
+  const interruttore = $("#curva-traccia");
+  if (Tracce.animaInterruttore) {
+    interruttore.checked = !curva;
+    requestAnimationFrame(() => requestAnimationFrame(() => { interruttore.checked = curva; }));
+    Tracce.animaInterruttore = false;
+  } else {
+    interruttore.checked = curva;
+  }
   $("#curva-traccia").addEventListener("change", () => Tracce.commutaCurva(g));
   $("#btn-traccia-via").hidden = !g.traccia;
   const scelta = $("#tipo-traccia");
