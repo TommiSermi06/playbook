@@ -240,12 +240,12 @@ function costruisciCallSheet(opzioni, contenitore) {
   // 1. Distribuisce i riquadri nelle colonne
   // In A3 il foglio è più grande: più colonne e colonne più alte (stessa grandezza del testo)
   const a3 = opzioni.carta === "A3";
-  // (solo testo in A3: 4 colonne larghe con il testo più grande, da leggere a bordo campo)
+  // (solo testo in A3: 5 colonne con il testo più grande, da leggere a bordo campo)
   const C = a3
     ? { ...CALLSHEET, altezzaColonna: 250, testa: opzioni.miniSchemi ? CALLSHEET.testa : 9.5, riga: 9.4 }
     : CALLSHEET;
   const altezzaRiga = opzioni.miniSchemi ? C.rigaConSchema : C.riga;
-  const colonnePerPagina = opzioni.miniSchemi ? (a3 ? 5 : 3) : 4;
+  const colonnePerPagina = opzioni.miniSchemi ? (a3 ? 5 : 3) : (a3 ? 5 : 4);
   const colonne = [[]];
   let libero = C.altezzaColonna;
   for (const r of riquadri) {
@@ -261,6 +261,21 @@ function costruisciCallSheet(opzioni, contenitore) {
     }
   }
 
+  /* 1b. Riquadro "Note" con le righe, da scrivere a pennarello: riempie lo
+     spazio libero in fondo all'ultima colonna, oppure prende una colonna intera */
+  const MIN_NOTE = 45;
+  if (opzioni.note !== false && riquadri.length) {
+    const colonneLibere = colonne.length % colonnePerPagina ? colonnePerPagina - (colonne.length % colonnePerPagina) : 0;
+    if (colonneLibere) {
+      // C'è almeno una colonna vuota nell'ultima pagina: le note la prendono tutta (e anche le altre libere)
+      colonne.push([{ note: true, altezza: C.altezzaColonna - C.testa - C.spazio }]);
+    } else if (libero >= MIN_NOTE + C.testa + C.spazio) {
+      colonne[colonne.length - 1].push({ note: true, altezza: libero - C.testa - C.spazio });
+    } else {
+      colonne.push([{ note: true, altezza: C.altezzaColonna - C.testa - C.spazio }]);
+    }
+  }
+
   // 2. Raggruppa le colonne in pagine
   const pagine = [];
   for (let i = 0; i < colonne.length; i += colonnePerPagina) pagine.push(colonne.slice(i, i + colonnePerPagina));
@@ -269,11 +284,15 @@ function costruisciCallSheet(opzioni, contenitore) {
     pag.appendChild(intestazione(`${playbookCorrente.nome} · Call sheet`, p + 1, pagine.length));
     const griglia = elemento("div", "griglia-callsheet");
     griglia.style.setProperty("--colonne", colonnePerPagina);
-    for (const colonna of gruppo) {
+    gruppo.forEach((colonna, i) => {
       const col = elemento("div", "colonna-callsheet");
-      for (const r of colonna) col.appendChild(riquadroSituazione(r, opzioni.miniSchemi));
+      // La colonna delle note si allarga su tutte le colonne libere a destra
+      if (colonna.length === 1 && colonna[0].note && i === gruppo.length - 1) {
+        col.style.gridColumn = `span ${colonnePerPagina - i}`;
+      }
+      for (const r of colonna) col.appendChild(r.note ? riquadroNote(r.altezza) : riquadroSituazione(r, opzioni.miniSchemi));
       griglia.appendChild(col);
-    }
+    });
     if (!riquadri.length) {
       griglia.appendChild(elemento("p", "callsheet-vuoto",
         "Nessuno schema ha una situazione: aprili e scegli 1° & 10, 3° & corto, Red zone…"));
@@ -283,6 +302,15 @@ function costruisciCallSheet(opzioni, contenitore) {
     contenitore.appendChild(pag);
   });
   return { titolo: `${playbookCorrente.nome} - Call sheet`, pagine: pagine.length };
+}
+
+function riquadroNote(altezza) {
+  const box = elemento("section", "riquadro-situazione riquadro-note");
+  box.appendChild(elemento("h3", "", "Note"));
+  const righe = elemento("div", "righe-note");
+  righe.style.height = `${Math.floor(altezza)}mm`;
+  box.appendChild(righe);
+  return box;
 }
 
 function riquadroSituazione(r, conSchemi) {

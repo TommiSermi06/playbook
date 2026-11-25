@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.22 — note sul call sheet
+
+- Call sheet: riquadro **«Note»** con le righe per scrivere a pennarello (opzione già attiva).
+  Riempie lo spazio libero in fondo, o prende le colonne vuote dell'ultimo foglio.
+- Call sheet A3 solo testo: 5 colonne, tutto in un foglio con la colonna delle note.
+
 ## Versione 0.21 — stampa in A3 e numeri/situazioni da file
 
 - Nella finestra di stampa si sceglie il foglio: **A4** o **A3**. Il playbook in A3 è ingrandito;

@@ -2517,3 +2517,10 @@ body.sola-lettura #btn-squadra { pointer-events: none; }
 .pagina-callsheet.a3 .riga-chiamata:not(.con-schema) .chiamata-numero { width: 10mm; font-size: 12pt; }
 .pagina-callsheet.a3 .riga-chiamata:not(.con-schema) .chiamata-formazione { font-size: 8pt; }
 .pagina-callsheet.a3 .griglia-callsheet:not(:has(.con-schema)) .riquadro-situazione h3 { font-size: 11pt; padding: 1.8mm 2.5mm; }
+
+/* Call sheet: riquadro "Note" con le righe per il pennarello */
+.riquadro-note h3 { background: var(--inchiostro-tenue); }
+.righe-note {
+  margin: 0 3mm;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(9mm - 0.3mm), #B4BCB8 calc(9mm - 0.3mm), #B4BCB8 9mm);
+}

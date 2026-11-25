@@ -13,7 +13,7 @@
 const OPZIONI_STAMPA_DEFAULT = {
   cosa: "tutto", perPagina: 4, campo: "chiaro", copertina: true, note: true,
   perFormazione: true, formazioneVuota: true,
-  tipo: "playbook", carta: "A4", wristband: "schemi", copie: 1, miniSchemi: false, senzaSituazione: false,
+  tipo: "playbook", carta: "A4", wristband: "schemi", copie: 1, miniSchemi: false, senzaSituazione: false, noteCallsheet: true,
 };
 
 /* ==========================================================================
@@ -109,6 +109,7 @@ function apriFoglioStampa() {
   $("#stampa-copie").value = opzioniStampa.copie || 1;
   $("#stampa-mini-schemi").checked = Boolean(opzioniStampa.miniSchemi);
   $("#stampa-senza-situazione").checked = Boolean(opzioniStampa.senzaSituazione);
+  $("#stampa-note-callsheet").checked = opzioniStampa.noteCallsheet !== false;
   $("#stampa-per-formazione").checked = opzioniStampa.perFormazione !== false;
   $("#stampa-formazione-vuota").checked = opzioniStampa.formazioneVuota !== false;
   mostraOrdineFormazioni();
@@ -302,6 +303,7 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
     copie: Math.max(1, Math.min(10, parseInt($("#stampa-copie").value, 10) || 1)),
     miniSchemi: $("#stampa-mini-schemi").checked,
     senzaSituazione: $("#stampa-senza-situazione").checked,
+    noteCallsheet: $("#stampa-note-callsheet").checked,
   };
   // Un wristband senza numeri di chiamata sarebbe vuoto
   if (opzioniStampa.tipo === "wristband" && !schemiNumerati(schemiDaStampare(opzioniStampa.cosa)).length) {
@@ -464,7 +466,7 @@ function costruisciStampa(opzioni) {
     contenitore.className = `stampa campo-${opzioni.campo} tipo-${opzioni.tipo}`;
     const esito = opzioni.tipo === "wristband"
       ? costruisciWristband(opzioni, contenitore)
-      : costruisciCallSheet(opzioni, contenitore);
+      : costruisciCallSheet({ ...opzioni, note: opzioni.noteCallsheet !== false }, contenitore);
     // Il wristband resta in A4: gli inserti devono avere la misura vera (12 × 7 cm)
     impostaPagina(opzioni.tipo === "callsheet", opzioni.tipo === "callsheet" ? opzioni.carta : "A4");
     return esito;
