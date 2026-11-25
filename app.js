@@ -54,6 +54,22 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
     crea("rect", { x: 0, y: yDisegno(y + 5), width: LARGHEZZA_CAMPO, height: 5, class: "striscia" }, svg);
   }
 
+  // Filigrana: il logo della squadra grande e tenue al centro del campo,
+  // come il logo di metà campo negli stadi. Fa parte del disegno,
+  // quindi comparirà anche nelle stampe.
+  if (!miniatura && typeof Squadra !== "undefined" && Squadra.logo) {
+    const lato = 16;
+    crea("image", {
+      href: Squadra.logo,
+      x: (LARGHEZZA_CAMPO - lato) / 2,
+      y: (ALTEZZA_CAMPO - lato) / 2 - 3,
+      width: lato,
+      height: lato,
+      preserveAspectRatio: "xMidYMid meet",
+      class: "filigrana",
+    }, svg);
+  }
+
   const linee = crea("g", { class: "linee" }, svg);
 
   // Linee delle yarde ogni 5 yarde (più marcate ogni 10)
@@ -99,10 +115,20 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
 
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
-  for (const g of schema.giocatori) {
+  schema.giocatori.forEach((g, i) => {
     const el = disegnaGiocatore(gruppo, g, schema.lato);
+    el.style.setProperty("--i", i); // per far entrare i giocatori uno dopo l'altro
     if (g.id === selezionato) el.classList.add("selezionato");
-  }
+  });
+}
+
+/* Piccola animazione: i giocatori "entrano" sul campo uno dopo l'altro */
+function animaEntrata() {
+  svgCampo.classList.remove("entrata");
+  void svgCampo.getBoundingClientRect(); // fa ripartire l'animazione
+  svgCampo.classList.add("entrata");
+  clearTimeout(animaEntrata.timer);
+  animaEntrata.timer = setTimeout(() => svgCampo.classList.remove("entrata"), 900);
 }
 
 /* ---------- Ruoli e colori ----------
@@ -293,6 +319,7 @@ function apriEditor(id, { focusNome = false } = {}) {
   $("#pannello").hidden = false;
 
   ridisegna();
+  animaEntrata();
   mostraElenco();
   if (focusNome) $("#nome-schema").focus();
 }
@@ -333,6 +360,7 @@ function salvaSubito() {
   if (!schemaCorrente) return;
   const ok = Dati.salva(schemaCorrente);
   $("#stato-salvataggio").textContent = ok ? "Salvato" : "Errore nel salvataggio";
+  festeggiaStemma();
   aggiornaRigaCorrente();
 }
 
@@ -370,6 +398,7 @@ function cambiaFormazione(idFormazione) {
   schemaCorrente.ribaltato = false;
   giocatoreSelezionato = null;
   ridisegna();
+  animaEntrata();
   salvaSubito();
   mostraAvviso(`Formazione: ${nomeFormazione(schemaCorrente)}`, annulla);
 }
@@ -595,6 +624,11 @@ $("#btn-ripeti").title = `Ripeti (${TASTO_CMD}${SU_MAC ? "⇧" : "Shift+"}Z)`;
 document.addEventListener("keydown", (e) => {
   const staScrivendo = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
   const cmd = e.metaKey || e.ctrlKey;
+  if (!$("#intro").hidden) return; // schermata di accesso: niente scorciatoie
+  if (!$("#foglio-squadra").hidden) {
+    if (e.key === "Escape") chiudiFoglioSquadra();
+    return;
+  }
   if (!$("#dialogo").hidden) {
     if (e.key === "Escape") chiudiDialogo();
     return;
@@ -704,7 +738,10 @@ $("#dialogo-ok").addEventListener("click", () => {
   azioneConferma = null;
 });
 $("#dialogo-annulla").addEventListener("click", chiudiDialogo);
-$("#velo").addEventListener("click", chiudiDialogo);
+$("#velo").addEventListener("click", () => {
+  if (!$("#foglio-squadra").hidden) chiudiFoglioSquadra();
+  else chiudiDialogo();
+});
 
 // Avviso in basso, con pulsante "Annulla" opzionale
 let timerAvviso = null;
@@ -741,7 +778,37 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("beforeunload", salvaSubito);
 
-/* ---------- Avvio: riapre l'ultimo schema modificato ---------- */
-mostraElenco();
-const ultimo = Dati.tutti()[0];
-if (ultimo) apriEditor(ultimo.id);
+/* ==========================================================================
+   8. LO STEMMA DELLA SQUADRA "VIVE" CON L'APP
+   Ogni volta che salvi, lo stemma in alto a sinistra fa un piccolo
+   saluto; mentre i dati vanno online gli gira attorno un anello.
+   ========================================================================== */
+function festeggiaStemma() {
+  const stemma = $("#stemma");
+  stemma.classList.remove("saluta");
+  void stemma.offsetWidth;
+  stemma.classList.add("saluta");
+}
+
+document.addEventListener("playbook:sync", (e) => {
+  const { stato } = e.detail;
+  const indicatore = $("#stato-sync");
+  $("#stemma").classList.toggle("sincronizza", stato === "inizio");
+  indicatore.className = "stato-sync " + stato;
+  indicatore.title = {
+    inizio: "Sincronizzazione in corso…",
+    fine: Cloud.attivo ? "Tutto salvato online" : "Salvato su questo computer",
+    errore: "Offline: salvato sul computer, riprovo appena torna la connessione",
+  }[stato];
+  if (schemaCorrente && Cloud.attivo) {
+    if (stato === "fine") $("#stato-salvataggio").textContent = "Sincronizzato";
+    if (stato === "errore") $("#stato-salvataggio").textContent = "Salvato sul computer (offline)";
+  }
+});
+
+/* ---------- Avvio: lo chiama accesso.js dopo il login ---------- */
+function avviaApp() {
+  mostraElenco();
+  const ultimo = Dati.tutti()[0];
+  if (ultimo) apriEditor(ultimo.id);
+}
