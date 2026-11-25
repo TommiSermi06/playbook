@@ -7,8 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Playbook">
-  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#0F1412">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
@@ -24,7 +23,7 @@
     <!-- ============ COLONNA 1: barra laterale con gli schemi ============ -->
     <aside class="laterale">
       <div class="laterale-testa">
-        <h1 class="logo">Playbook</h1>
+        <h1 class="logo"><img src="icon-180.png" alt="">Playbook</h1>
         <button id="btn-nuovo" class="btn-icona" title="Nuovo schema (N)" aria-label="Nuovo schema">
           <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
         </button>
@@ -62,8 +61,13 @@
             <input id="nome-schema" class="nome-schema" type="text" maxlength="60" placeholder="Nome dello schema" autocomplete="off">
             <p class="sottotitolo"><span id="info-schema"></span> <span class="stato-salvataggio" id="stato-salvataggio"></span></p>
           </div>
-          <!-- Annulla / Ripeti -->
+          <!-- Strumenti: Ribalta, Annulla, Ripeti -->
           <div class="gruppo-pulsanti">
+            <button class="btn-strumento" id="btn-ribalta" title="Ribalta destra/sinistra (R)">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3v18" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2" fill="none"/><path d="M9 7L3 17h6zM15 7l6 10h-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+              Ribalta
+            </button>
+            <span class="divisore"></span>
             <button class="btn-strumento" id="btn-annulla" title="Annulla (Ctrl+Z)" aria-label="Annulla" disabled>
               <svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
             </button>
@@ -78,6 +82,7 @@
           <svg id="campo" class="campo" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
 
+        <div class="legenda" id="legenda"></div>
         <p class="suggerimento" id="suggerimento"></p>
       </div>
     </main>

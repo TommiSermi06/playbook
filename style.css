@@ -1,59 +1,53 @@
 /* ==========================================================================
-   STILE — app per computer, con l'eleganza delle app Apple (macOS)
-   Tutti i colori sono variabili: cambiano da soli tra modalità chiara e scura.
+   STILE — app per computer, tema scuro «campo di notte»
+   Tutti i colori sono variabili definite qui sotto: per cambiarli basta un punto solo.
    ========================================================================== */
 
+/* Tema scuro «campo di notte»: l'app usa sempre questi colori.
+   Accento ambra: è il colore della nostra app (pulsanti, selezioni). */
 :root {
-  --sfondo: #F2F2F7;
-  --sfondo-laterale: #EBEBF0;
-  --sfondo-card: #FFFFFF;
-  --sfondo-grigio: rgba(118, 118, 128, 0.12);
-  --sfondo-hover: rgba(118, 118, 128, 0.10);
-  --testo: #000000;
-  --testo-secondario: rgba(60, 60, 67, 0.6);
-  --separatore: rgba(60, 60, 67, 0.18);
-  --blu: #007AFF;
-  --blu-tenue: rgba(0, 122, 255, 0.12);
-  --rosso: #FF3B30;
-  --ombra: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --ombra-dialogo: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --sfondo: #0F1412;
+  --sfondo-laterale: #151B18;
+  --sfondo-card: #1D2521;
+  --sfondo-barra: #19201C;
+  --sfondo-grigio: rgba(255, 255, 255, 0.07);
+  --sfondo-hover: rgba(255, 255, 255, 0.05);
+  --testo: #F2F5F3;
+  --testo-secondario: rgba(226, 235, 230, 0.55);
+  --separatore: rgba(255, 255, 255, 0.08);
+  --accento: #FF9F1C;
+  --accento-tenue: rgba(255, 159, 28, 0.22);
+  --testo-su-accento: #1A1205;
+  --rosso: #FF5A4E;
+  --ombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ombra-dialogo: 0 24px 70px rgba(0, 0, 0, 0.6);
 
   /* Colori del campo */
-  --prato: #2F7D3B;
-  --linee-campo: rgba(255, 255, 255, 0.85);
-  --tacche-campo: rgba(255, 255, 255, 0.55);
-  --numeri-campo: rgba(255, 255, 255, 0.55);
-  --linea-scrimmage: #4DA3FF;
-  --linea-primo-down: #FFD60A;
-  --pallone: #8B4A1E;
-  --attacco-riempimento: #FFFFFF;
-  --attacco-bordo: #0B1F3A;
-  --attacco-testo: #0B1F3A;
-  --difesa-testo: #FFFFFF;
-  --difesa-contorno: #8E1B12;
-  --selezione: #FFD60A;
+  --prato: #16211B;
+  --prato-striscia: #1A2820;
+  --linee-campo: rgba(255, 255, 255, 0.16);
+  --tacche-campo: rgba(255, 255, 255, 0.14);
+  --numeri-campo: rgba(255, 255, 255, 0.16);
+  --linea-scrimmage: #5AC8FA;
+  --linea-primo-down: #FF9F1C;
+  --pallone: #B5652B;
+  --testo-giocatore: #0F1412;
+  --contorno-difesa: #0F1412;
+  --selezione: #FFFFFF;
+
+  /* Colori dei ruoli: si capisce subito chi è chi */
+  --ruolo-linea: #A9B4AE;      /* linea d'attacco */
+  --ruolo-qb: #FF9F1C;         /* quarterback */
+  --ruolo-back: #4CD98A;       /* running back e fullback */
+  --ruolo-ricevitori: #5AC8FA; /* ricevitori e tight end */
+  --ruolo-dl: #FF6B5E;         /* linea difensiva */
+  --ruolo-lb: #FFB547;         /* linebacker */
+  --ruolo-db: #F5E663;         /* cornerback e safety */
 
   --curva: cubic-bezier(0.25, 0.1, 0.25, 1);
   --larghezza-laterale: 280px;
   --larghezza-pannello: 300px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sfondo: #1E1E1E;
-    --sfondo-laterale: #282828;
-    --sfondo-card: #2C2C2E;
-    --sfondo-grigio: rgba(118, 118, 128, 0.24);
-    --sfondo-hover: rgba(255, 255, 255, 0.06);
-    --testo: #FFFFFF;
-    --testo-secondario: rgba(235, 235, 245, 0.6);
-    --separatore: rgba(84, 84, 88, 0.6);
-    --blu: #0A84FF;
-    --blu-tenue: rgba(10, 132, 255, 0.25);
-    --rosso: #FF453A;
-    --ombra: none;
-    --prato: #24622E;
-  }
+  color-scheme: dark;
 }
 
 /* ---------- Base ---------- */
@@ -112,10 +106,15 @@ kbd {
   margin: 0 4px 14px;
 }
 .logo {
-  font-size: 22px;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   margin: 0;
 }
+.logo img { width: 26px; height: 26px; border-radius: 7px; }
 
 .btn-icona {
   display: grid;
@@ -123,7 +122,7 @@ kbd {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  color: var(--blu);
+  color: var(--accento);
   transition: background 0.15s;
 }
 .btn-icona:hover { background: var(--sfondo-hover); }
@@ -146,22 +145,20 @@ kbd {
   bottom: 2px;
   left: 2px;
   width: calc(50% - 2px);
-  background: var(--sfondo-card);
+  background: #34403A;
   border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   transition: transform 0.25s var(--curva);
 }
 .segmentato[data-scelto="difesa"]::before { transform: translateX(100%); }
-@media (prefers-color-scheme: dark) {
-  .segmentato::before { background: #636366; }
-}
 .segmento {
   position: relative;
   height: 28px;
   font-size: 13px;
   font-weight: 500;
 }
-.segmento.attivo { font-weight: 600; }
+.segmento { color: var(--testo-secondario); transition: color 0.2s; }
+.segmento.attivo { font-weight: 600; color: var(--testo); }
 
 /* Campo di ricerca */
 .cerca {
@@ -211,10 +208,10 @@ kbd {
   animation: appari 0.25s var(--curva) both;
 }
 .riga:hover { background: var(--sfondo-hover); }
-.riga:focus-visible { box-shadow: 0 0 0 2px var(--blu); }
-.riga.attiva { background: var(--blu); color: #FFFFFF; }
+.riga:focus-visible { box-shadow: 0 0 0 2px var(--accento); }
+.riga.attiva { background: var(--accento); color: var(--testo-su-accento); }
 .riga.attiva .riga-sotto,
-.riga.attiva .riga-titolo.senza-nome { color: rgba(255, 255, 255, 0.8); }
+.riga.attiva .riga-titolo.senza-nome { color: rgba(26, 18, 5, 0.7); }
 
 .miniatura {
   flex: none;
@@ -265,15 +262,15 @@ kbd {
 .vuoto-testo { color: var(--testo-secondario); margin: 0 0 20px; }
 
 .btn-pieno {
-  background: var(--blu);
-  color: #FFFFFF;
+  background: var(--accento);
+  color: var(--testo-su-accento);
   font-weight: 600;
   height: 32px;
   padding: 0 16px;
   border-radius: 8px;
 }
 .btn-pieno:hover { filter: brightness(1.08); }
-.btn-pieno.distruttivo { background: var(--rosso); }
+.btn-pieno.distruttivo { background: var(--rosso); color: #FFFFFF; }
 .btn-secondario {
   height: 32px;
   padding: 0 16px;
@@ -292,10 +289,13 @@ kbd {
 
 .editor-testa {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
+  margin: -20px -28px 18px;
+  padding: 12px 28px;
+  background: var(--sfondo-barra);
+  border-bottom: 1px solid var(--separatore);
 }
 .editor-titoli { flex: 1; min-width: 0; }
 
@@ -307,7 +307,7 @@ kbd {
   background: transparent;
   color: var(--testo);
   font: inherit;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   padding: 2px 6px;
   margin-left: -6px;
@@ -315,7 +315,7 @@ kbd {
   transition: background 0.15s;
 }
 .nome-schema:hover { background: var(--sfondo-hover); }
-.nome-schema:focus { background: var(--sfondo-card); box-shadow: 0 0 0 3px var(--blu-tenue); }
+.nome-schema:focus { background: var(--sfondo-card); box-shadow: 0 0 0 3px var(--accento-tenue); }
 .nome-schema::placeholder { color: var(--testo-secondario); }
 
 .sottotitolo {
@@ -324,16 +324,20 @@ kbd {
   color: var(--testo-secondario);
 }
 
-.gruppo-pulsanti { display: flex; gap: 4px; }
+.gruppo-pulsanti { display: flex; align-items: center; gap: 4px; }
+.divisore { width: 1px; height: 20px; margin: 0 6px; background: var(--separatore); }
 .btn-strumento {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 30px;
-  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 34px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
   color: var(--testo);
-  background: var(--sfondo-card);
-  box-shadow: var(--ombra);
+  font-size: 13px;
+  font-weight: 500;
 }
 .btn-strumento:not(:disabled):hover { background: var(--sfondo-grigio); }
 
@@ -352,8 +356,9 @@ kbd {
   width: min(100cqw, 100cqh * 53.33 / 35);
   height: auto;
   aspect-ratio: 53.33 / 35;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
+  border: 1px solid var(--separatore);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -363,47 +368,58 @@ body.trascinando,
 body.trascinando .campo { cursor: grabbing; }
 
 .prato { fill: var(--prato); }
-.linea-yarde { stroke: var(--linee-campo); stroke-width: 0.1; opacity: 0.6; }
-.linea-yarde.forte { stroke-width: 0.16; opacity: 0.9; }
+.striscia { fill: var(--prato-striscia); } /* strisce alterne del manto erboso */
+.linea-yarde { stroke: var(--linee-campo); stroke-width: 0.1; }
+.linea-yarde.forte { stroke-width: 0.14; }
 .tacca { stroke: var(--tacche-campo); stroke-width: 0.1; }
-.numero-yarde { fill: var(--numeri-campo); font-size: 0.85px; font-weight: 600; }
-.linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.2; }
-.linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.16; opacity: 0.75; }
-.pallone { fill: var(--pallone); stroke: #FFFFFF; stroke-width: 0.06; }
+.numero-yarde { fill: var(--numeri-campo); font-size: 1.25px; font-weight: 800; }
+.linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.16; opacity: 0.9; }
+.linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.14; stroke-dasharray: 0.6 0.4; opacity: 0.8; }
+.pallone { fill: var(--pallone); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.06; }
 
-/* Giocatori dell'attacco: cerchi (e quadrato per il centro) */
+/* Giocatori: dischi pieni colorati per ruolo, con la sigla scura */
 .giocatore .sagoma,
 .giocatore .etichetta { transform-box: fill-box; transform-origin: center; transition: transform 0.15s var(--curva); }
 .giocatore .sagoma {
-  fill: var(--attacco-riempimento);
-  stroke: var(--attacco-bordo);
-  stroke-width: 0.14;
+  fill: var(--colore-ruolo, var(--ruolo-linea));
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 0.08;
 }
 .giocatore .sagoma-invisibile { fill: transparent; }
 .giocatore .etichetta {
-  font-size: 1.05px;
-  font-weight: 700;
-  fill: var(--attacco-testo);
+  font-size: 0.95px;
+  font-weight: 800;
+  fill: var(--testo-giocatore);
   pointer-events: none;
 }
-.giocatore .etichetta.lunga { font-size: 0.8px; }
+.giocatore .etichetta.lunga { font-size: 0.72px; }
 
-/* Giocatori della difesa: lettere bianche con contorno rosso scuro */
+/* Ogni ruolo ha il suo colore */
+.ruolo-linea      { --colore-ruolo: var(--ruolo-linea); }
+.ruolo-qb         { --colore-ruolo: var(--ruolo-qb); }
+.ruolo-back       { --colore-ruolo: var(--ruolo-back); }
+.ruolo-ricevitori { --colore-ruolo: var(--ruolo-ricevitori); }
+.ruolo-dl         { --colore-ruolo: var(--ruolo-dl); }
+.ruolo-lb         { --colore-ruolo: var(--ruolo-lb); }
+.ruolo-db         { --colore-ruolo: var(--ruolo-db); }
+
+/* Difesa: lettere colorate per ruolo, con un bordo scuro per leggerle bene */
 .forma-lettera .etichetta {
-  fill: var(--difesa-testo);
-  stroke: var(--difesa-contorno);
-  stroke-width: 0.28;
+  fill: var(--colore-ruolo);
+  stroke: var(--contorno-difesa);
+  stroke-width: 0.3;
   paint-order: stroke;
-  font-size: 1.6px;
+  font-size: 1.55px;
   font-weight: 800;
 }
-.forma-lettera .etichetta.lunga { font-size: 1.2px; }
+.forma-lettera .etichetta.lunga { font-size: 1.15px; }
 
-/* Selezione: alone giallo attorno al giocatore */
+/* Selezione: anello bianco tratteggiato attorno al giocatore */
 .giocatore .alone {
   fill: none;
   stroke: var(--selezione);
-  stroke-width: 0.18;
+  stroke-width: 0.12;
+  stroke-dasharray: 0.35 0.25;
   opacity: 0;
   transition: opacity 0.15s;
 }
@@ -413,13 +429,29 @@ body.trascinando .campo { cursor: grabbing; }
 body.trascinando .giocatore.selezionato .sagoma,
 body.trascinando .giocatore.selezionato .etichetta { transform: scale(1.2); }
 
-.miniatura .linea-yarde { opacity: 0.35; }
+.miniatura .linea-yarde { opacity: 0.6; }
 
+.legenda {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--testo-secondario);
+}
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--colore-ruolo);
+}
 .suggerimento {
   text-align: center;
   font-size: 12px;
   color: var(--testo-secondario);
-  margin: 14px 0 0;
+  margin: 8px 0 0;
 }
 
 /* ---------- Colonna 3: pannello dei dettagli ---------- */
@@ -458,7 +490,7 @@ body.trascinando .giocatore.selezionato .etichetta { transform: scale(1.2); }
   right: 0;
   border-top: 1px solid var(--separatore);
 }
-.scelta .spunta { color: var(--blu); opacity: 0; }
+.scelta .spunta { color: var(--accento); opacity: 0; }
 .scelta.attiva { font-weight: 600; }
 .scelta.attiva .spunta { opacity: 1; }
 
@@ -486,7 +518,7 @@ body.trascinando .giocatore.selezionato .etichetta { transform: scale(1.2); }
   font-weight: 600;
   outline: none;
 }
-.riga-campo input:focus { box-shadow: 0 0 0 3px var(--blu-tenue); }
+.riga-campo input:focus { box-shadow: 0 0 0 3px var(--accento-tenue); }
 
 textarea {
   display: block;
@@ -512,7 +544,7 @@ textarea::placeholder { color: var(--testo-secondario); }
   min-height: 34px;
   padding: 0 12px;
   text-align: left;
-  color: var(--blu);
+  color: var(--accento);
   position: relative;
 }
 .riga-azione:hover { background: var(--sfondo-hover); }
@@ -563,8 +595,9 @@ textarea::placeholder { color: var(--testo-secondario); }
   padding: 0 6px 0 16px;
   min-height: 40px;
   border-radius: 10px;
-  background: rgba(30, 30, 32, 0.92);
+  background: rgba(44, 54, 49, 0.95);
   color: #FFFFFF;
+  border: 1px solid var(--separatore);
   font-size: 13px;
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
@@ -574,7 +607,7 @@ textarea::placeholder { color: var(--testo-secondario); }
 }
 .toast.visibile { opacity: 1; transform: translate(-50%, 0); }
 .toast button {
-  color: #64B5FF;
+  color: var(--accento);
   font-weight: 600;
   height: 32px;
   padding: 0 10px;

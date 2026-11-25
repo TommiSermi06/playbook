@@ -49,6 +49,10 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
 
   // Prato
   crea("rect", { x: 0, y: 0, width: LARGHEZZA_CAMPO, height: ALTEZZA_CAMPO, class: "prato" }, svg);
+  // Strisce alterne ogni 5 yarde, come il taglio dell'erba negli stadi
+  for (let y = -10; y < YARDE_AVANTI; y += 10) {
+    crea("rect", { x: 0, y: yDisegno(y + 5), width: LARGHEZZA_CAMPO, height: 5, class: "striscia" }, svg);
+  }
 
   const linee = crea("g", { class: "linee" }, svg);
 
@@ -76,8 +80,13 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
     // Distanza dalla linea scritta a bordo campo (+5, +10, -5…)
     for (let y = -10; y <= 20; y += 5) {
       if (y === 0) continue;
-      const t = crea("text", { x: 2.2, y: yDisegno(y) - 0.35, class: "numero-yarde" }, linee);
-      t.textContent = (y > 0 ? "+" : "−") + Math.abs(y);
+      const testo = (y > 0 ? "+" : "−") + Math.abs(y);
+      for (const [x, ancora] of [[2.4, "start"], [LARGHEZZA_CAMPO - 2.4, "end"]]) {
+        const t = crea("text", {
+          x, y: yDisegno(y) - 0.45, "text-anchor": ancora, class: "numero-yarde", // appena sopra la linea
+        }, linee);
+        t.textContent = testo;
+      }
     }
   }
 
@@ -91,14 +100,42 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null } = {
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
   for (const g of schema.giocatori) {
-    const el = disegnaGiocatore(gruppo, g);
+    const el = disegnaGiocatore(gruppo, g, schema.lato);
     if (g.id === selezionato) el.classList.add("selezionato");
   }
 }
 
-function disegnaGiocatore(genitore, g) {
+/* ---------- Ruoli e colori ----------
+   Dalla sigla capiamo il gruppo del giocatore, e da questo il suo colore.
+   Se rinomini un giocatore (es. Y -> TE) il colore si aggiorna da solo. */
+const RUOLI = {
+  attacco: {
+    linea: ["C", "G", "T", "LG", "RG", "LT", "RT", "OL"],
+    qb: ["QB", "Q"],
+    back: ["RB", "FB", "TB", "HB", "B", "F"],
+    ricevitori: ["X", "Y", "Z", "H", "W", "TE", "WR", "SL", "A"],
+  },
+  difesa: {
+    dl: ["E", "T", "N", "DE", "DT", "NT", "DL"],
+    lb: ["W", "M", "S", "B", "J", "LB", "OLB", "ILB", "MLB", "SAM", "MIK", "WIL"],
+    db: ["C", "CB", "FS", "SS", "NB", "$", "DB", "F"],
+  },
+};
+const NOMI_RUOLI = {
+  linea: "Linea", qb: "Quarterback", back: "Back", ricevitori: "Ricevitori",
+  dl: "Linea difensiva", lb: "Linebacker", db: "Secondaria",
+};
+
+function ruoloDi(lato, etichetta) {
+  for (const [ruolo, sigle] of Object.entries(RUOLI[lato])) {
+    if (sigle.includes(etichetta)) return ruolo;
+  }
+  return lato === "attacco" ? "ricevitori" : "lb"; // sigla sconosciuta
+}
+
+function disegnaGiocatore(genitore, g, lato) {
   const el = crea("g", {
-    class: "giocatore forma-" + g.forma,
+    class: `giocatore forma-${g.forma} ruolo-${ruoloDi(lato, g.etichetta)}`,
     "data-id": g.id,
     transform: `translate(${g.x} ${yDisegno(g.y)})`,
   }, genitore);
@@ -274,8 +311,11 @@ function chiudiEditor() {
 function ridisegna() {
   disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
   const lato = schemaCorrente.lato === "attacco" ? "Attacco" : "Difesa";
-  $("#info-schema").textContent = `${lato} · ${nomeFormazione(schemaCorrente)} ·`;
+  const ribaltato = schemaCorrente.ribaltato ? " (ribaltata)" : "";
+  $("#info-schema").textContent = `${lato} · ${nomeFormazione(schemaCorrente)}${ribaltato} ·`;
+  $("#btn-ribalta").classList.toggle("attivo", !!schemaCorrente.ribaltato);
   mostraFormazioni();
+  mostraLegenda();
   mostraInfoGiocatore();
 }
 
@@ -327,11 +367,38 @@ function cambiaFormazione(idFormazione) {
   ricordaStato();
   schemaCorrente.formazione = idFormazione;
   schemaCorrente.giocatori = giocatoriDaFormazione(schemaCorrente.lato, idFormazione);
+  schemaCorrente.ribaltato = false;
   giocatoreSelezionato = null;
   ridisegna();
   salvaSubito();
   mostraAvviso(`Formazione: ${nomeFormazione(schemaCorrente)}`, annulla);
 }
+
+/* ---------- Legenda dei colori sotto il campo ---------- */
+function mostraLegenda() {
+  const legenda = $("#legenda");
+  legenda.innerHTML = "";
+  for (const ruolo of Object.keys(RUOLI[schemaCorrente.lato])) {
+    const voce = document.createElement("span");
+    voce.className = "ruolo-" + ruolo;
+    voce.innerHTML = "<i></i>";
+    voce.append(NOMI_RUOLI[ruolo]);
+    legenda.appendChild(voce);
+  }
+}
+
+/* ---------- Ribalta: lo schema diventa a specchio (destra <-> sinistra) ---------- */
+function ribalta() {
+  if (!schemaCorrente) return;
+  ricordaStato();
+  for (const g of schemaCorrente.giocatori) {
+    g.x = +(LARGHEZZA_CAMPO - g.x).toFixed(2);
+  }
+  schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
+  ridisegna();
+  salvaSubito();
+}
+$("#btn-ribalta").addEventListener("click", ribalta);
 
 /* ---------- Pannello del giocatore selezionato ---------- */
 function descriviPosizione(g) {
@@ -470,7 +537,11 @@ svgCampo.addEventListener("pointercancel", fineTrascinamento);
 let storia = { indietro: [], avanti: [] };
 
 function istantanea() {
-  return JSON.stringify({ formazione: schemaCorrente.formazione, giocatori: schemaCorrente.giocatori });
+  return JSON.stringify({
+    formazione: schemaCorrente.formazione,
+    giocatori: schemaCorrente.giocatori,
+    ribaltato: !!schemaCorrente.ribaltato,
+  });
 }
 
 function ricordaStato(foto = istantanea()) {
@@ -481,8 +552,9 @@ function ricordaStato(foto = istantanea()) {
 }
 
 function ripristina(foto) {
-  const { formazione, giocatori } = JSON.parse(foto);
+  const { formazione, giocatori, ribaltato } = JSON.parse(foto);
   schemaCorrente.formazione = formazione;
+  schemaCorrente.ribaltato = ribaltato;
   schemaCorrente.giocatori = giocatori;
   if (!giocatori.some((g) => g.id === giocatoreSelezionato)) giocatoreSelezionato = null;
   ridisegna();
@@ -515,7 +587,7 @@ $("#btn-ripeti").addEventListener("click", ripeti);
    ========================================================================== */
 $("#suggerimento").innerHTML =
   `Trascina per spostare · <kbd>Maiusc</kbd> aggancia alla mezza yarda · ` +
-  `<kbd>←↑↓→</kbd> sposta il selezionato · <kbd>${TASTO_CMD}Z</kbd> annulla`;
+  `<kbd>←↑↓→</kbd> sposta il selezionato · <kbd>R</kbd> ribalta · <kbd>${TASTO_CMD}Z</kbd> annulla`;
 $("#kbd-duplica").textContent = TASTO_CMD + "D";
 $("#btn-annulla").title = `Annulla (${TASTO_CMD}Z)`;
 $("#btn-ripeti").title = `Ripeti (${TASTO_CMD}${SU_MAC ? "⇧" : "Shift+"}Z)`;
@@ -544,6 +616,9 @@ document.addEventListener("keydown", (e) => {
   }
 
   if (staScrivendo || cmd || e.altKey) return;
+
+  // R = ribalta lo schema aperto
+  if ((e.key === "r" || e.key === "R") && schemaCorrente) { e.preventDefault(); ribalta(); return; }
 
   // N = nuovo schema
   if (e.key === "n" || e.key === "N") { e.preventDefault(); nuovoSchema(); return; }

@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.3 — nuovo aspetto
+- Tema scuro «campo di notte» con accento ambra e icona nuova
+- Giocatori colorati per ruolo (linea, QB, back, ricevitori / linea difensiva, linebacker, secondaria) con legenda
+- Campo con strisce, distanze dalla linea su entrambi i lati, primo down tratteggiato
+- Barra degli strumenti con Ribalta (tasto R), Annulla e Ripeti
+
 ## Versione 0.2 — per computer
 - Layout a tre colonne: elenco schemi con ricerca, campo grande, pannello dettagli
 - Clic per selezionare un giocatore, trascina per spostarlo (Maiusc = aggancio alla mezza yarda)
