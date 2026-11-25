@@ -306,6 +306,7 @@ function apriMenuScheda(bottone, pb) {
     ["Condividi e co-allenatori…", () => apriFoglioCondividi(pb)],
     ["Duplica", () => duplicaPlaybook(pb)],
     ["Rinomina un ruolo…", () => apriRinominaRuolo(pb)],
+    ["Applica numeri e situazioni da file…", () => scegliFilePartita(pb)],
     ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
     ["Elimina…", () => eliminaPlaybook(pb), "distruttiva"],
   ];
@@ -519,6 +520,54 @@ function esportaPlaybook(pb) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(link.href), 2000);
   mostraAvviso(`«${pb.nome}» esportato`);
+}
+
+/* ---------- Numeri di chiamata e situazioni da un file ----------
+   File { tipo: "playbook-app/partita", schemi: [{ nome, chiamata, situazioni }] }
+   Gli schemi si riconoscono dal nome (maiuscole e spazi non contano).
+   Si applica a un playbook esistente, senza toccare disegni e note. */
+const TIPO_FILE_PARTITA = "playbook-app/partita";
+
+function scegliFilePartita(pb) {
+  const input = Object.assign(document.createElement("input"), { type: "file", accept: ".json,application/json" });
+  input.addEventListener("change", () => { if (input.files[0]) applicaFilePartita(pb, input.files[0]); });
+  input.click();
+}
+
+async function applicaFilePartita(pb, file) {
+  let dati;
+  try { dati = JSON.parse(await file.text()); } catch { dati = null; }
+  if (!dati || dati.tipo !== TIPO_FILE_PARTITA || !Array.isArray(dati.schemi)) {
+    mostraAvviso("Il file non contiene numeri e situazioni per questa app");
+    return;
+  }
+  const chiave = (t) => (t || "").toLocaleLowerCase("it").replace(/\s+/g, " ").trim();
+  const perNome = new Map(dati.schemi.map((x) => [chiave(x.nome), x]));
+  const validi = new Set(SITUAZIONI.map((x) => x.id));
+  const schemi = schemiDelPlaybook(pb.id);
+  const prima = JSON.parse(JSON.stringify(schemi));
+  const cambiati = [];
+  for (const s of schemi) {
+    const x = perNome.get(chiave(s.nome));
+    if (!x) continue;
+    if (x.chiamata) s.chiamata = x.chiamata; else delete s.chiamata;
+    s.situazioni = (x.situazioni || []).filter((id) => validi.has(id));
+    cambiati.push(s);
+    perNome.delete(chiave(s.nome));
+  }
+  if (!cambiati.length) {
+    mostraAvviso(`Nessuno schema di «${pb.nome}» ha i nomi del file`);
+    return;
+  }
+  Dati.aggiornaMolti(cambiati);
+  if (playbookCorrente && playbookCorrente.id === pb.id) aggiornaDopoPartita();
+  const mancanti = [...perNome.values()].map((x) => x.nome);
+  const testo = `Numeri e situazioni applicati a ${cambiati.length} schemi`
+    + (mancanti.length ? ` · non trovati: ${mancanti.slice(0, 4).join(", ")}${mancanti.length > 4 ? "…" : ""}` : "");
+  mostraAvviso(testo, () => {
+    Dati.aggiornaMolti(prima.filter((s) => cambiati.some((c) => c.id === s.id)));
+    if (playbookCorrente && playbookCorrente.id === pb.id) aggiornaDopoPartita();
+  });
 }
 
 async function importaDaFile(file) {

@@ -2506,3 +2506,14 @@ body.sola-lettura #btn-squadra { pointer-events: none; }
 .proposta-avviso { margin: 8px 0 0; font-size: 12px; color: var(--accento); }
 .proposta-azioni { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .proposta-azioni button { padding: 7px 16px; }
+
+/* Stampa in A3: le pagine A4 ingrandite di √2, così riempiono il foglio A3 */
+.stampa.carta-a3 .pagina-stampa { zoom: 1.41421; }
+/* Il call sheet in A3 usa il foglio vero (più colonne), senza ingrandire */
+.stampa.carta-a3 .pagina-stampa.a3 { zoom: 1; width: 420mm; height: 297mm; }
+#blocco-carta[hidden] { display: none; }
+/* Call sheet A3 solo testo: righe e scritte più grandi */
+.pagina-callsheet.a3 .riga-chiamata:not(.con-schema) { height: 9.4mm; font-size: 11pt; }
+.pagina-callsheet.a3 .riga-chiamata:not(.con-schema) .chiamata-numero { width: 10mm; font-size: 12pt; }
+.pagina-callsheet.a3 .riga-chiamata:not(.con-schema) .chiamata-formazione { font-size: 8pt; }
+.pagina-callsheet.a3 .griglia-callsheet:not(:has(.con-schema)) .riquadro-situazione h3 { font-size: 11pt; padding: 1.8mm 2.5mm; }

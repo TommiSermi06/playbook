@@ -238,9 +238,14 @@ function costruisciCallSheet(opzioni, contenitore) {
   for (const r of riquadri) r.schemi.sort((a, b) => (a.chiamata || 9999) - (b.chiamata || 9999));
 
   // 1. Distribuisce i riquadri nelle colonne
-  const C = CALLSHEET;
+  // In A3 il foglio è più grande: più colonne e colonne più alte (stessa grandezza del testo)
+  const a3 = opzioni.carta === "A3";
+  // (solo testo in A3: 4 colonne larghe con il testo più grande, da leggere a bordo campo)
+  const C = a3
+    ? { ...CALLSHEET, altezzaColonna: 250, testa: opzioni.miniSchemi ? CALLSHEET.testa : 9.5, riga: 9.4 }
+    : CALLSHEET;
   const altezzaRiga = opzioni.miniSchemi ? C.rigaConSchema : C.riga;
-  const colonnePerPagina = opzioni.miniSchemi ? 3 : 4;
+  const colonnePerPagina = opzioni.miniSchemi ? (a3 ? 5 : 3) : 4;
   const colonne = [[]];
   let libero = C.altezzaColonna;
   for (const r of riquadri) {
@@ -260,7 +265,7 @@ function costruisciCallSheet(opzioni, contenitore) {
   const pagine = [];
   for (let i = 0; i < colonne.length; i += colonnePerPagina) pagine.push(colonne.slice(i, i + colonnePerPagina));
   pagine.forEach((gruppo, p) => {
-    const pag = elemento("section", "pagina-stampa pagina-callsheet");
+    const pag = elemento("section", "pagina-stampa pagina-callsheet" + (a3 ? " a3" : ""));
     pag.appendChild(intestazione(`${playbookCorrente.nome} · Call sheet`, p + 1, pagine.length));
     const griglia = elemento("div", "griglia-callsheet");
     griglia.style.setProperty("--colonne", colonnePerPagina);

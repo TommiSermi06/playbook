@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=0.20">
+  <link rel="stylesheet" href="style.css?v=0.21">
 </head>
 <body>
   <!-- ======================================================================
@@ -76,7 +76,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.20</p>
+      <p class="versione" id="versione">Versione 0.21</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -388,6 +388,15 @@
     </div>
     <p class="info-tipo" id="info-tipo"></p>
 
+    <!-- Formato del foglio (il wristband resta in A4: inserti a misura vera) -->
+    <div id="blocco-carta">
+      <p class="etichetta-stampa">Foglio</p>
+      <div class="segmentato segmentato-2" id="stampa-carta">
+        <button type="button" class="segmento" data-valore="A4">A4</button>
+        <button type="button" class="segmento" data-valore="A3">A3 · tutto più grande</button>
+      </div>
+    </div>
+
     <p class="etichetta-stampa">Cosa stampare</p>
     <div class="lista-stampa" id="stampa-cosa"></div>
 
@@ -507,23 +516,23 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.20"></script>
+  <script src="config.js?v=0.21"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.20"></script>
-  <script src="regole.js?v=0.20"></script>
-  <script src="cloud.js?v=0.20"></script>
-  <script src="dati.js?v=0.20"></script>
-  <script src="formazioni-personali.js?v=0.20"></script>
-  <script src="app.js?v=0.20"></script>
-  <script src="tracce.js?v=0.20"></script>
-  <script src="costruttore.js?v=0.20"></script>
-  <script src="lucchetto.js?v=0.20"></script>
-  <script src="stampa.js?v=0.20"></script>
-  <script src="partita.js?v=0.20"></script>
-  <script src="playbook.js?v=0.20"></script>
-  <script src="squadra.js?v=0.20"></script>
-  <script src="condivisione.js?v=0.20"></script>
-  <script src="proposte.js?v=0.20"></script>
-  <script src="accesso.js?v=0.20"></script>
+  <script src="formazioni.js?v=0.21"></script>
+  <script src="regole.js?v=0.21"></script>
+  <script src="cloud.js?v=0.21"></script>
+  <script src="dati.js?v=0.21"></script>
+  <script src="formazioni-personali.js?v=0.21"></script>
+  <script src="app.js?v=0.21"></script>
+  <script src="tracce.js?v=0.21"></script>
+  <script src="costruttore.js?v=0.21"></script>
+  <script src="lucchetto.js?v=0.21"></script>
+  <script src="stampa.js?v=0.21"></script>
+  <script src="partita.js?v=0.21"></script>
+  <script src="playbook.js?v=0.21"></script>
+  <script src="squadra.js?v=0.21"></script>
+  <script src="condivisione.js?v=0.21"></script>
+  <script src="proposte.js?v=0.21"></script>
+  <script src="accesso.js?v=0.21"></script>
 </body>
 </html>

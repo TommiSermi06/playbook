@@ -13,7 +13,7 @@
 const OPZIONI_STAMPA_DEFAULT = {
   cosa: "tutto", perPagina: 4, campo: "chiaro", copertina: true, note: true,
   perFormazione: true, formazioneVuota: true,
-  tipo: "playbook", wristband: "schemi", copie: 1, miniSchemi: false, senzaSituazione: false,
+  tipo: "playbook", carta: "A4", wristband: "schemi", copie: 1, miniSchemi: false, senzaSituazione: false,
 };
 
 /* ==========================================================================
@@ -104,6 +104,7 @@ function apriFoglioStampa() {
   }
 
   impostaSegmentato("#stampa-tipo", opzioniStampa.tipo || "playbook");
+  impostaSegmentato("#stampa-carta", opzioniStampa.carta || "A4");
   impostaSegmentato("#stampa-wristband", opzioniStampa.wristband || "schemi");
   $("#stampa-copie").value = opzioniStampa.copie || 1;
   $("#stampa-mini-schemi").checked = Boolean(opzioniStampa.miniSchemi);
@@ -237,7 +238,7 @@ function impostaSegmentato(selettore, valore) {
   gruppo.style.setProperty("--indice", indice);
   gruppo.dataset.valore = bottoni[indice].dataset.valore;
 }
-["#stampa-per-pagina", "#stampa-campo", "#stampa-tipo", "#stampa-wristband"].forEach((sel) => {
+["#stampa-per-pagina", "#stampa-campo", "#stampa-tipo", "#stampa-wristband", "#stampa-carta"].forEach((sel) => {
   $(sel).querySelectorAll(".segmento").forEach((b) =>
     b.addEventListener("click", () => {
       impostaSegmentato(sel, b.dataset.valore);
@@ -252,6 +253,7 @@ function aggiornaOpzioniTipo() {
   $("#opzioni-playbook").hidden = tipo !== "playbook";
   $("#opzioni-wristband").hidden = tipo !== "wristband";
   $("#opzioni-callsheet").hidden = tipo !== "callsheet";
+  $("#blocco-carta").hidden = tipo === "wristband"; // il wristband ha la misura fissa
   const info = $("#info-tipo");
   info.innerHTML = "";
   info.className = "info-tipo";
@@ -295,6 +297,7 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
     perFormazione: $("#stampa-per-formazione").checked,
     formazioneVuota: $("#stampa-formazione-vuota").checked,
     tipo: $("#stampa-tipo").dataset.valore || "playbook",
+    carta: $("#stampa-carta").dataset.valore || "A4",
     wristband: $("#stampa-wristband").dataset.valore || "schemi",
     copie: Math.max(1, Math.min(10, parseInt($("#stampa-copie").value, 10) || 1)),
     miniSchemi: $("#stampa-mini-schemi").checked,
@@ -439,8 +442,9 @@ function copertina(titolo, schemi, paginaDi, gruppi = null) {
   return pag;
 }
 
-// Formato del foglio (A4 verticale o orizzontale) per la stampa
-function impostaPagina(orizzontale) {
+/* Formato del foglio: A4 o A3, verticale o orizzontale.
+   In A3 le stesse pagine vengono ingrandite (×1,41): tutto più grande e leggibile. */
+function impostaPagina(orizzontale, carta = "A4") {
   let stilePagina = $("#stile-pagina");
   if (!stilePagina) {
     stilePagina = document.createElement("style");
@@ -448,7 +452,8 @@ function impostaPagina(orizzontale) {
     document.head.appendChild(stilePagina);
   }
   $("#stampa").classList.toggle("orizzontale", orizzontale);
-  stilePagina.textContent = `@page { size: A4 ${orizzontale ? "landscape" : "portrait"}; margin: 0; }`;
+  $("#stampa").classList.toggle("carta-a3", carta === "A3");
+  stilePagina.textContent = `@page { size: ${carta} ${orizzontale ? "landscape" : "portrait"}; margin: 0; }`;
 }
 
 function costruisciStampa(opzioni) {
@@ -460,7 +465,8 @@ function costruisciStampa(opzioni) {
     const esito = opzioni.tipo === "wristband"
       ? costruisciWristband(opzioni, contenitore)
       : costruisciCallSheet(opzioni, contenitore);
-    impostaPagina(opzioni.tipo === "callsheet");
+    // Il wristband resta in A4: gli inserti devono avere la misura vera (12 × 7 cm)
+    impostaPagina(opzioni.tipo === "callsheet", opzioni.tipo === "callsheet" ? opzioni.carta : "A4");
     return esito;
   }
   const schemiTutti = schemiDaStampare(opzioni.cosa);
@@ -521,15 +527,7 @@ function costruisciStampa(opzioni) {
   });
 
   // Formato della pagina: 1 schema per pagina in orizzontale, gli altri in verticale
-  let stilePagina = $("#stile-pagina");
-  if (!stilePagina) {
-    stilePagina = document.createElement("style");
-    stilePagina.id = "stile-pagina";
-    document.head.appendChild(stilePagina);
-  }
-  const orizzontale = perPagina === 1;
-  contenitore.classList.toggle("orizzontale", orizzontale);
-  stilePagina.textContent = `@page { size: A4 ${orizzontale ? "landscape" : "portrait"}; margin: 0; }`;
+  impostaPagina(perPagina === 1, opzioni.carta);
   return { titolo, pagine: totale };
 }
 
