@@ -384,7 +384,12 @@ body.trascinando .campo { cursor: grabbing; }
 .linea-yarde.forte { stroke-width: 0.14; }
 .tacca { stroke: var(--tacche-campo); stroke-width: 0.1; }
 .numero-yarde { fill: var(--numeri-campo); font-size: 1.25px; font-weight: 800; }
-.linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.16; opacity: 0.9; }
+.linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.16; opacity: 0.9; transition: stroke-width 0.2s, filter 0.2s; }
+/* La linea si illumina quando un giocatore prova a superarla */
+.linea-scrimmage.avviso {
+  stroke-width: 0.4;
+  filter: drop-shadow(0 0 0.5px var(--linea-scrimmage)) drop-shadow(0 0 1.2px var(--linea-scrimmage));
+}
 .linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.14; stroke-dasharray: 0.6 0.4; opacity: 0.8; }
 .pallone { fill: var(--pallone); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.06; }
 
@@ -1345,7 +1350,7 @@ body.schema-bloccato .campo-cornice::after {
 /* ---------- Profondità modificabile ---------- */
 .campo-profondita { display: inline-flex; align-items: center; gap: 6px; color: var(--testo-secondario); }
 .campo-profondita input {
-  width: 58px;
+  width: 52px;
   text-align: right;
   border: 0;
   border-radius: 5px;

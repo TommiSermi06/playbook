@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.8 — regola della linea di scrimmage
+- L'attacco non supera mai la linea, la difesa non la supera mai dall'altra parte (mouse, frecce, pedine, profondità)
+- Se un giocatore ci prova si ferma sulla linea e la linea si illumina
+- Profondità: si scrivono solo le yarde (attacco sempre dietro, difesa sempre oltre)
+- Gli schemi vecchi con giocatori oltre la linea vengono rimessi in regola all'apertura
+
 ## Versione 0.7 — ritocchi da allenatore
 - Profondità del giocatore modificabile: scrivi le yarde e scegli dietro/oltre la linea
 - Il pallone compare solo quando c'è il centro (C), con animazione, e lo segue

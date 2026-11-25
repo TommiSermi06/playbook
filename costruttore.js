@@ -161,7 +161,7 @@ function aggiungiGiocatore(sigla, posizione = null) {
     id: nuovoIdGiocatore(),
     etichetta: sigla,
     x: +Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, pos.x)).toFixed(1),
-    y: +Math.min(YARDE_AVANTI - 0.6, Math.max(-YARDE_DIETRO + 0.6, pos.y)).toFixed(1),
+    y: limitaY(schemaCorrente.lato, pos.y), // mai oltre la linea di scrimmage
     forma: schemaCorrente.lato === "difesa" ? "lettera" : sigla === "C" ? "quadrato" : "cerchio",
   };
   schemaCorrente.giocatori.push(g);
