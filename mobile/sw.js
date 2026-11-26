@@ -4,11 +4,11 @@
    subito; se non c'è rete usa la copia salvata.
    I dati degli schemi stanno nella copia del telefono (localStorage).
    ========================================================================== */
-const CACHE = "playbook-mobile-m5";
+const CACHE = "playbook-mobile-m6";
 const FILE = [
-  "./", "index.html", "mobile.css?v=m3", "campo.js?v=m3", "mobile.js?v=m4", "editor.js?v=m5", "proposte.js?v=m3", "manifest.json",
+  "./", "index.html", "mobile.css?v=m6", "campo.js?v=m3", "mobile.js?v=m6", "editor.js?v=m5", "proposte.js?v=m3", "manifest.json",
   "../config.js?v=m1", "../lib/supabase.js", "../formazioni.js?v=m1", "../regole.js?v=m1",
-  "../tracce.js?v=m5", "../cloud.js?v=m1", "../icon-180.png",
+  "../tracce.js?v=m5", "../animazione.js?v=m6", "../cloud.js?v=m1", "../icon-180.png",
 ];
 
 self.addEventListener("install", (e) => {

@@ -423,6 +423,7 @@ function apriEditor(id, { focusNome = false } = {}) {
 
   chiudiMenuTracce();
   if (Tracce.disegno) Tracce.annullaDisegno();
+  fermaGioco(false);
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
   giocatoreSelezionato = null;
@@ -835,6 +836,7 @@ function manigliaVicina(p) {
 }
 
 svgCampo.addEventListener("pointerdown", (evento) => {
+  if (Animazione.attiva) { fermaGioco(); return; } // un clic sul campo ferma l'animazione
   if (modificheVietate()) return; // sola lettura: il campo si guarda soltanto
   if (!schemaCorrente || evento.button > 0) return;
   if (schemaCorrente.bloccato) {
@@ -1087,6 +1089,14 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // Barra spaziatrice: lo schema "si gioca" (animazione.js)
+  if (e.key === " " && !staScrivendo && !cmd && schemaCorrente && !Tracce.disegno) {
+    e.preventDefault();
+    commutaGioco();
+    return;
+  }
+  if (Animazione.attiva && e.key === "Escape") { fermaGioco(); return; }
+
   // Selezione multipla: Ctrl+A, frecce, Canc ed Esc sul gruppo (selezione.js)
   if (tastiSelezione(e, cmd, staScrivendo)) return;
 
@@ -1196,6 +1206,38 @@ document.addEventListener("keydown", (e) => {
     posizionaGiocatore(g);
     salvaTraPoco();
   }
+});
+
+/* ---------- Animazione dello schema (vedi animazione.js) ---------- */
+let rallentatore = false;
+function commutaGioco() {
+  if (fermaGioco()) return;
+  if (!schemaCorrente || !schemaCorrente.giocatori.length) return;
+  chiudiMenuTracce();
+  if (Tracce.disegno) Tracce.annullaDisegno();
+  disegnaCampo(svgCampo, schemaCorrente, {}); // senza maniglie né selezione
+  Animazione.avvia(svgCampo, schemaCorrente, {
+    velocita: rallentatore ? 0.45 : 1,
+    fine: () => { ridisegna(); aggiornaPulsanteGioco(); },
+  });
+  aggiornaPulsanteGioco();
+}
+// Ferma l'animazione e rimette i giocatori al loro posto
+function fermaGioco(ridisegnaCampo = true) {
+  if (!Animazione.ferma()) return false;
+  if (ridisegnaCampo && schemaCorrente) ridisegna();
+  aggiornaPulsanteGioco();
+  return true;
+}
+function aggiornaPulsanteGioco() {
+  $("#btn-gioca").textContent = Animazione.attiva ? "■ Ferma" : "▶︎ Gioca";
+  $("#btn-gioca").classList.toggle("in-corso", Boolean(Animazione.attiva));
+}
+$("#btn-gioca").addEventListener("click", commutaGioco);
+$("#btn-lento").addEventListener("click", () => {
+  rallentatore = !rallentatore;
+  $("#btn-lento").setAttribute("aria-pressed", String(rallentatore));
+  mostraAvviso(rallentatore ? "Al rallentatore 🐢" : "Velocità normale");
 });
 
 /* ---------- Copia / incolla una traccia (vedi AppuntiTraccia in tracce.js) ---------- */

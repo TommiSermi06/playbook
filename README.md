@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.28 — animazione degli schemi
+
+- Pulsante **▶︎ Gioca** sul campo (o barra spaziatrice): i giocatori si muovono lungo le tracce.
+  Prima le motion, poi lo snap (il pallone va al QB), poi tutti partono, ognuno alla velocità del suo compito.
+  Le tracce restano tenui sotto. 🐢 per il rallentatore. Clic sul campo o Esc per fermare.
+- Anche sul telefono (▶︎ Gioca nello schema) e nel link in sola lettura.
+
 ## Versione 0.27 — selezione multipla
 
 - **Maiusc+clic** aggiunge o toglie un giocatore; **trascinando sul prato** un riquadro seleziona chi ci sta dentro; **Ctrl+A** tutti.

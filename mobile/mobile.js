@@ -442,6 +442,7 @@ function mostraElenco() {
    4. LO SCHEMA
    ========================================================================== */
 function apriSchema(indice, { nuova = true } = {}) {
+  Animazione.ferma();
   Stato.indice = indice;
   mostraSchema(false);
   if (nuova) vai("schermata-schema");
@@ -450,6 +451,7 @@ function apriSchema(indice, { nuova = true } = {}) {
 function schemaAperto() { return Stato.elenco[Stato.indice]; }
 
 function mostraSchema(anima) {
+  if (!anima) $("#btn-anima").textContent = "▶︎ Gioca";
   const s = schemaAperto();
   if (!s) return;
   $("#schema-titolo").textContent = s.nome || "Senza nome";
@@ -474,7 +476,15 @@ function mostraSchema(anima) {
   $("#riga-info").hidden = !puoModificare(Stato.pb);
 }
 
-$("#btn-anima").addEventListener("click", () => mostraSchema(true));
+// ▶︎ Gioca: i giocatori si muovono lungo le tracce (../animazione.js)
+$("#btn-anima").addEventListener("click", () => {
+  if (Animazione.ferma()) { mostraSchema(false); return; }
+  mostraSchema(false);
+  Animazione.avvia($("#campo-grande"), schemaAperto(), {
+    fine: () => mostraSchema(false),
+  });
+  $("#btn-anima").textContent = "■ Ferma";
+});
 $("#btn-zoom").addEventListener("click", () => { Stato.zoom = !Stato.zoom; mostraSchema(false); });
 
 // Scorri a destra / sinistra sul campo per cambiare schema

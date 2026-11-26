@@ -746,3 +746,6 @@ a.riga { display: flex; }
   font-size: 17px;
   font-weight: 600;
 }
+
+/* Animazione: mentre lo schema "si gioca" le tracce restano tenui */
+.in-gioco .tracce { opacity: 0.32; transition: opacity 0.3s; }
