@@ -167,6 +167,7 @@ kbd {
 
 /* Campo di ricerca */
 .cerca {
+  flex: none; /* nella colonna laterale non deve schiacciarsi sotto i filtri */
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2796,7 +2797,7 @@ body:not(.modo-note) .campo .avversari .giocatore { cursor: grab; }
   display: flex;
   gap: 5px;
   overflow-x: auto;
-  margin: 0 2px 8px;
+  margin: 10px 2px 8px; /* staccati dalla ricerca */
   padding-bottom: 2px;
   scrollbar-width: none;
 }

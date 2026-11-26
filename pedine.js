@@ -35,7 +35,7 @@ function scriviPedina(el, g, { miniatura = false } = {}) {
   }, el);
   testo.textContent = testoPedina(g);
   if (g.nome && !miniatura) {
-    const sotto = g.forma === "lettera" ? 1.55 : RAGGIO_GIOCATORE + 0.82;
+    const sotto = g.forma === "lettera" ? 1.35 : RAGGIO_GIOCATORE + 0.5;
     const nome = crea("text", {
       class: "nome-pedina",
       y: sotto,

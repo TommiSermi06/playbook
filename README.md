@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.37 — spazi sistemati
+
+- Nome del giocatore più vicino alla pedina
+- Ricerca e filtri per categoria non si sovrappongono più (la ricerca non si schiaccia e i filtri hanno spazio sopra)
+
 ## Versione 0.36 — pedine con numero e nome del giocatore
 
 - Ogni pedina può avere un numero (compare «#12» dentro il cerchio al posto del ruolo) e un nome (scritto sotto); il colore resta quello del ruolo (`pedine.js`)
