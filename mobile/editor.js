@@ -349,6 +349,7 @@ $("#btn-ribalta").addEventListener("click", () => {
     }
   }
   ribaltaNote(schemaCorrente); // anche le note sul campo
+  ribaltaAvversari(schemaCorrente); // e gli avversari in trasparenza
   schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
   salvaEditor();
   disegnaEditor();

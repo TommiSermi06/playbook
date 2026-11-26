@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.31 — avversari in trasparenza
+
+- Nuova sezione **Difesa avversaria** (o **Attacco avversario** negli schemi di difesa) nel pannello: opzionale.
+  Si carica una formazione (pronta o tua) o uno schema dell'altro lato del playbook, oppure si aggiungono solo alcune pedine.
+- Le pedine avversarie si vedono tenui, si trascinano come le proprie e restano dalla loro parte della linea; clic + Canc per toglierne una.
+- Mostra/nascondi, Togli tutti; seguono Ribalta e Annulla; si vedono anche sul telefono, nel link condiviso e in stampa.
+
 ## Versione 0.30 — più note insieme
 
 - Note sul campo: **Maiusc+clic**, **riquadro** sul prato e **Ctrl+A** per sceglierne più d'una;

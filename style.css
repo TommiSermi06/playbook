@@ -2710,3 +2710,41 @@ body.modo-note .campo[data-strumento="sposta"] { cursor: default; }
 }
 .barra-note > button.elimina-note:hover { background: #FF7468; }
 .barra-note > button.elimina-note:disabled { background: rgba(255, 90, 78, 0.18); color: rgba(255, 255, 255, 0.45); cursor: default; }
+
+/* ==========================================================================
+   AVVERSARI IN TRASPARENZA
+   ========================================================================== */
+.avversari .giocatore { opacity: 0.42; }
+.avversari .giocatore.selezionato { opacity: 0.75; }
+.avversari .giocatore .alone { stroke: #FFFFFF; }
+body:not(.modo-note) .campo .avversari .giocatore { cursor: grab; }
+.stampa .avversari .giocatore { opacity: 0.35; }
+.pannello-avversari { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.aiuto-avversari { margin: 0; font-size: 12px; }
+#carica-avversari {
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--separatore);
+  background: var(--sfondo-grigio);
+  color: var(--testo);
+  font: inherit;
+  font-size: 13px;
+}
+.etichetta-pedine-avv { margin: 2px 0 0; font-size: 12px; color: var(--testo-secondario); }
+.pedine-avversarie { display: flex; flex-wrap: wrap; gap: 5px; }
+.pedina-avv {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--colore-ruolo) 40%, transparent);
+  border: 1px solid var(--colore-ruolo);
+  color: var(--testo);
+  font-size: 11.5px;
+  font-weight: 800;
+  transition: transform 0.12s var(--curva), background 0.15s;
+}
+.pedina-avv:hover { background: color-mix(in srgb, var(--colore-ruolo) 65%, transparent); transform: scale(1.06); }
+.azioni-avversari { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.riga-mostra { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }

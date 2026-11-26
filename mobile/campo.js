@@ -126,6 +126,9 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
     crea("ellipse", { cx: 0, cy: 0, rx: 0.32, ry: 0.5, class: "pallone" }, gp);
   }
 
+  // Avversari in trasparenza (../avversari.js)
+  if (typeof disegnaAvversari === "function") disegnaAvversari(svg, schema);
+
   // Tracce (sotto i giocatori). Con "anima" partono una dopo l'altra.
   const livello = crea("g", { class: "tracce" + (anima ? " in-animazione" : "") }, svg);
   let ordine = 0;

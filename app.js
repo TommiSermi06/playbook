@@ -136,6 +136,9 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
     statoPalla = { idSchema: schema.id, visibile: false };
   }
 
+  // Avversari in trasparenza (avversari.js): sotto tracce e giocatori
+  disegnaAvversari(svg, schema, { selezionato: vivo && typeof Avversari !== "undefined" ? Avversari.sel : null });
+
   // Tracce (sotto i giocatori): un gruppo per giocatore, spostato sulla
   // sua posizione, così quando lo trascini la traccia lo segue.
   const conTracce = typeof Tracce !== "undefined";
@@ -434,6 +437,7 @@ function apriEditor(id, { focusNome = false } = {}) {
   if (Tracce.disegno) Tracce.annullaDisegno();
   fermaGioco(false);
   chiudiNoteCampo();
+  Avversari.sel = null;
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
   giocatoreSelezionato = null;
@@ -484,6 +488,7 @@ function ridisegna() {
   mostraPartita();
   aggiornaBannerBozza();
   mostraInfoGiocatore();
+  mostraPannelloAvversari();
 }
 
 /* ---------- Salvataggio automatico ----------
@@ -675,6 +680,7 @@ function ribalta() {
     }
   }
   ribaltaNote(schemaCorrente); // anche testi, frecce e zone
+  ribaltaAvversari(schemaCorrente); // e gli avversari in trasparenza
   schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
   ridisegna();
   salvaSubito();
@@ -828,6 +834,7 @@ function giocatoreVicino(p, raggio = 1.6) {
 
 function selezionaGiocatore(id) {
   Selezione.ids.clear(); // si torna alla selezione di un giocatore solo
+  if (id && Avversari.sel) { Avversari.sel = null; } // si sceglie un tuo giocatore: via la pedina avversaria
   if (id !== giocatoreSelezionato) chiudiMenuTracce();
   giocatoreSelezionato = id;
   disegnaCampo(svgCampo, schemaCorrente, { selezionato: id }); // mostra le maniglie della traccia
@@ -888,6 +895,20 @@ svgCampo.addEventListener("pointerdown", (evento) => {
     return;
   }
 
+  // Pedina avversaria (avversari-ui.js): si trascina come le tue
+  const avv = !g && avversarioVicino(p);
+  if (avv) {
+    evento.preventDefault();
+    svgCampo.setPointerCapture(evento.pointerId);
+    chiudiMenuTracce();
+    giocatoreSelezionato = null;
+    document.body.classList.add("trascinando");
+    trascinamento = iniziaTrascinamentoAvversario(avv, p);
+    disegnaCampo(svgCampo, schemaCorrente, {});
+    return;
+  }
+  if (Avversari.sel) { Avversari.sel = null; }
+
   // Prato vuoto: si disegna il riquadro di selezione (un semplice clic toglie la selezione)
   if (!g) {
     chiudiMenuTracce();
@@ -933,6 +954,7 @@ svgCampo.addEventListener("pointermove", (evento) => {
   const p = puntoNelCampo(evento);
   if (trascinamento.tipo === "gruppo") { muoviGruppo(trascinamento, p, evento.shiftKey); return; }
   if (trascinamento.tipo === "riquadro") { muoviRiquadro(trascinamento, p); return; }
+  if (trascinamento.tipo === "avversario") { muoviAvversario(trascinamento, p, evento.shiftKey); return; }
   const g = trascinamento.giocatore;
 
   // Trascinamento di un punto della traccia
@@ -969,6 +991,7 @@ function fineTrascinamento() {
   trascinamento = null;
   document.body.classList.remove("trascinando");
   if (t.tipo === "riquadro") { fineRiquadro(t); return; }
+  if (t.tipo === "avversario") { fineTrascinamentoAvversario(t); return; }
   if (t.tipo === "gruppo") {
     if (t.mosso) { ricordaStato(t.prima); salvaTraPoco(); disegnaCampo(svgCampo, schemaCorrente, {}); }
     else { Selezione.imposta([t.giocatore.id]); apriMenuTracce(t.giocatore); } // clic: solo lui
@@ -1000,6 +1023,8 @@ function istantanea() {
     giocatori: schemaCorrente.giocatori,
     ribaltato: !!schemaCorrente.ribaltato,
     annotazioni: schemaCorrente.annotazioni || [],
+    avversari: schemaCorrente.avversari || [],
+    avversariNascosti: Boolean(schemaCorrente.avversariNascosti),
   });
 }
 
@@ -1011,8 +1036,11 @@ function ricordaStato(foto = istantanea()) {
 }
 
 function ripristina(foto) {
-  const { formato, formazione, giocatori, ribaltato, annotazioni } = JSON.parse(foto);
+  const { formato, formazione, giocatori, ribaltato, annotazioni, avversari, avversariNascosti } = JSON.parse(foto);
   schemaCorrente.annotazioni = annotazioni || [];
+  schemaCorrente.avversari = avversari || [];
+  schemaCorrente.avversariNascosti = Boolean(avversariNascosti);
+  if (!schemaCorrente.avversari.some((g) => g.id === Avversari.sel)) Avversari.sel = null;
   schemaCorrente.formato = formato || "11";
   schemaCorrente.formazione = formazione;
   schemaCorrente.ribaltato = ribaltato;
@@ -1112,6 +1140,9 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (Animazione.attiva && e.key === "Escape") { fermaGioco(); return; }
+
+  // Pedina avversaria scelta: Canc la toglie, Esc la deseleziona (avversari-ui.js)
+  if (tastiAvversari(e, staScrivendo)) return;
 
   // Selezione multipla: Ctrl+A, frecce, Canc ed Esc sul gruppo (selezione.js)
   if (tastiSelezione(e, cmd, staScrivendo)) return;
