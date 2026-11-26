@@ -562,6 +562,7 @@ function mostraFormazioni() {
     scelta.className = "scelta" + (f.id === schemaCorrente.formazione ? " attiva" : "");
     scelta.innerHTML = `<span></span><svg class="spunta" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
     scelta.querySelector("span").textContent = f.nome;
+    scelta.prepend(puntinoColore(schemaCorrente.lato, f.id, f.nome)); // colore nel call sheet (colori-formazioni.js)
     scelta.addEventListener("click", () => cambiaFormazione(f.id));
     contenitore.appendChild(scelta);
   }
@@ -580,6 +581,7 @@ function mostraFormazioni() {
         <svg class="spunta" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
         <button class="elimina-mia" title="Elimina questa formazione" aria-label="Elimina">×</button>`;
       scelta.querySelector(".nome-mia").textContent = f.nome;
+      scelta.querySelector(".stella").after(puntinoColore(schemaCorrente.lato, f.id, f.nome));
       scelta.addEventListener("click", () => cambiaFormazione(f.id));
       scelta.addEventListener("keydown", (e) => { if (e.key === "Enter") cambiaFormazione(f.id); });
       scelta.querySelector(".elimina-mia").addEventListener("click", (e) => {

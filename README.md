@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.41 — nomi lunghi che entrano e colori delle formazioni scelti dal coach
+
+- Stampa: se il nome di uno schema è troppo lungo, il carattere si rimpicciolisce da solo finché entra tutto (call sheet, wristband, scout cards, schede del playbook), fino a metà grandezza; niente più «…» sui nomi normali, anche in A3
+- Colori delle formazioni scelti dal coach (`colori-formazioni.js`): pallino accanto a ogni formazione nell'elenco «Formazione» e nelle opzioni del call sheet, tavolozza di 14 colori + «Altro…» + «Automatico». Salvati nel playbook (`coloriFormazioni`), li sceglie il proprietario
+- I colori automatici restano fissi: scegliere il colore di una formazione non cambia quello delle altre
+
 ## Versione 0.40 — call sheet con corsa / pass e colore della formazione
 
 - Call sheet: accanto a ogni schema la categoria in breve (CORSA, PASS, PLAY ACT., SCREEN…) col suo colore, e la riga col colore della formazione (GOLD → oro, RED → rosso…; le altre un colore fisso ciascuna). Si può togliere dalle opzioni

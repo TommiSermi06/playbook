@@ -206,6 +206,7 @@ $("#stampa-per-formazione").addEventListener("change", mostraOrdineFormazioni);
 $("#stampa-cosa").addEventListener("change", mostraOrdineFormazioni);
 
 function chiudiFoglioStampa() {
+  if (typeof chiudiTavolozzaColori === "function") chiudiTavolozzaColori();
   $("#velo").classList.remove("visibile");
   $("#foglio-stampa").classList.remove("visibile");
   setTimeout(() => {
@@ -387,7 +388,10 @@ function impostaPagina(orizzontale, carta = "A4") {
    orizzontale, carta }. */
 function costruisciStampa(opzioni, contenitore = $("#stampa"), { anteprima = false } = {}) {
   const esito = costruisciPagine(opzioni, contenitore);
-  if (!anteprima) impostaPagina(esito.orizzontale, esito.carta);
+  if (!anteprima) {
+    impostaPagina(esito.orizzontale, esito.carta);
+    adattaTesti(contenitore); // i nomi lunghi si rimpiccioliscono (dopo il formato: A3 è più largo)
+  }
   return esito;
 }
 
@@ -480,4 +484,39 @@ async function stampaPlaybook(opzioni) {
   // Dopo la stampa (o l'annullamento) si torna all'app
   document.title = titoloPagina;
   document.body.classList.remove("in-stampa");
+}
+
+/* ==========================================================================
+   NOMI LUNGHI: CARATTERE PIÙ PICCOLO INVECE DEI PUNTINI
+   Se il nome di uno schema non entra nel suo spazio (call sheet,
+   wristband, scout cards, schede del playbook), il carattere si
+   rimpicciolisce un po' alla volta finché entra tutto, fino a poco più
+   di metà della grandezza normale (solo oltre restano i «…»).
+   Le pagine di stampa sono nascoste: per misurarle le rendiamo
+   visibili un attimo, fuori dallo schermo.
+   ========================================================================== */
+const TESTI_DA_ADATTARE = ".chiamata-nome, .inserto-nome, .carta-scout-testi strong, .scheda-titolo strong";
+
+function adattaTesti(contenitore) {
+  const elementi = [...contenitore.querySelectorAll(TESTI_DA_ADATTARE)];
+  if (!elementi.length) return;
+  const nascosto = getComputedStyle(contenitore).display === "none";
+  const prima = contenitore.getAttribute("style") || "";
+  if (nascosto) {
+    contenitore.style.cssText += ";display:block;position:absolute;left:-100000px;top:0;visibility:hidden;";
+  }
+  try {
+    for (const el of elementi) {
+      if (!el.clientWidth || el.scrollWidth <= el.clientWidth + 0.5) continue;
+      const base = parseFloat(getComputedStyle(el).fontSize);
+      const minimo = base * 0.5;
+      let grandezza = base;
+      while (el.scrollWidth > el.clientWidth + 0.5 && grandezza > minimo) {
+        grandezza = Math.max(minimo, grandezza - base * 0.04);
+        el.style.fontSize = `${grandezza.toFixed(2)}px`;
+      }
+    }
+  } finally {
+    if (nascosto) contenitore.setAttribute("style", prima);
+  }
 }

@@ -142,6 +142,7 @@ function disegnaAnteprima(opz, box, { larghezza, altezzaMax = Infinity, pagina =
   pagine.classList.add("anteprima-pagine");
   pagine.classList.toggle("orizzontale", Boolean(esito.orizzontale));
   pagine.classList.toggle("carta-a3", esito.carta === "A3");
+  adattaTesti(pagine); // anche nell'anteprima i nomi lunghi si rimpiccioliscono
   const tutte = [...pagine.children].filter((p) => p.classList.contains("pagina-stampa"));
   if (!tutte.length) { box.innerHTML = ""; box.style.width = ""; box.style.height = ""; return 0; }
   const n = Math.min(pagina, tutte.length - 1);
@@ -317,6 +318,8 @@ function aggiornaOpzioniTipo() {
   $("#riga-senza-situazione").hidden = !perSituazione;
   $("#riga-note-callsheet").hidden = stile.opz.gruppiCallsheet === "griglia";
   $("#riga-dettagli-callsheet").hidden = stile.opz.gruppiCallsheet === "griglia";
+  if (tipo === "callsheet") mostraColoriCallsheet();
+  else $("#riga-colori-formazioni").hidden = true;
 
   const info = $("#info-tipo");
   info.innerHTML = "";
@@ -369,6 +372,7 @@ function aggiornaAnteprimaStampa(subito = false) {
 $("#anteprima-prima").addEventListener("click", () => { paginaAnteprima = Math.max(0, paginaAnteprima - 1); aggiornaAnteprimaStampa(true); });
 $("#anteprima-dopo").addEventListener("click", () => { paginaAnteprima++; aggiornaAnteprimaStampa(true); });
 $("#stampa-cosa").addEventListener("change", () => { paginaAnteprima = 0; aggiornaOpzioniTipo(); });
+$("#stampa-dettagli-callsheet").addEventListener("change", () => mostraColoriCallsheet());
 for (const id of ["#stampa-copie", "#stampa-senza-situazione", "#stampa-note-callsheet", "#stampa-colori-callsheet", "#stampa-dettagli-callsheet",
   "#stampa-formazione-vuota", "#stampa-copertina", "#stampa-note"]) {
   $(id).addEventListener("change", () => aggiornaAnteprimaStampa());

@@ -500,17 +500,19 @@ const COLORI_FORMAZIONI_LIBERI = ["#2E86AB", "#1B998B", "#7B2CBF", "#F46036", "#
 
 function coloriFormazioni(schemi) {
   const colori = new Map();
-  const usati = new Set();
-  const senza = [];
+  // I colori scelti dal coach (playbook.coloriFormazioni, colori-formazioni.js) hanno la precedenza
+  const scelti = (playbookCorrente && playbookCorrente.coloriFormazioni) || {};
+  const senzaColore = []; // formazioni senza colore nel nome, in ordine di apparizione
   for (const s of schemi) {
     const k = `${s.lato}|${chiaveFormazione(s)}`;
-    if (colori.has(k) || senza.includes(k)) continue;
-    const nome = nomeFormazione(s);
-    const trovato = COLORI_NEI_NOMI.find(([re]) => re.test(nome));
-    if (trovato) { colori.set(k, trovato[1]); usati.add(trovato[1]); } else senza.push(k);
+    if (colori.has(k) || senzaColore.includes(k)) continue;
+    const trovato = COLORI_NEI_NOMI.find(([re]) => re.test(nomeFormazione(s)));
+    if (scelti[k]) colori.set(k, scelti[k]);
+    else if (trovato) colori.set(k, trovato[1]);
+    if (!trovato) senzaColore.push(k);
   }
-  const liberi = COLORI_FORMAZIONI_LIBERI.filter((c) => !usati.has(c));
-  senza.forEach((k, i) => colori.set(k, (liberi.length ? liberi : COLORI_FORMAZIONI_LIBERI)[i % (liberi.length || COLORI_FORMAZIONI_LIBERI.length)]));
+  // Colore automatico fisso per posizione: scegliere il colore di una formazione non cambia quello delle altre
+  senzaColore.forEach((k, i) => { if (!colori.has(k)) colori.set(k, COLORI_FORMAZIONI_LIBERI[i % COLORI_FORMAZIONI_LIBERI.length]); });
   return colori;
 }
 
