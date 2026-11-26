@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.30 — più note insieme
+
+- Note sul campo: **Maiusc+clic**, **riquadro** sul prato e **Ctrl+A** per sceglierne più d'una;
+  le note scelte si spostano, si ricolorano e si eliminano insieme.
+- Pulsante **🗑 Elimina** rosso e con la scritta (con il numero di note scelte), spento se non c'è niente di scelto.
+
 ## Versione 0.29 — note sul campo
 
 - Pulsante **✎ Note** sopra il campo: **Testo**, **Freccia** libera e **Zona** colorata, in 5 colori.

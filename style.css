@@ -2702,3 +2702,11 @@ body.modo-note .campo[data-strumento="sposta"] { cursor: default; }
   outline: none;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
+/* Pulsante «Elimina» delle note: rosso e con la scritta, spento se non c'è niente di scelto */
+.barra-note > button.elimina-note {
+  color: #FFFFFF;
+  background: var(--rosso);
+  padding: 0 12px;
+}
+.barra-note > button.elimina-note:hover { background: #FF7468; }
+.barra-note > button.elimina-note:disabled { background: rgba(255, 90, 78, 0.18); color: rgba(255, 255, 255, 0.45); cursor: default; }

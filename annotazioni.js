@@ -19,14 +19,14 @@ const COLORI_NOTE = {
   bianco: "#FFFFFF",
 };
 
-// L'annotazione selezionata nell'editor del computer (se c'è)
-function noteSelezionata() {
-  return typeof NoteCampo !== "undefined" && NoteCampo.attivo ? NoteCampo.sel : null;
+// Le note scelte nell'editor del computer (un insieme di id, vuoto se nessuna)
+function noteSelezionate() {
+  return typeof NoteCampo !== "undefined" && NoteCampo.attivo ? NoteCampo.sel : new Set();
 }
 
 function attributiNota(a, classe) {
   return {
-    class: `annotazione ${classe} colore-${a.colore || "giallo"}${a.id === noteSelezionata() ? " selezionata" : ""}`,
+    class: `annotazione ${classe} colore-${a.colore || "giallo"}${noteSelezionate().has(a.id) ? " selezionata" : ""}`,
     "data-id": a.id,
     style: `--colore-nota: ${COLORI_NOTE[a.colore] || COLORI_NOTE.giallo}`,
   };
