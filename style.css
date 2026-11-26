@@ -2527,3 +2527,31 @@ body.sola-lettura #btn-squadra { pointer-events: none; }
 /* La fascia delle note: in fondo alla pagina, larga quanto il foglio */
 .fascia-note { flex: none; margin: 3mm 0 0; }
 .fascia-note .righe-note { margin: 0 4mm; }
+
+/* ==========================================================================
+   RIORDINO DEGLI SCHEMI (trascinando le righe)
+   ========================================================================== */
+.riga.riordinabile { cursor: grab; position: relative; }
+/* La maniglia ⋮⋮ compare passando sopra la riga */
+.riga.riordinabile::after {
+  content: "⋮⋮";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  letter-spacing: -2px;
+  color: var(--testo-secondario);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.riga.riordinabile:hover::after { opacity: 0.8; }
+.riga.in-trascinamento { opacity: 0.35; }
+/* Linea arancione dove andrà lo schema */
+.riga.inserisci-sopra { box-shadow: inset 0 3px 0 var(--accento); }
+.riga.inserisci-sotto { box-shadow: inset 0 -3px 0 var(--accento); }
+body.riordino-in-corso .riga { transition: box-shadow 0.12s; }
+.riga.appena-spostata { animation: brillaRiga 0.9s var(--curva); }
+@keyframes brillaRiga {
+  0%, 30% { background: var(--accento-tenue); }
+  100% { background: transparent; }
+}

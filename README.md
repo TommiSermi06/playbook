@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.25 — riordino degli schemi
+
+- Nell'elenco si cambia l'ordine degli schemi **trascinando** una riga sopra o sotto un'altra
+  (linea arancione dove andrà), oppure con **Alt + ↑ / ↓** sullo schema aperto. Con «Annulla».
+- L'ordine si salva nel playbook: è lo stesso su computer, telefono, stampa, link condiviso e per i co-allenatori.
+- Solo il proprietario del playbook può riordinare; con la ricerca attiva il trascinamento è spento.
+
 ## Versione 0.24 — link condiviso dal telefono
 
 - Un link in sola lettura (`?vedi=…`) aperto da un telefono porta da solo alla versione per telefono (`mobile/`).

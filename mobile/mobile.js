@@ -161,6 +161,16 @@ function ordinaSchemi(lista) {
     || nomeFormazione(a).localeCompare(nomeFormazione(b), "it")
     || (a.nome || "").localeCompare(b.nome || "", "it"));
 }
+/* L'ordine scelto dal coach sul computer (playbook.ordine); se non c'è,
+   per numero di chiamata. Gli schemi nuovi stanno in cima, come sul computer. */
+function ordinaComePlaybook(lista, pb) {
+  if (!pb || !Array.isArray(pb.ordine) || !pb.ordine.length) return ordinaSchemi(lista);
+  const posto = new Map(pb.ordine.map((x, i) => [x, i]));
+  return [
+    ...lista.filter((s) => !posto.has(s.id)).sort((a, b) => (b.creato || 0) - (a.creato || 0)),
+    ...lista.filter((s) => posto.has(s.id)).sort((a, b) => posto.get(a.id) - posto.get(b.id)),
+  ];
+}
 const schemiDi = (pb) => Stato.schemi.filter((s) => s.playbook === pb.id && !s.bozza);
 
 /* ==========================================================================
@@ -408,7 +418,7 @@ function mostraElenco() {
   if (Stato.cerca) schemi = schemi.filter((s) =>
     (s.nome || "").toLowerCase().includes(Stato.cerca) || nomeFormazione(s).toLowerCase().includes(Stato.cerca)
     || String(s.chiamata || "") === Stato.cerca);
-  Stato.elenco = ordinaSchemi(schemi);
+  Stato.elenco = ordinaComePlaybook(schemi, Stato.pb);
   const lista = $("#lista-schemi");
   lista.innerHTML = "";
   $("#conteggio").textContent = `${Stato.elenco.length} ${Stato.elenco.length === 1 ? "schema" : "schemi"}`;

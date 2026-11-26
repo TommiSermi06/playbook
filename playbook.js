@@ -156,8 +156,17 @@ const Playbook = {
 let playbookCorrente = null;
 
 /* ---------- Piccoli aiuti ---------- */
+/* Gli schemi di un playbook nel suo ordine: quello scelto dal coach
+   (playbook.ordine, vedi riordino.js); gli schemi nuovi stanno in cima. */
 function schemiDelPlaybook(id = playbookCorrente && playbookCorrente.id) {
-  return Dati.tutti().filter((s) => s.playbook === id);
+  const schemi = Dati.tutti().filter((s) => s.playbook === id);
+  const pb = Playbook.trova(id);
+  if (!pb || !Array.isArray(pb.ordine) || !pb.ordine.length) return schemi;
+  const posto = new Map(pb.ordine.map((x, i) => [x, i]));
+  return [
+    ...schemi.filter((s) => !posto.has(s.id)),
+    ...schemi.filter((s) => posto.has(s.id)).sort((a, b) => posto.get(a.id) - posto.get(b.id)),
+  ];
 }
 function eFlag(pb) {
   return Boolean(FORMATI[pb.formato] && FORMATI[pb.formato].flag);

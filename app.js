@@ -373,6 +373,7 @@ function mostraElenco() {
     riga.append(mini, testi);
     riga.addEventListener("click", () => apriEditor(schema.id));
     riga.addEventListener("keydown", (e) => { if (e.key === "Enter") apriEditor(schema.id); });
+    abilitaRiordino(riga, schema); // trascina per cambiare l'ordine
     lista.appendChild(riga);
   }
 }
@@ -1070,6 +1071,13 @@ document.addEventListener("keydown", (e) => {
   if (cmd && e.key.toLowerCase() === "d" && schemaCorrente) {
     e.preventDefault();
     duplica();
+    return;
+  }
+
+  // Alt + ↑ / ↓: sposta lo schema aperto nell'elenco
+  if (e.altKey && !cmd && !staScrivendo && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    e.preventDefault();
+    spostaSchemaCorrente(e.key === "ArrowUp" ? -1 : 1);
     return;
   }
 
