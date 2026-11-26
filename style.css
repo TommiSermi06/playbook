@@ -3058,3 +3058,13 @@ html[data-tema="chiaro"] .giocatore .nome-pedina,
   .colonna-anteprima-stampa { position: static; order: -1; }
 }
 .capovolta .campo-scout image { transform-box: fill-box; transform-origin: center; rotate: 180deg; }
+
+/* Call sheet: corsa / pass accanto a ogni schema e colore della formazione */
+.riga-chiamata.con-dettagli { border-left: 1.6mm solid var(--colore-formazione); padding-left: 1.4mm; }
+.riga-chiamata.con-dettagli .chiamata-formazione { color: var(--colore-formazione); font-weight: 700; }
+.chiamata-categoria {
+  flex: none; padding: 0.3mm 1.2mm; border-radius: 0.8mm; font-size: 6pt; font-weight: 800; letter-spacing: 0.02em;
+  color: #fff; background: var(--colore-categoria, var(--inchiostro-tenue)); white-space: nowrap;
+}
+.chiamata-categoria.vuota { background: none; color: var(--inchiostro-tenue); }
+.pagina-callsheet.a3 .chiamata-categoria { font-size: 8pt; }

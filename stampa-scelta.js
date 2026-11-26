@@ -107,6 +107,7 @@ function leggiControlliStampa() {
     senzaSituazione: $("#stampa-senza-situazione").checked,
     noteCallsheet: $("#stampa-note-callsheet").checked,
     coloriCallsheet: $("#stampa-colori-callsheet").checked,
+    dettagliCallsheet: $("#stampa-dettagli-callsheet").checked,
   };
 }
 
@@ -120,8 +121,13 @@ function limiteAnteprima(opz) {
 }
 
 /* Disegna in "box" la pagina "pagina" (0 = la prima) larga "larghezza" px.
+   Le misure del foglio si calcolano dai millimetri veri (A4 / A3,
+   verticale / orizzontale), non dal browser: così sono sempre giuste.
+   Con "ritaglio" (larghezza / altezza) si vede solo la parte alta della
+   pagina, ingrandita: nella galleria i fogli verticali non sembrano vuoti.
    Restituisce quante pagine ci sono (0 se nessuna). */
-function disegnaAnteprima(opz, box, { larghezza, altezzaMax = Infinity, pagina = 0, limite = null }) {
+const PX_PER_MM = 96 / 25.4;
+function disegnaAnteprima(opz, box, { larghezza, altezzaMax = Infinity, pagina = 0, limite = null, ritaglio = null }) {
   box.innerHTML = "";
   const pagine = document.createElement("div");
   box.appendChild(pagine);
@@ -137,14 +143,18 @@ function disegnaAnteprima(opz, box, { larghezza, altezzaMax = Infinity, pagina =
   pagine.classList.toggle("orizzontale", Boolean(esito.orizzontale));
   pagine.classList.toggle("carta-a3", esito.carta === "A3");
   const tutte = [...pagine.children].filter((p) => p.classList.contains("pagina-stampa"));
-  if (!tutte.length) { box.innerHTML = ""; box.style.height = ""; return 0; }
+  if (!tutte.length) { box.innerHTML = ""; box.style.width = ""; box.style.height = ""; return 0; }
   const n = Math.min(pagina, tutte.length - 1);
   tutte.forEach((p, i) => { p.style.display = i === n ? "" : "none"; });
-  const r = tutte[n].getBoundingClientRect();
-  const k = Math.min(larghezza / r.width, altezzaMax / r.height); // i fogli verticali non devono uscire
-  box.style.width = `${Math.round(r.width * k)}px`;
+  // Misure del foglio in px (A3 = A4 × 1,414)
+  const a3 = esito.carta === "A3" ? Math.SQRT2 : 1;
+  const w = (esito.orizzontale ? 297 : 210) * a3 * PX_PER_MM;
+  const h = (esito.orizzontale ? 210 : 297) * a3 * PX_PER_MM;
+  const hVisibile = ritaglio ? Math.min(h, w / ritaglio) : h; // con il ritaglio: solo la parte alta
+  const k = Math.min(larghezza / w, altezzaMax / hVisibile);
   pagine.style.transform = `scale(${k})`;
-  box.style.height = `${Math.round(r.height * k)}px`;
+  box.style.width = `${Math.round(w * k)}px`;
+  box.style.height = `${Math.round(hVisibile * k)}px`;
   return tutte.length;
 }
 
@@ -200,7 +210,7 @@ function disegnaGalleria() {
     galleria.appendChild(carta);
     const opz = { ...opzioniPer(scheda, stile, { conControlli: false }), cosa, copertina: false };
     const box = carta.querySelector(".box-anteprima");
-    const n = disegnaAnteprima(opz, box, { larghezza: 160, altezzaMax: 125, limite: limiteAnteprima(opz) });
+    const n = disegnaAnteprima(opz, box, { larghezza: 175, ritaglio: 1.42, limite: limiteAnteprima(opz) });
     if (!n) box.appendChild(Object.assign(document.createElement("span"), { className: "anteprima-vuota", textContent: "Niente da stampare" }));
   }
 }
@@ -253,6 +263,7 @@ function apriSchedaStampa(id) {
   $("#stampa-senza-situazione").checked = Boolean(o.senzaSituazione);
   $("#stampa-note-callsheet").checked = o.noteCallsheet !== false;
   $("#stampa-colori-callsheet").checked = Boolean(o.coloriCallsheet);
+  $("#stampa-dettagli-callsheet").checked = o.dettagliCallsheet !== false;
   $("#stampa-per-formazione").checked = o.perFormazione !== false;
   $("#stampa-formazione-vuota").checked = o.formazioneVuota !== false;
   $("#stampa-copertina").checked = o.copertina !== false;
@@ -305,6 +316,7 @@ function aggiornaOpzioniTipo() {
   const perSituazione = tipo === "callsheet" && (stile.opz.gruppiCallsheet || "situazione") === "situazione";
   $("#riga-senza-situazione").hidden = !perSituazione;
   $("#riga-note-callsheet").hidden = stile.opz.gruppiCallsheet === "griglia";
+  $("#riga-dettagli-callsheet").hidden = stile.opz.gruppiCallsheet === "griglia";
 
   const info = $("#info-tipo");
   info.innerHTML = "";
@@ -357,7 +369,7 @@ function aggiornaAnteprimaStampa(subito = false) {
 $("#anteprima-prima").addEventListener("click", () => { paginaAnteprima = Math.max(0, paginaAnteprima - 1); aggiornaAnteprimaStampa(true); });
 $("#anteprima-dopo").addEventListener("click", () => { paginaAnteprima++; aggiornaAnteprimaStampa(true); });
 $("#stampa-cosa").addEventListener("change", () => { paginaAnteprima = 0; aggiornaOpzioniTipo(); });
-for (const id of ["#stampa-copie", "#stampa-senza-situazione", "#stampa-note-callsheet", "#stampa-colori-callsheet",
+for (const id of ["#stampa-copie", "#stampa-senza-situazione", "#stampa-note-callsheet", "#stampa-colori-callsheet", "#stampa-dettagli-callsheet",
   "#stampa-formazione-vuota", "#stampa-copertina", "#stampa-note"]) {
   $(id).addEventListener("change", () => aggiornaAnteprimaStampa());
 }

@@ -282,6 +282,8 @@ function costruisciCallSheet(opzioni, contenitore) {
   if (opzioni.gruppiCallsheet === "griglia") return costruisciGrigliaSchemi(opzioni, contenitore);
   const schemi = schemiDaStampare(opzioni.cosa).slice(0, opzioni.limite || Infinity);
   const riquadri = riquadriCallSheet(schemi, opzioni);
+  // Accanto a ogni schema: corsa / pass… e il colore della sua formazione
+  const dettagli = opzioni.dettagliCallsheet !== false ? { colori: coloriFormazioni(schemi) } : null;
   riquadri.forEach((r, i) => { if (opzioni.coloriCallsheet) r.colore = COLORI_RIQUADRI[i % COLORI_RIQUADRI.length]; });
 
   // 1. Distribuisce i riquadri nelle colonne
@@ -343,7 +345,7 @@ function costruisciCallSheet(opzioni, contenitore) {
     griglia.style.setProperty("--colonne", colonnePerPagina);
     gruppo.forEach((colonna) => {
       const col = elemento("div", "colonna-callsheet");
-      for (const r of colonna) col.appendChild(riquadroSituazione(r, opzioni.miniSchemi));
+      for (const r of colonna) col.appendChild(riquadroSituazione(r, opzioni.miniSchemi, dettagli));
       griglia.appendChild(col);
     });
     if (!riquadri.length) {
@@ -368,19 +370,26 @@ function riquadroNote(altezza) {
   return box;
 }
 
-function riquadroSituazione(r, conSchemi) {
+function riquadroSituazione(r, conSchemi, dettagli = null) {
   const box = elemento("section", "riquadro-situazione" + (r.colore ? " a-colori" : ""));
   if (r.colore) box.style.setProperty("--colore-riquadro", r.colore);
   const titolo = elemento("h3", "", r.nome);
   titolo.appendChild(elemento("span", "", String(r.totale)));
   box.appendChild(titolo);
   for (const s of r.schemi) {
-    const riga = elemento("div", "riga-chiamata" + (conSchemi ? " con-schema" : ""));
+    const riga = elemento("div", "riga-chiamata" + (conSchemi ? " con-schema" : "") + (dettagli ? " con-dettagli" : ""));
+    if (dettagli) riga.style.setProperty("--colore-formazione", dettagli.colori.get(`${s.lato}|${chiaveFormazione(s)}`) || "#9AA0A6");
     riga.appendChild(elemento("span", "chiamata-numero", s.chiamata ? String(s.chiamata) : "–"));
     const testi = elemento("span", "chiamata-testi");
     testi.appendChild(elemento("span", "chiamata-nome", s.nome || "Senza nome"));
     testi.appendChild(elemento("span", "chiamata-formazione", nomeFormazione(s)));
     riga.appendChild(testi);
+    if (dettagli) {
+      const breve = categoriaBreve(s);
+      const cat = elemento("span", "chiamata-categoria" + (breve ? "" : " vuota"), breve || "—");
+      if (breve) cat.style.setProperty("--colore-categoria", coloreCategoria(s));
+      riga.appendChild(cat);
+    }
     if (conSchemi) riga.appendChild(miniSchema(s, "chiamata-campo", 1.6));
     box.appendChild(riga);
   }
@@ -473,4 +482,44 @@ function costruisciScout(opzioni, contenitore) {
     contenitore.appendChild(pag);
   });
   return { titolo: `${playbookCorrente.nome} - Scout cards`, pagine: pagine.length };
+}
+
+/* ==========================================================================
+   COLORE DELLE FORMAZIONI E CATEGORIA IN BREVE (call sheet)
+   Le formazioni che hanno un colore nel nome lo usano (GOLD → oro,
+   RED → rosso, BLUE → blu…); le altre prendono un colore fisso, diverso
+   per ognuna, in ordine di apparizione.
+   ========================================================================== */
+const COLORI_NEI_NOMI = [
+  [/\b(gold|oro)\b/i, "#C9A100"], [/\b(red|rosso|rossa)\b/i, "#D7263D"], [/\b(blue|blu)\b/i, "#1679C2"],
+  [/\b(green|verde)\b/i, "#1E9E57"], [/\b(black|nero|nera)\b/i, "#222222"], [/\b(orange|arancio|arancione)\b/i, "#F46036"],
+  [/\b(purple|viola)\b/i, "#7B2CBF"], [/\b(silver|argento)\b/i, "#8A9399"], [/\b(yellow|giallo|gialla)\b/i, "#E2B400"],
+  [/\b(brown|marrone)\b/i, "#8A4A1C"], [/\b(pink|rosa)\b/i, "#E05591"], [/\b(white|bianco|bianca)\b/i, "#B8BEC2"],
+];
+const COLORI_FORMAZIONI_LIBERI = ["#2E86AB", "#1B998B", "#7B2CBF", "#F46036", "#C2185B", "#3A7D44", "#5C6BC0", "#8D6E63"];
+
+function coloriFormazioni(schemi) {
+  const colori = new Map();
+  const usati = new Set();
+  const senza = [];
+  for (const s of schemi) {
+    const k = `${s.lato}|${chiaveFormazione(s)}`;
+    if (colori.has(k) || senza.includes(k)) continue;
+    const nome = nomeFormazione(s);
+    const trovato = COLORI_NEI_NOMI.find(([re]) => re.test(nome));
+    if (trovato) { colori.set(k, trovato[1]); usati.add(trovato[1]); } else senza.push(k);
+  }
+  const liberi = COLORI_FORMAZIONI_LIBERI.filter((c) => !usati.has(c));
+  senza.forEach((k, i) => colori.set(k, (liberi.length ? liberi : COLORI_FORMAZIONI_LIBERI)[i % (liberi.length || COLORI_FORMAZIONI_LIBERI.length)]));
+  return colori;
+}
+
+// «CORSA», «PASS», «PLAY ACT.»… (vuoto se lo schema non ha categoria)
+const CATEGORIE_BREVI = {
+  corsa: "CORSA", passaggio: "PASS", "play-action": "PLAY ACT.", rpo: "RPO", screen: "SCREEN", trick: "TRICK",
+  zona: "ZONA", uomo: "UOMO", blitz: "BLITZ", "contro-corsa": "VS CORSA", speciale: "SPECIALE",
+  kickoff: "KICKOFF", "kick-return": "K. RETURN", punt: "PUNT", "punt-return": "P. RETURN", "field-goal": "FG / PAT", "fg-block": "BLOCCO FG", onside: "ONSIDE",
+};
+function categoriaBreve(s) {
+  return categoriaDi(s) ? CATEGORIE_BREVI[s.categoria] || nomeCategoria(s).toUpperCase() : "";
 }

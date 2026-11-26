@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.40 — call sheet con corsa / pass e colore della formazione
+
+- Call sheet: accanto a ogni schema la categoria in breve (CORSA, PASS, PLAY ACT., SCREEN…) col suo colore, e la riga col colore della formazione (GOLD → oro, RED → rosso…; le altre un colore fisso ciascuna). Si può togliere dalle opzioni
+- Galleria di stampa: i fogli mostrano la parte alta della pagina ingrandita (niente più pagine che sembrano vuote) e le misure si calcolano dai millimetri veri (A4/A3), non dal browser
+
 ## Versione 0.39 — stampa: galleria dei tipi, stili e anteprima
 
 - La finestra «Stampa» parte da una galleria di 6 tipi, ognuno con l'anteprima vera della prima pagina (fatta con i propri schemi): Wristband · Schemi, Wristband · Lista, Call sheet · Schemi, Call sheet · Lista, Playbook, Scout cards (`stampa-scelta.js`)
