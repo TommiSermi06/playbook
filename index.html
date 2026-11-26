@@ -8,6 +8,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Playbook">
   <meta name="theme-color" content="#0F1412">
+  <script>
+    // Tema chiaro scelto dal coach: si applica subito, prima di disegnare la pagina
+    try { if (localStorage.getItem("playbook.tema") === "chiaro") document.documentElement.dataset.tema = "chiaro"; } catch (e) {}
+  </script>
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-180.png">
   <link rel="manifest" href="manifest.json">
@@ -20,7 +24,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=0.33">
+  <link rel="stylesheet" href="style.css?v=0.34">
 </head>
 <body>
   <!-- ======================================================================
@@ -88,7 +92,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.33</p>
+      <p class="versione" id="versione">Versione 0.34<button type="button" class="btn-tema btn-tema-laterale">☀️ Tema chiaro</button></p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -278,6 +282,7 @@
         </span>
       </button>
       <div class="home-account">
+        <button type="button" class="btn-tema">☀️ Tema chiaro</button>
         <button type="button" class="btn-proposte" id="btn-proposte-home" hidden>📥 Proposte <span class="conta-proposte" id="conta-proposte-home"></span></button>
         <span id="email-home"></span>
         <button class="btn-link" id="btn-esci-home">Esci</button>
@@ -515,6 +520,7 @@
        INTRODUZIONE E ACCESSO
        ====================================================================== -->
   <div class="intro" id="intro">
+    <button type="button" class="btn-tema btn-tema-intro">☀️ Tema chiaro</button>
     <div class="intro-campo" aria-hidden="true"></div>
     <div class="intro-centro">
       <!-- Marchio animato: una traccia che si disegna, attaccante e difensore -->
@@ -573,31 +579,33 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.33"></script>
+  <script src="tema.js?v=0.34"></script>
+  <script src="filigrana.js?v=0.34"></script>
+  <script src="config.js?v=0.34"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.33"></script>
-  <script src="regole.js?v=0.33"></script>
-  <script src="cloud.js?v=0.33"></script>
-  <script src="dati.js?v=0.33"></script>
-  <script src="formazioni-personali.js?v=0.33"></script>
-  <script src="app.js?v=0.33"></script>
-  <script src="tracce.js?v=0.33"></script>
-  <script src="avversari.js?v=0.33"></script>
-  <script src="annotazioni.js?v=0.33"></script>
-  <script src="animazione.js?v=0.33"></script>
-  <script src="costruttore.js?v=0.33"></script>
-  <script src="lucchetto.js?v=0.33"></script>
-  <script src="stampa.js?v=0.33"></script>
-  <script src="partita.js?v=0.33"></script>
-  <script src="playbook.js?v=0.33"></script>
-  <script src="squadra.js?v=0.33"></script>
-  <script src="avversari-ui.js?v=0.33"></script>
-  <script src="note-campo.js?v=0.33"></script>
-  <script src="selezione.js?v=0.33"></script>
-  <script src="categorie.js?v=0.33"></script>
-  <script src="riordino.js?v=0.33"></script>
-  <script src="condivisione.js?v=0.33"></script>
-  <script src="proposte.js?v=0.33"></script>
-  <script src="accesso.js?v=0.33"></script>
+  <script src="formazioni.js?v=0.34"></script>
+  <script src="regole.js?v=0.34"></script>
+  <script src="cloud.js?v=0.34"></script>
+  <script src="dati.js?v=0.34"></script>
+  <script src="formazioni-personali.js?v=0.34"></script>
+  <script src="app.js?v=0.34"></script>
+  <script src="tracce.js?v=0.34"></script>
+  <script src="avversari.js?v=0.34"></script>
+  <script src="annotazioni.js?v=0.34"></script>
+  <script src="animazione.js?v=0.34"></script>
+  <script src="costruttore.js?v=0.34"></script>
+  <script src="lucchetto.js?v=0.34"></script>
+  <script src="stampa.js?v=0.34"></script>
+  <script src="partita.js?v=0.34"></script>
+  <script src="playbook.js?v=0.34"></script>
+  <script src="squadra.js?v=0.34"></script>
+  <script src="avversari-ui.js?v=0.34"></script>
+  <script src="note-campo.js?v=0.34"></script>
+  <script src="selezione.js?v=0.34"></script>
+  <script src="categorie.js?v=0.34"></script>
+  <script src="riordino.js?v=0.34"></script>
+  <script src="condivisione.js?v=0.34"></script>
+  <script src="proposte.js?v=0.34"></script>
+  <script src="accesso.js?v=0.34"></script>
 </body>
 </html>

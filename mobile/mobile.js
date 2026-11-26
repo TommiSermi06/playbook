@@ -635,6 +635,11 @@ $("#velo").addEventListener("click", chiudiFogli);
 $("#btn-account-chiudi").addEventListener("click", chiudiFogli);
 document.querySelectorAll("[data-chiudi-foglio]").forEach((b) => b.addEventListener("click", chiudiFogli));
 
+// Il logo adattato al campo (../filigrana.js) è pronto: si ridisegna lo schema aperto
+function aggiornaDopoLogo() {
+  if (pila[pila.length - 1] === "schermata-schema" && !Animazione.attiva) mostraSchema(false);
+}
+
 /* ==========================================================================
    AVVIO
    ========================================================================== */
@@ -665,6 +670,27 @@ async function avvio() {
   if (utente) await entra();
   else { impostaModo("accedi"); vai("schermata-accesso", { sostituisci: true }); }
 }
+
+/* ---------- Tema: automatico (come il telefono), chiaro o scuro ---------- */
+function temaScelto() {
+  try { return localStorage.getItem("playbook.m.tema") || "auto"; } catch { return "auto"; }
+}
+function impostaTemaM(tema) {
+  try { localStorage.setItem("playbook.m.tema", tema); } catch { /* niente */ }
+  if (tema === "auto") delete document.documentElement.dataset.tema;
+  else document.documentElement.dataset.tema = tema;
+  impostaSegmentato($("#scelta-tema"), tema);
+  // Nella schermata d'accesso: un tocco passa da chiaro a scuro
+  const scuroOra = tema === "scuro" || (tema === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  $("#btn-tema-accesso").textContent = scuroOra ? "☀️ Chiaro" : "🌙 Scuro";
+}
+$("#scelta-tema").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => impostaTemaM(b.dataset.valore)));
+$("#btn-tema-accesso").addEventListener("click", () => {
+  const scuroOra = document.documentElement.dataset.tema === "scuro"
+    || (!document.documentElement.dataset.tema && matchMedia("(prefers-color-scheme: dark)").matches);
+  impostaTemaM(scuroOra ? "chiaro" : "scuro");
+});
+impostaTemaM(temaScelto());
 
 // Quando torna la rete, mando le modifiche rimaste sul telefono
 window.addEventListener("online", inviaInAttesa);

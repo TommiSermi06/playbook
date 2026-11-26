@@ -742,7 +742,7 @@ textarea::placeholder { color: var(--testo-secondario); }
 .squadra-sotto img { width: 13px; height: 13px; border-radius: 3px; }
 
 /* Filigrana del logo sul campo */
-.filigrana { opacity: 0.09; pointer-events: none; }
+.filigrana { opacity: 0.17; pointer-events: none; } /* logo adattato al campo (filigrana.js) */
 
 /* ---------- Account in fondo alla barra laterale ---------- */
 .account {
@@ -2811,3 +2811,75 @@ body:not(.modo-note) .campo .avversari .giocatore { cursor: grab; }
   white-space: nowrap;
 }
 .filtro-categoria.attivo { background: var(--accento); color: var(--testo-su-accento); font-weight: 700; }
+
+/* ==========================================================================
+   TEMA CHIARO (pulsante ☀️ / 🌙): le stesse variabili, colori chiari
+   ========================================================================== */
+html[data-tema="chiaro"] {
+  --sfondo: #F3F5F4;
+  --sfondo-laterale: #FFFFFF;
+  --sfondo-card: #FFFFFF;
+  --sfondo-barra: #FFFFFF;
+  --sfondo-grigio: rgba(0, 0, 0, 0.055);
+  --sfondo-hover: rgba(0, 0, 0, 0.045);
+  --testo: #15191A;
+  --testo-secondario: rgba(21, 25, 26, 0.58);
+  --separatore: rgba(0, 0, 0, 0.1);
+  --accento: #E58600;
+  --accento-tenue: rgba(229, 134, 0, 0.15);
+  --testo-su-accento: #FFFFFF;
+  --rosso: #E0362B;
+  --ombra: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --ombra-dialogo: 0 24px 70px rgba(0, 0, 0, 0.2);
+
+  /* Campo chiaro: erba chiara, linee e ruoli più scuri */
+  --prato: #E5EFE8;
+  --prato-striscia: #DAE8DE;
+  --linee-campo: rgba(0, 0, 0, 0.17);
+  --tacche-campo: rgba(0, 0, 0, 0.16);
+  --numeri-campo: rgba(0, 0, 0, 0.26);
+  --linea-scrimmage: #1C74D4;
+  --linea-primo-down: #E08600;
+  --pallone: #8A4A1C;
+  --testo-giocatore: #FFFFFF;
+  --contorno-difesa: #FFFFFF;
+  --selezione: #15191A;
+  --ruolo-linea: #5F6B66;
+  --ruolo-qb: #E07E00;
+  --ruolo-back: #1E9E57;
+  --ruolo-ricevitori: #1679C2;
+  --ruolo-dl: #D33A2E;
+  --ruolo-lb: #E07000;
+  --ruolo-db: #A88C00;
+  color-scheme: light;
+}
+html[data-tema="chiaro"] .filigrana { opacity: 0.12; }
+html[data-tema="chiaro"] .intro { background: radial-gradient(ellipse at 50% 35%, #FFFFFF 0%, var(--sfondo) 70%); }
+html[data-tema="chiaro"] .intro-campo { background-image: repeating-linear-gradient(to bottom, transparent 0 79px, rgba(0, 0, 0, 0.05) 79px 80px); }
+html[data-tema="chiaro"] .accesso { background: rgba(255, 255, 255, 0.9); }
+html[data-tema="chiaro"] .riga.attiva .riga-sotto,
+html[data-tema="chiaro"] .riga.attiva .riga-titolo.senza-nome { color: rgba(255, 255, 255, 0.85); }
+html[data-tema="chiaro"] .nota-testo { stroke: rgba(255, 255, 255, 0.9); }
+
+/* Pulsante del tema */
+.btn-tema {
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: var(--sfondo-grigio);
+  color: var(--testo-secondario);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-tema:hover { color: var(--testo); background: var(--sfondo-hover); }
+.btn-tema-laterale { margin-left: auto; opacity: 1; }
+.versione { display: flex; align-items: center; gap: 8px; }
+.btn-tema-intro { position: absolute; top: 16px; right: 16px; z-index: 5; }
+html[data-tema="chiaro"] .segmentato::before { background: #FFFFFF; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16); }
+html[data-tema="chiaro"] .filigrana { opacity: 0.16; }
+/* Tema chiaro: menu, barre e sfondi che nel tema scuro hanno colori propri */
+html[data-tema="chiaro"] .menu-tracce,
+html[data-tema="chiaro"] .menu-scheda { background: rgba(255, 255, 255, 0.98); box-shadow: 0 16px 44px rgba(0, 0, 0, 0.2); }
+html[data-tema="chiaro"] .home { background: radial-gradient(ellipse at 50% -10%, #FFFFFF 0%, var(--sfondo) 60%); }
+html[data-tema="chiaro"] .home-testa { background: rgba(255, 255, 255, 0.85); border-bottom: 1px solid var(--separatore); }

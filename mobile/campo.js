@@ -81,7 +81,9 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
   if (!miniatura && logo) {
     const lato = 16;
     crea("image", {
-      href: logo, x: (LARGHEZZA_CAMPO - lato) / 2, y: (ALTEZZA_CAMPO - lato) / 2 - 3,
+      // Copia del logo adattata al campo scuro (../filigrana.js): si vedono anche i colori scuri
+      href: typeof Filigrana !== "undefined" ? Filigrana.versione(logo, true, () => { if (typeof aggiornaDopoLogo === "function") aggiornaDopoLogo(); }) : logo,
+      x: (LARGHEZZA_CAMPO - lato) / 2, y: (ALTEZZA_CAMPO - lato) / 2 - 3,
       width: lato, height: lato, preserveAspectRatio: "xMidYMid meet", class: "filigrana",
     }, svg);
   }

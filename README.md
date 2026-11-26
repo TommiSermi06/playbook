@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.34 — tema chiaro e logo più visibile
+
+- Pulsante **☀️ Tema chiaro / 🌙 Tema scuro** nella schermata d'accesso, nella pagina dei playbook e in fondo alla barra laterale (scelta ricordata).
+- Telefono: tema Automatico / Chiaro / Scuro nell'account, e un pulsante nella schermata d'accesso.
+- Logo a metà campo: si usa una copia adattata al colore del campo (sul campo scuro i colori scuri vengono schiariti,
+  sul campo chiaro il contrario), così si vedono anche le parti viola o blu notte. Vale anche sul telefono.
+
 ## Versione 0.33 — stampa per categoria e tag
 
 - Finestra di stampa: **Raggruppa** per Nessuno · Formazione · Categoria · Tag (ogni gruppo da una pagina nuova, con l'indice in copertina).

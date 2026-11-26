@@ -40,8 +40,9 @@
   color-scheme: light dark;
 }
 
+/* Tema: «Automatico» segue il telefono; «Chiaro» e «Scuro» si scelgono nell'account */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="chiaro"]) {
     --sfondo: #000000;
     --sfondo-card: #1C1C1E;
     --sfondo-grigio: rgba(118, 118, 128, 0.24);
@@ -57,6 +58,23 @@
     --ombra-foglio: 0 -8px 30px rgba(0, 0, 0, 0.5);
   }
 }
+:root[data-tema="scuro"] {
+    --sfondo: #000000;
+    --sfondo-card: #1C1C1E;
+    --sfondo-grigio: rgba(118, 118, 128, 0.24);
+    --sfondo-barra: rgba(22, 22, 24, 0.86);
+    --testo: #FFFFFF;
+    --testo-secondario: rgba(235, 235, 245, 0.6);
+    --separatore: rgba(84, 84, 88, 0.6);
+    --accento: #FF9F1C;
+    --accento-tenue: rgba(255, 159, 28, 0.2);
+    --testo-su-accento: #1A1205;
+    --verde: #30D158;
+    --rosso: #FF453A;
+    --ombra-foglio: 0 -8px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+}
+:root[data-tema="chiaro"] { color-scheme: light; }
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -529,7 +547,7 @@ input, textarea { font: inherit; color: inherit; }
 .linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.16; opacity: 0.9; }
 .linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.14; stroke-dasharray: 0.6 0.4; opacity: 0.8; }
 .pallone { fill: var(--pallone); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.06; }
-.filigrana { opacity: 0.09; }
+.filigrana { opacity: 0.17; } /* logo adattato al campo scuro (../filigrana.js) */
 .giocatore .sagoma { fill: var(--colore-ruolo, var(--ruolo-linea)); stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.08; }
 .giocatore .etichetta { font-size: 0.95px; font-weight: 800; fill: var(--testo-giocatore); font-family: -apple-system, system-ui, sans-serif; }
 .giocatore .etichetta.lunga { font-size: 0.72px; }
@@ -761,3 +779,19 @@ a.riga { display: flex; }
 
 /* Avversari in trasparenza (messi dal computer) */
 .avversari .giocatore { opacity: 0.42; }
+
+/* Scelta del tema (accesso e account) */
+.btn-tema-m {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 16px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 18px;
+  background: var(--sfondo-grigio);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--testo-secondario);
+}
+.riga-tema { padding: 8px 12px; }
+.riga-tema .segmentato { margin: 0; }

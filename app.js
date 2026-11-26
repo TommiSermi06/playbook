@@ -62,7 +62,8 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
   if (!miniatura && typeof Squadra !== "undefined" && Squadra.logo) {
     const lato = 16;
     crea("image", {
-      href: Squadra.logo,
+      // In stampa il logo originale; sullo schermo una copia adattata al colore del campo (filigrana.js)
+      href: stampa ? Squadra.logo : Filigrana.versione(Squadra.logo, !temaChiaro(), () => { if (schemaCorrente) ridisegna(); }),
       x: (LARGHEZZA_CAMPO - lato) / 2,
       y: (ALTEZZA_CAMPO - lato) / 2 - 3,
       width: lato,
