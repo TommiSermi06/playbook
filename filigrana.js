@@ -49,8 +49,12 @@ const Filigrana = {
           for (let i = 0; i < d.length; i += 4) {
             if (d[i + 3] < 8) continue; // trasparente
             const [hh, s, l] = rgbInHsl(d[i], d[i + 1], d[i + 2]);
-            // Campo scuro: almeno il 56% di luce. Campo chiaro: al massimo il 38%.
-            const nuovaL = campoScuro ? Math.max(l, 0.56) : Math.min(l, 0.38);
+            // Campo scuro: i colori più scuri (viola, blu notte, nero) salgono di più,
+            // fino al 64% di luce; quelli medi (es. il rosso) quasi non si toccano.
+            // Campo chiaro: al massimo il 38%.
+            const nuovaL = campoScuro
+              ? Math.max(l, 0.64 - 0.10 * Math.min(1, Math.max(0, (l - 0.2) / 0.3)))
+              : Math.min(l, 0.38);
             if (nuovaL === l) continue;
             const [r, g, b] = hslInRgb(hh, Math.min(1, s * 1.25), nuovaL); // un po' più colore, così non diventa grigio
             d[i] = r; d[i + 1] = g; d[i + 2] = b;

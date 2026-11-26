@@ -547,7 +547,7 @@ input, textarea { font: inherit; color: inherit; }
 .linea-scrimmage { stroke: var(--linea-scrimmage); stroke-width: 0.16; opacity: 0.9; }
 .linea-primo-down { stroke: var(--linea-primo-down); stroke-width: 0.14; stroke-dasharray: 0.6 0.4; opacity: 0.8; }
 .pallone { fill: var(--pallone); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.06; }
-.filigrana { opacity: 0.17; } /* logo adattato al campo scuro (../filigrana.js) */
+.filigrana { opacity: 0.21; } /* logo adattato al campo scuro (../filigrana.js) */
 .giocatore .sagoma { fill: var(--colore-ruolo, var(--ruolo-linea)); stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.08; }
 .giocatore .etichetta { font-size: 0.95px; font-weight: 800; fill: var(--testo-giocatore); font-family: -apple-system, system-ui, sans-serif; }
 .giocatore .etichetta.lunga { font-size: 0.72px; }

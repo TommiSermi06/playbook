@@ -742,7 +742,7 @@ textarea::placeholder { color: var(--testo-secondario); }
 .squadra-sotto img { width: 13px; height: 13px; border-radius: 3px; }
 
 /* Filigrana del logo sul campo */
-.filigrana { opacity: 0.17; pointer-events: none; } /* logo adattato al campo (filigrana.js) */
+.filigrana { opacity: 0.21; pointer-events: none; } /* logo adattato al campo (filigrana.js) */
 
 /* ---------- Account in fondo alla barra laterale ---------- */
 .account {
