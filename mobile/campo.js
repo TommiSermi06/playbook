@@ -116,6 +116,9 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(0), y2: yDisegno(0), class: "linea-scrimmage" }, linee);
 
+  // Note sul campo (../annotazioni.js): zone sotto tutto
+  if (typeof disegnaZoneNote === "function") disegnaZoneNote(svg, schema);
+
   // Pallone
   const palla = posizionePalla(schema);
   if (palla) {
@@ -138,6 +141,9 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
     }
   }
 
+  // Frecce libere sopra le tracce
+  if (typeof disegnaFrecceNote === "function") disegnaFrecceNote(svg, schema);
+
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
   for (const g of schema.giocatori) {
@@ -159,6 +165,9 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
     }, el);
     t.textContent = g.etichetta;
   }
+
+  // Testi sopra tutto
+  if (typeof disegnaTestiNote === "function") disegnaTestiNote(svg, schema, { miniatura });
 
   if (viewBox) svg.setAttribute("viewBox", viewBox);          // inquadratura tenuta ferma (editor)
   else if (ritaglio) ritagliaCampo(svg, schema, typeof ritaglio === "number" ? ritaglio : 2.5);

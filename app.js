@@ -117,6 +117,9 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
     crea("rect", { x: 0.05, y: 0.05, width: LARGHEZZA_CAMPO - 0.1, height: ALTEZZA_CAMPO - 0.1, rx: 0.4, class: "bordo-campo" }, svg);
   }
 
+  // Note sul campo: le zone colorate stanno sotto tutto (annotazioni.js)
+  disegnaZoneNote(svg, schema);
+
   // Il pallone: in attacco compare solo quando c'è il centro (C) e sta
   // sempre davanti a lui; in difesa resta al centro della linea come riferimento.
   const palla = posizionePalla(schema);
@@ -151,6 +154,9 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
   }
   if (vivo && conTracce) Tracce.daAnimare = null;
 
+  // Frecce libere (note sul campo): sopra le tracce, sotto i giocatori
+  disegnaFrecceNote(svg, schema);
+
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
   schema.giocatori.forEach((g, i) => {
@@ -158,6 +164,9 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
     el.style.setProperty("--i", i); // per far entrare i giocatori uno dopo l'altro
     if (g.id === selezionato) el.classList.add("selezionato");
   });
+
+  // Testi (note sul campo): sopra tutto
+  disegnaTestiNote(svg, schema, { miniatura });
 
   // Maniglie: i punti della traccia del giocatore selezionato, da trascinare
   const sel = schema.giocatori.find((g) => g.id === selezionato);
@@ -424,6 +433,7 @@ function apriEditor(id, { focusNome = false } = {}) {
   chiudiMenuTracce();
   if (Tracce.disegno) Tracce.annullaDisegno();
   fermaGioco(false);
+  chiudiNoteCampo();
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
   giocatoreSelezionato = null;
@@ -664,6 +674,7 @@ function ribalta() {
       (g.traccia.rami || []).forEach((r) => r.punti.forEach((p) => { p.dx = -p.dx; }));
     }
   }
+  ribaltaNote(schemaCorrente); // anche testi, frecce e zone
   schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
   ridisegna();
   salvaSubito();
@@ -988,6 +999,7 @@ function istantanea() {
     formazione: schemaCorrente.formazione,
     giocatori: schemaCorrente.giocatori,
     ribaltato: !!schemaCorrente.ribaltato,
+    annotazioni: schemaCorrente.annotazioni || [],
   });
 }
 
@@ -999,7 +1011,8 @@ function ricordaStato(foto = istantanea()) {
 }
 
 function ripristina(foto) {
-  const { formato, formazione, giocatori, ribaltato } = JSON.parse(foto);
+  const { formato, formazione, giocatori, ribaltato, annotazioni } = JSON.parse(foto);
+  schemaCorrente.annotazioni = annotazioni || [];
   schemaCorrente.formato = formato || "11";
   schemaCorrente.formazione = formazione;
   schemaCorrente.ribaltato = ribaltato;
@@ -1088,6 +1101,9 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") chiudiDialogo();
     return;
   }
+
+  // Note sul campo aperte: i loro tasti (note-campo.js)
+  if (tastiNote(e, staScrivendo)) return;
 
   // Barra spaziatrice: lo schema "si gioca" (animazione.js)
   if (e.key === " " && !staScrivendo && !cmd && schemaCorrente && !Tracce.disegno) {
@@ -1213,6 +1229,7 @@ let rallentatore = false;
 function commutaGioco() {
   if (fermaGioco()) return;
   if (!schemaCorrente || !schemaCorrente.giocatori.length) return;
+  chiudiNoteCampo();
   chiudiMenuTracce();
   if (Tracce.disegno) Tracce.annullaDisegno();
   disegnaCampo(svgCampo, schemaCorrente, {}); // senza maniglie né selezione

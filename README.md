@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.29 — note sul campo
+
+- Pulsante **✎ Note** sopra il campo: **Testo**, **Freccia** libera e **Zona** colorata, in 5 colori.
+  Con le note aperte il mouse lavora solo sulle note (↖ Sposta per sceglierle e trascinarle, doppio clic per riscrivere un testo, Canc per toglierle).
+- Fanno parte dello schema: si vedono sul telefono, nel link condiviso e in stampa; seguono Ribalta e Annulla.
+
 ## Versione 0.28 — animazione degli schemi
 
 - Pulsante **▶︎ Gioca** sul campo (o barra spaziatrice): i giocatori si muovono lungo le tracce.

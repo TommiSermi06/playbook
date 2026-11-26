@@ -348,6 +348,7 @@ $("#btn-ribalta").addEventListener("click", () => {
       (g.traccia.rami || []).forEach((r) => r.punti.forEach((p) => { p.dx = -p.dx; }));
     }
   }
+  ribaltaNote(schemaCorrente); // anche le note sul campo
   schemaCorrente.ribaltato = !schemaCorrente.ribaltato;
   salvaEditor();
   disegnaEditor();

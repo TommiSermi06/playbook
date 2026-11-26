@@ -749,3 +749,12 @@ a.riga { display: flex; }
 
 /* Animazione: mentre lo schema "si gioca" le tracce restano tenui */
 .in-gioco .tracce { opacity: 0.32; transition: opacity 0.3s; }
+
+/* Note sul campo (testi, frecce, zone) fatte sul computer */
+.annotazione { --colore-nota: #FFD60A; pointer-events: none; }
+.nota-zona { fill: var(--colore-nota); fill-opacity: 0.2; stroke: var(--colore-nota); stroke-width: 0.12; stroke-dasharray: 0.5 0.3; }
+.nota-freccia .linea-nota { stroke: var(--colore-nota); stroke-width: 0.26; stroke-linecap: round; }
+.nota-freccia .punta-nota { fill: var(--colore-nota); }
+.nota-freccia .presa-nota { stroke: transparent; }
+.nota-testo { fill: var(--colore-nota); font-size: 1.25px; font-weight: 800; stroke: rgba(10, 14, 12, 0.85); stroke-width: 0.28; paint-order: stroke; font-family: -apple-system, system-ui, sans-serif; }
+.miniatura .annotazione, .miniatura-proposta .annotazione { opacity: 0.7; }

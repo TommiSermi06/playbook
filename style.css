@@ -2605,3 +2605,100 @@ body.riordino-in-corso .riga { transition: box-shadow 0.12s; }
 .campo.in-gioco .tracce { opacity: 0.32; transition: opacity 0.3s; }
 .campo.in-gioco .maniglie { display: none; }
 .campo.in-gioco { cursor: pointer; }
+
+/* ==========================================================================
+   NOTE SUL CAMPO: testi, frecce libere e zone colorate
+   ========================================================================== */
+.annotazione { --colore-nota: #FFD60A; }
+.nota-zona { fill: var(--colore-nota); fill-opacity: 0.2; stroke: var(--colore-nota); stroke-width: 0.12; stroke-dasharray: 0.5 0.3; }
+.nota-freccia .linea-nota { stroke: var(--colore-nota); stroke-width: 0.26; stroke-linecap: round; }
+.nota-freccia .punta-nota { fill: var(--colore-nota); }
+.nota-freccia .presa-nota { stroke: transparent; stroke-width: 1.6; }
+.nota-testo {
+  fill: var(--colore-nota);
+  font-size: 1.25px;
+  font-weight: 800;
+  stroke: rgba(10, 14, 12, 0.85);
+  stroke-width: 0.28;
+  paint-order: stroke;
+  letter-spacing: 0.02em;
+}
+/* Fuori dalla modalità note non si possono prendere col mouse */
+body:not(.modo-note) .annotazione { pointer-events: none; }
+body.modo-note .annotazione { cursor: move; }
+.annotazione.selezionata { filter: drop-shadow(0 0 0.35px #FFFFFF) drop-shadow(0 0 0.35px #FFFFFF); }
+.nota-zona.selezionata { stroke-dasharray: none; stroke-width: 0.18; }
+/* Nelle miniature le note sono più tenui */
+.miniatura .annotazione { opacity: 0.7; }
+/* In stampa su campo chiaro il bianco diventerebbe invisibile */
+.stampa.campo-chiaro .annotazione.colore-bianco { --colore-nota: #15191A; }
+.stampa .nota-testo { stroke: rgba(255, 255, 255, 0.9); }
+.stampa.campo-scuro .nota-testo { stroke: rgba(10, 14, 12, 0.85); }
+
+/* Barra degli strumenti sopra il campo */
+.barra-note {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 14px;
+  background: rgba(15, 20, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: appari 0.2s var(--curva) both;
+  white-space: nowrap;
+  max-width: calc(100% - 20px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.barra-note[hidden] { display: none; }
+.barra-note > button {
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--testo);
+}
+.barra-note > button:hover { background: var(--sfondo-hover); }
+.barra-note > button.attivo { background: var(--accento); color: var(--testo-su-accento); }
+.barra-note > button.fine { color: var(--accento); }
+.barra-note .colore-nota {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--c);
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+.barra-note .colore-nota.attivo { background: var(--c); border-color: #FFFFFF; }
+.divisore-note { width: 1px; height: 20px; margin: 0 4px; background: rgba(255, 255, 255, 0.14); }
+#btn-note-campo.attivo { color: var(--accento); background: var(--accento-tenue); }
+body.modo-note .campo { cursor: crosshair; }
+body.modo-note .campo[data-strumento="sposta"] { cursor: default; }
+/* Campo per scrivere il testo, sopra il punto cliccato */
+.campo-testo-nota {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 2px solid var(--accento);
+  background: #0F1412;
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
