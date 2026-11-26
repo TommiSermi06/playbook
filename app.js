@@ -426,6 +426,7 @@ function apriEditor(id, { focusNome = false } = {}) {
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
   giocatoreSelezionato = null;
+  Selezione.ids.clear();
   tavolozzaAperta = schemaCorrente.formazione === "libera" && !schemaCorrente.bloccato;
   // Schemi creati prima di questa regola: chi era oltre la linea torna al suo posto
   for (const g of schemaCorrente.giocatori) g.y = limitaY(schemaCorrente.lato, g.y, { avvisa: false });
@@ -683,6 +684,7 @@ function descriviPosizione(g) {
 }
 
 function mostraInfoGiocatore() {
+  if (Selezione.attiva()) { mostraPannelloSelezione(); return; } // più giocatori selezionati
   const box = $("#info-giocatore");
   const g = schemaCorrente.giocatori.find((g) => g.id === giocatoreSelezionato);
   if (!g) {
@@ -813,6 +815,7 @@ function giocatoreVicino(p, raggio = 1.6) {
 }
 
 function selezionaGiocatore(id) {
+  Selezione.ids.clear(); // si torna alla selezione di un giocatore solo
   if (id !== giocatoreSelezionato) chiudiMenuTracce();
   giocatoreSelezionato = id;
   disegnaCampo(svgCampo, schemaCorrente, { selezionato: id }); // mostra le maniglie della traccia
@@ -861,8 +864,25 @@ svgCampo.addEventListener("pointerdown", (evento) => {
 
   const g = giocatoreVicino(p);
 
-  // Clic sul prato vuoto: togli la selezione e chiudi il menu
-  if (!g) { chiudiMenuTracce(); selezionaGiocatore(null); return; }
+  // Selezione multipla (selezione.js): Maiusc+clic aggiunge o toglie un giocatore
+  if (g && evento.shiftKey) { evento.preventDefault(); Selezione.commuta(g); return; }
+  // Trascinando uno dei selezionati si sposta tutto il gruppo
+  if (g && Selezione.attiva() && Selezione.ids.has(g.id)) {
+    evento.preventDefault();
+    svgCampo.setPointerCapture(evento.pointerId);
+    document.body.classList.add("trascinando");
+    trascinamento = { ...iniziaTrascinamentoGruppo(p), giocatore: g };
+    return;
+  }
+
+  // Prato vuoto: si disegna il riquadro di selezione (un semplice clic toglie la selezione)
+  if (!g) {
+    chiudiMenuTracce();
+    evento.preventDefault();
+    svgCampo.setPointerCapture(evento.pointerId);
+    trascinamento = iniziaRiquadro(p);
+    return;
+  }
 
   evento.preventDefault();
   svgCampo.setPointerCapture(evento.pointerId);
@@ -898,6 +918,8 @@ svgCampo.addEventListener("pointermove", (evento) => {
     return;
   }
   const p = puntoNelCampo(evento);
+  if (trascinamento.tipo === "gruppo") { muoviGruppo(trascinamento, p, evento.shiftKey); return; }
+  if (trascinamento.tipo === "riquadro") { muoviRiquadro(trascinamento, p); return; }
   const g = trascinamento.giocatore;
 
   // Trascinamento di un punto della traccia
@@ -933,6 +955,12 @@ function fineTrascinamento() {
   const t = trascinamento;
   trascinamento = null;
   document.body.classList.remove("trascinando");
+  if (t.tipo === "riquadro") { fineRiquadro(t); return; }
+  if (t.tipo === "gruppo") {
+    if (t.mosso) { ricordaStato(t.prima); salvaTraPoco(); disegnaCampo(svgCampo, schemaCorrente, {}); }
+    else { Selezione.imposta([t.giocatore.id]); apriMenuTracce(t.giocatore); } // clic: solo lui
+    return;
+  }
   if (t.mosso) {
     ricordaStato(t.prima);
     salvaTraPoco();
@@ -1058,6 +1086,9 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") chiudiDialogo();
     return;
   }
+
+  // Selezione multipla: Ctrl+A, frecce, Canc ed Esc sul gruppo (selezione.js)
+  if (tastiSelezione(e, cmd, staScrivendo)) return;
 
   // Annulla / Ripeti (quando non si sta scrivendo un testo)
   if (cmd && e.key.toLowerCase() === "z" && !staScrivendo) {

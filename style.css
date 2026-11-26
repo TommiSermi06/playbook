@@ -2555,3 +2555,22 @@ body.riordino-in-corso .riga { transition: box-shadow 0.12s; }
   0%, 30% { background: var(--accento-tenue); }
   100% { background: transparent; }
 }
+
+/* ==========================================================================
+   SELEZIONE MULTIPLA
+   ========================================================================== */
+.riquadro-selezione {
+  fill: var(--accento);
+  fill-opacity: 0.12;
+  stroke: var(--accento);
+  stroke-width: 0.12;
+  stroke-dasharray: 0.5 0.3;
+  pointer-events: none;
+}
+.giocatore.nel-riquadro .sagoma { stroke: var(--accento); stroke-width: 0.22; }
+.giocatore.nel-riquadro.forma-lettera .etichetta { stroke: var(--accento); }
+.giocatore.multi .alone { stroke: var(--accento); }
+.selezione-titolo { margin: 0 0 6px; display: flex; flex-direction: column; gap: 2px; }
+.selezione-titolo span { font-size: 12px; color: var(--testo-secondario); }
+.selezione-aiuto { margin: 0 0 10px; font-size: 12px; }
+.azioni-selezione { display: flex; flex-wrap: wrap; gap: 6px; }

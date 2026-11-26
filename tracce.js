@@ -616,7 +616,7 @@ function aggiornaSuggerimento() {
       `<kbd>doppio clic</kbd> o <kbd>Invio</kbd> per finire · <kbd>Esc</kbd> annulla`;
   } else {
     s.classList.remove("in-disegno");
-    s.innerHTML = `Clic su un giocatore per le tracce · trascina per spostare · ` +
+    s.innerHTML = `Clic su un giocatore per le tracce · trascina per spostare · <kbd>Maiusc</kbd>+clic o riquadro: più giocatori · ` +
       `<kbd>Maiusc</kbd> aggancia alla mezza yarda · <kbd>←↑↓→</kbd> sposta · ` +
       `<kbd>R</kbd> ribalta · <kbd>L</kbd> blocca · <kbd>${TASTO_CMD}Z</kbd> annulla`;
   }

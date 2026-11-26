@@ -3,6 +3,12 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.27 — selezione multipla
+
+- **Maiusc+clic** aggiunge o toglie un giocatore; **trascinando sul prato** un riquadro seleziona chi ci sta dentro; **Ctrl+A** tutti.
+- Trascinando uno dei selezionati si sposta il gruppo (nessuno supera la linea); frecce per spostarlo, Canc per toglierlo, Esc per deselezionare.
+- Pannello: stessa profondità, togli le tracce, togli dal campo. Tutto con Annulla.
+
 ## Versione 0.26 — copia e incolla delle tracce
 
 - Clic su un giocatore → **📋 Copia traccia**; clic su un altro → **📥 Incolla traccia** o **⇋ Incolla specchiata**
