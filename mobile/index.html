@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="../icon-180.png">
   <link rel="icon" type="image/png" href="../icon-180.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="mobile.css?v=m2">
+  <link rel="stylesheet" href="mobile.css?v=m3">
 </head>
 <body>
   <!-- Schermata d'avvio, mentre controlliamo l'accesso -->
@@ -67,6 +67,14 @@
     </header>
     <h1 class="titolo-grande">Playbook</h1>
     <p class="sottotitolo-grande" id="home-squadra">I tuoi playbook</p>
+    <!-- Proposte dello staff da decidere (solo il proprietario) -->
+    <div class="gruppo" id="riga-proposte" hidden>
+      <button class="riga toccabile" id="btn-proposte">
+        <span class="icona-playbook">📥</span>
+        <span class="riga-testi"><span class="riga-titolo">Proposte dello staff</span><span class="riga-sotto">Da accettare o rifiutare</span></span>
+        <span class="numero-chiamata" id="conto-proposte"></span>
+      </button>
+    </div>
 
     <p class="titolo-sezione" id="titolo-miei">I miei playbook</p>
     <div class="gruppo" id="lista-playbook"></div>
@@ -92,6 +100,12 @@
     <h1 class="titolo-grande" id="pb-titolo"></h1>
     <p class="sottotitolo-grande" id="pb-sotto"></p>
     <p class="banner" id="banner-vista" hidden>👁 Sola lettura · condiviso dal coach</p>
+    <div class="gruppo" id="riga-proposte-pb" style="margin-top: 10px" hidden>
+      <button class="riga toccabile" id="btn-proposte-pb">
+        <span class="riga-testi"><span class="riga-titolo">📥 Proposte dello staff da decidere</span></span>
+        <span class="numero-chiamata" id="conto-proposte-pb"></span>
+      </button>
+    </div>
     <p class="banner" id="banner-proposte" hidden>📨 In questo playbook puoi solo mandare proposte: per ora si fanno dal computer.</p>
 
     <div class="segmentato" id="scelta-lato" style="margin-top: 12px">
@@ -212,6 +226,19 @@
     </div>
   </section>
 
+  <!-- ================= 7. PROPOSTE DELLO STAFF ================= -->
+  <section class="schermata fuori" id="schermata-proposte" hidden>
+    <header class="barra">
+      <span class="barra-sx"><button class="btn-barra toccabile" data-indietro></button></span>
+      <span class="barra-titolo">Proposte</span>
+      <span class="barra-dx"></span>
+    </header>
+    <h1 class="titolo-grande">Proposte</h1>
+    <p class="sottotitolo-grande">Entrano nel playbook solo se le accetti.</p>
+    <div id="lista-proposte"></div>
+    <p class="vuoto" id="proposte-vuote" hidden>Nessuna proposta da decidere. 👍</p>
+  </section>
+
   <!-- ================= FOGLI DAL BASSO ================= -->
   <div class="foglio" id="foglio-formazioni" hidden>
     <div class="maniglia-foglio"></div>
@@ -279,14 +306,15 @@
   <!-- Gli stessi file della versione per computer (dati, account, tracce)... -->
   <script src="../config.js?v=m1"></script>
   <script src="../lib/supabase.js"></script>
-  <script src="campo.js?v=m2"></script>
+  <script src="campo.js?v=m3"></script>
   <script src="../formazioni.js?v=m1"></script>
   <script src="../regole.js?v=m1"></script>
   <script src="../tracce.js?v=m1"></script>
   <script src="../cloud.js?v=m1"></script>
   <!-- ...e la logica tutta nuova per il telefono -->
-  <script src="mobile.js?v=m2"></script>
-  <script src="editor.js?v=m2"></script>
+  <script src="mobile.js?v=m3"></script>
+  <script src="editor.js?v=m3"></script>
+  <script src="proposte.js?v=m3"></script>
   <script>
     // Il pulsante "indietro" con la freccia iOS
     document.querySelectorAll("[data-indietro]").forEach((b) => {

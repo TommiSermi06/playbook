@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.24 — link condiviso dal telefono
+
+- Un link in sola lettura (`?vedi=…`) aperto da un telefono porta da solo alla versione per telefono (`mobile/`).
+  Sul computer e sul tablet in orizzontale non cambia niente.
+
 ## Versione 0.23 — note in orizzontale
 
 - Il riquadro «Note» del call sheet è una fascia larga quanto il foglio, in fondo all'ultima pagina.

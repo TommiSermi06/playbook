@@ -282,6 +282,7 @@ async function entra() {
   try {
     await scaricaTutto();
     mostraHome();
+    controllaProposte();
   } catch {
     avviso(cEraCopia ? "Senza rete: stai vedendo l'ultima copia" : "Non riesco a scaricare i playbook");
   }
@@ -331,7 +332,7 @@ function disegnaGruppoPlaybook(contenitore, lista) {
 $("#btn-aggiorna").addEventListener("click", async () => {
   const b = $("#btn-aggiorna");
   b.classList.add("gira");
-  try { await scaricaTutto(); mostraHome(); avviso("Aggiornato"); }
+  try { await scaricaTutto(); mostraHome(); await controllaProposte(); avviso("Aggiornato"); }
   catch { avviso("Nessuna connessione"); }
   finally { b.classList.remove("gira"); }
 });
@@ -363,6 +364,7 @@ function apriPlaybook(pb, { sostituisci = false } = {}) {
   $("#banner-vista").hidden = !Stato.vista;
   $("#btn-nuovo-schema").hidden = !puoModificare(pb);
   $("#banner-proposte").hidden = !pb.proprietario || pb.permesso !== "proposta";
+  if (typeof mostraContoProposte === "function") mostraContoProposte();
   $("#btn-pb-indietro").hidden = Stato.vista;
   impostaSegmentato($("#scelta-lato"), Stato.lato);
   mostraFiltri();

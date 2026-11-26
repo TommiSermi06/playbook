@@ -713,3 +713,36 @@ a.riga { display: flex; }
     width: min(100% - 16px, (100vh - 70px) * 1.524);
   }
 }
+
+/* ==========================================================================
+   PROPOSTE DELLO STAFF
+   ========================================================================== */
+.proposta {
+  margin: 0 16px 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--sfondo-card);
+  transition: opacity 0.25s var(--curva), transform 0.25s var(--curva);
+}
+.proposta.in-uscita { opacity: 0.35; transform: scale(0.98); }
+.proposta-testa { display: flex; align-items: center; gap: 8px; }
+.proposta-testa strong { font-size: 17px; }
+.etichetta-pill.tipo-modifica { background: rgba(90, 200, 250, 0.18); color: #1A8FC9; }
+.etichetta-pill.tipo-nuovo { background: rgba(52, 199, 89, 0.16); color: var(--verde); }
+.etichetta-pill.tipo-elimina { background: rgba(255, 59, 48, 0.14); color: var(--rosso); }
+.proposta-info { margin: 6px 0 10px; font-size: 13px; color: var(--testo-secondario); }
+.proposta-campi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.proposta-campo { margin: 0; }
+.miniatura-proposta { display: block; width: 100%; aspect-ratio: 53.33 / 35; border-radius: 10px; overflow: hidden; }
+.proposta-campo figcaption { margin-top: 4px; text-align: center; font-size: 12px; color: var(--testo-secondario); }
+.proposta-campo.nuova .miniatura-proposta { outline: 2px solid var(--accento); outline-offset: -2px; }
+.proposta-campo.da-eliminare .miniatura-proposta { opacity: 0.5; outline: 2px solid var(--rosso); outline-offset: -2px; }
+.proposta-avviso { margin: 8px 0 0; font-size: 13px; color: var(--accento); }
+.proposta-azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.btn-secondario-m {
+  min-height: 50px;
+  border-radius: 12px;
+  background: var(--sfondo-grigio);
+  font-size: 17px;
+  font-weight: 600;
+}
