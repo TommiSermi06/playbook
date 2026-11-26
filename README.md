@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.44 — riquadro delle tracce: solo sul campo, anche orizzontale
+
+- Il riquadro delle tracce si muove (e si apre) solo nella colonna centrale, sotto la barra del titolo: non copre più l'elenco degli schemi né il pannello di destra
+- Pulsante ⇆ nella sua barra: riquadro orizzontale (route su due righe, azioni accanto) o verticale; la scelta resta ricordata
+
 ## Versione 0.43 — riquadro delle tracce trascinabile
 
 - Il riquadro che si apre cliccando un giocatore (albero delle route, blocco, copia/incolla…) si sposta trascinandolo dalla barra in alto e resta dove lo lasci, anche per gli altri giocatori; doppio clic sulla barra: torna accanto al giocatore. Resta sempre dentro la finestra

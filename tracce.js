@@ -598,14 +598,38 @@ function apriMenuTracce(g) {
   if (left + larg > innerWidth - 12) left = r.left - larg - 14;
   let top = r.top + r.height / 2 - alt / 2;
   top = Math.max(12, Math.min(innerHeight - alt - 12, top));
-  menu.style.left = Math.max(12, left) + "px";
-  menu.style.top = top + "px";
+  menu.classList.toggle("orizzontale", Boolean(leggiLocale(CHIAVE_MENU_ORIZZONTALE)));
+  if (menu.classList.contains("orizzontale")) { // più largo: sotto o sopra il giocatore
+    left = r.left + r.width / 2 - menu.offsetWidth / 2;
+    top = r.bottom + 14;
+    if (top + menu.offsetHeight > zonaMenu().bottom) top = r.top - menu.offsetHeight - 14;
+  }
+  mettiMenuIn(menu, left, top);
   // Se il coach l'ha spostato, il riquadro si riapre dove l'ha lasciato
   const fissata = leggiLocale(CHIAVE_POSIZIONE_MENU);
   if (fissata) mettiMenuIn(menu, fissata.left, fissata.top);
   menu.classList.toggle("spostato", Boolean(fissata));
   menu.dataset.giocatore = g.id;
   testa.title = "Trascina per spostare il riquadro · doppio clic: torna accanto al giocatore";
+  // Pulsante ⇆: riquadro orizzontale / verticale
+  const gira = document.createElement("button");
+  gira.type = "button";
+  gira.className = "gira-menu";
+  gira.textContent = menu.classList.contains("orizzontale") ? "⇅" : "⇆";
+  gira.title = menu.classList.contains("orizzontale") ? "Riquadro verticale" : "Riquadro orizzontale";
+  gira.addEventListener("pointerdown", (e) => e.stopPropagation()); // non inizia il trascinamento
+  gira.addEventListener("dblclick", (e) => e.stopPropagation());
+  gira.addEventListener("click", () => {
+    const orizzontale = !menu.classList.contains("orizzontale");
+    scriviLocale(CHIAVE_MENU_ORIZZONTALE, orizzontale);
+    const prima = menu.getBoundingClientRect();
+    menu.classList.toggle("orizzontale", orizzontale);
+    gira.textContent = orizzontale ? "⇅" : "⇆";
+    gira.title = orizzontale ? "Riquadro verticale" : "Riquadro orizzontale";
+    const pos = mettiMenuIn(menu, prima.left, prima.top); // resta lì, ma dentro la zona del campo
+    if (leggiLocale(CHIAVE_POSIZIONE_MENU)) scriviLocale(CHIAVE_POSIZIONE_MENU, pos);
+  });
+  testa.appendChild(gira);
   testa.addEventListener("pointerdown", (e) => iniziaSpostamentoMenu(menu, e));
   testa.addEventListener("dblclick", () => {
     scriviLocale(CHIAVE_POSIZIONE_MENU, null);
@@ -619,11 +643,25 @@ function apriMenuTracce(g) {
    il campo. La posizione resta ricordata: il riquadro si riapre lì anche
    cliccando altri giocatori. Doppio clic sulla barra: torna accanto al giocatore. */
 const CHIAVE_POSIZIONE_MENU = "playbook.posizione-menu-tracce";
+const CHIAVE_MENU_ORIZZONTALE = "playbook.menu-tracce-orizzontale";
 
-// Tiene il riquadro dentro la finestra
+/* Dove può stare il riquadro: la colonna centrale, sotto la barra del
+   titolo (campo e spazio sotto), non sopra l'elenco degli schemi o il
+   pannello di destra. */
+function zonaMenu() {
+  const centro = document.querySelector(".centro");
+  if (!centro) return { left: 8, top: 8, right: innerWidth - 8, bottom: innerHeight - 8 };
+  const c = centro.getBoundingClientRect();
+  const testa = document.querySelector("#editor:not([hidden]) .editor-testa");
+  const alto = testa ? testa.getBoundingClientRect().bottom : c.top;
+  return { left: c.left + 6, top: alto + 6, right: Math.min(innerWidth, c.right) - 6, bottom: Math.min(innerHeight, c.bottom) - 6 };
+}
+
+// Tiene il riquadro dentro la zona del campo
 function mettiMenuIn(menu, left, top) {
-  const l = Math.max(8, Math.min(innerWidth - menu.offsetWidth - 8, left));
-  const t = Math.max(8, Math.min(innerHeight - menu.offsetHeight - 8, top));
+  const z = zonaMenu();
+  const l = Math.max(z.left, Math.min(z.right - menu.offsetWidth, left));
+  const t = Math.max(z.top, Math.min(z.bottom - menu.offsetHeight, top));
   menu.style.left = l + "px";
   menu.style.top = t + "px";
   return { left: l, top: t };

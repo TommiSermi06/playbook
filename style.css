@@ -3108,3 +3108,25 @@ html[data-tema="chiaro"] .giocatore .nome-pedina,
 }
 .menu-tracce.in-spostamento { transition: none; cursor: grabbing; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); }
 .menu-tracce.in-spostamento .menu-testa { cursor: grabbing; }
+
+/* Pulsante ⇆ e riquadro delle tracce orizzontale */
+.gira-menu {
+  margin-left: auto; width: 24px; height: 24px; border-radius: 7px; font-size: 14px; line-height: 1;
+  color: var(--testo-secondario); cursor: pointer;
+}
+.gira-menu:hover { background: var(--sfondo-hover); color: var(--testo); }
+.menu-tracce.orizzontale {
+  width: 720px; max-width: calc(100vw - 24px);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: start;
+}
+.menu-tracce.orizzontale .menu-testa { grid-column: 1 / -1; }
+.menu-tracce.orizzontale .menu-griglia { grid-template-columns: repeat(5, 78px); }
+.menu-tracce.orizzontale .menu-griglia.difesa { grid-template-columns: repeat(3, 116px); }
+.menu-tracce.orizzontale .azione-menu { text-align: left; white-space: nowrap; gap: 10px; }
+.menu-tracce.orizzontale .azione-menu span { overflow: hidden; text-overflow: ellipsis; }
+.menu-tracce.orizzontale .menu-azioni {
+  display: flex; flex-direction: column; align-content: start;
+  margin-top: 0; padding-top: 0; border-top: 0; padding-left: 12px; border-left: 1px solid var(--separatore);
+}
+.menu-tracce.orizzontale .menu-testa + .menu-azioni { grid-column: 1 / -1; border-left: 0; padding-left: 0; }
+.menu-tracce.orizzontale .voce-traccia { padding: 6px 2px 5px; }
