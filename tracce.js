@@ -125,6 +125,49 @@ function tracciaDaDifesa(g, preset) {
 }
 
 /* ==========================================================================
+   COPIA E INCOLLA UNA TRACCIA (anche specchiata)
+   La traccia copiata resta in memoria nel browser, così si può incollare
+   anche in un altro schema. Specchiata = ribaltata destra/sinistra
+   (un Out verso destra diventa un Out verso sinistra).
+   Usato dal computer (menu e Ctrl+C / Ctrl+V) e dall'editor del telefono.
+   ========================================================================== */
+const AppuntiTraccia = {
+  chiave: "playbook.appunti-traccia",
+
+  leggi() { return leggiLocale(this.chiave); },
+
+  copia(g, lato) {
+    if (!g.traccia) return false;
+    scriviLocale(this.chiave, { lato, etichetta: g.etichetta, traccia: JSON.parse(JSON.stringify(g.traccia)) });
+    return true;
+  },
+
+  // null se si può incollare su questo giocatore, altrimenti il motivo
+  motivoNo(g, lato) {
+    const a = this.leggi();
+    if (!a) return "Prima copia una traccia";
+    if (a.lato !== lato) {
+      return a.lato === "difesa" ? "È una traccia di difesa: incollala su un difensore"
+        : "È una traccia d'attacco: incollala su un giocatore d'attacco";
+    }
+    const tipo = a.traccia.tipo;
+    if (eUomoDiLinea(g) && tipo !== "blocco") return "La linea fa solo blocchi";
+    if (tipo === "qb" && !eQuarterback(g)) return "Il movimento del QB si incolla solo al QB";
+    if (tipo === "blocco" && formatoDi(schemaCorrente).flag) return "Nel flag non si blocca";
+    return null;
+  },
+
+  // La traccia da incollare su "g" (con specchia = true, ribaltata destra/sinistra)
+  crea(g, specchia = false) {
+    const t = JSON.parse(JSON.stringify(this.leggi().traccia));
+    const segno = specchia ? -1 : 1;
+    t.punti = t.punti.map((p) => dentroCampo(g, p.dx * segno, p.dy)); // sempre dentro il campo
+    for (const r of t.rami || []) r.punti = r.punti.map((p) => ({ dx: +(p.dx * segno).toFixed(2), dy: p.dy }));
+    return t;
+  },
+};
+
+/* ==========================================================================
    DISEGNO
    ========================================================================== */
 
@@ -515,6 +558,14 @@ function apriMenuTracce(g) {
     if (attacco && !formatoDi(schemaCorrente).flag) { // nel flag non si blocca
       aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
     }
+  }
+  // Copia / incolla (anche specchiata)
+  if (g.traccia) {
+    aggiungiAzione("📋  Copia traccia", `${TASTO_CMD}C`, () => copiaTracciaGiocatore(g));
+  }
+  if (AppuntiTraccia.leggi() && !AppuntiTraccia.motivoNo(g, schemaCorrente.lato)) {
+    aggiungiAzione("📥  Incolla traccia", `${TASTO_CMD}V`, () => incollaTracciaGiocatore(g, false));
+    aggiungiAzione("⇋  Incolla specchiata", `${TASTO_CMD}⇧V`, () => incollaTracciaGiocatore(g, true));
   }
   if (g.traccia) {
     aggiungiAzione(g.traccia.curva ? "〰️  Linea con angoli netti" : "〰️  Linea morbida (curva)", "C", () => Tracce.commutaCurva(g));

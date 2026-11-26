@@ -1067,6 +1067,17 @@ document.addEventListener("keydown", (e) => {
   }
   if (cmd && e.key.toLowerCase() === "y" && !staScrivendo) { e.preventDefault(); ripeti(); return; }
 
+  // Copia / incolla la traccia del giocatore selezionato (Maiusc = specchiata)
+  if (cmd && !staScrivendo && schemaCorrente && giocatoreSelezionato && ["c", "v"].includes(e.key.toLowerCase())) {
+    const g = schemaCorrente.giocatori.find((x) => x.id === giocatoreSelezionato);
+    if (g) {
+      e.preventDefault();
+      if (e.key.toLowerCase() === "c") copiaTracciaGiocatore(g);
+      else incollaTracciaGiocatore(g, e.shiftKey);
+      return;
+    }
+  }
+
   // Duplica
   if (cmd && e.key.toLowerCase() === "d" && schemaCorrente) {
     e.preventDefault();
@@ -1155,6 +1166,19 @@ document.addEventListener("keydown", (e) => {
     salvaTraPoco();
   }
 });
+
+/* ---------- Copia / incolla una traccia (vedi AppuntiTraccia in tracce.js) ---------- */
+function copiaTracciaGiocatore(g) {
+  chiudiMenuTracce();
+  if (!AppuntiTraccia.copia(g, schemaCorrente.lato)) { mostraAvviso(`${g.etichetta} non ha una traccia da copiare`); return; }
+  mostraAvviso(`Traccia di ${g.etichetta} copiata: clicca un altro giocatore e incollala`);
+}
+function incollaTracciaGiocatore(g, specchia) {
+  const motivo = AppuntiTraccia.motivoNo(g, schemaCorrente.lato);
+  if (motivo) { chiudiMenuTracce(); mostraAvviso(motivo); return; }
+  Tracce.applica(g, AppuntiTraccia.crea(g, specchia)); // con animazione e Annulla (Ctrl+Z)
+  mostraAvviso(`Traccia incollata su ${g.etichetta}${specchia ? " (specchiata)" : ""}`);
+}
 
 /* ---------- Duplica / Elimina ---------- */
 function duplica() {

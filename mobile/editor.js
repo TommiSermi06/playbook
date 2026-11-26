@@ -504,6 +504,15 @@ function apriFoglioTracce() {
     }
     box.appendChild(griglia);
   };
+  // Incolla la traccia copiata (anche da un altro schema), normale o specchiata
+  const appunti = AppuntiTraccia.leggi();
+  if (appunti && !AppuntiTraccia.motivoNo(g, schemaCorrente.lato)) {
+    const nome = appunti.traccia.nome && appunti.traccia.nome !== "A mano" ? ` (${appunti.traccia.nome})` : "";
+    sezione(`Incolla la traccia di ${appunti.etichetta}${nome}`, [
+      ["📥 Incolla", () => AppuntiTraccia.crea(g, false)],
+      ["⇋ Incolla specchiata", () => AppuntiTraccia.crea(g, true)],
+    ]);
+  }
   if (schemaCorrente.lato === "difesa") {
     sezione("Difesa", TRACCE_DIFESA.map((p) => [p.nome, () => tracciaDaDifesa(g, p)]));
   } else if (eQuarterback(g)) {
@@ -526,6 +535,13 @@ function apriFoglioTracce() {
   disegna.addEventListener("click", () => { chiudiFogli(); setTimeout(iniziaDisegno, 320); });
   altro.appendChild(disegna);
   if (g.traccia) {
+    const copia = el("button", "riga toccabile btn-testo", "📋 Copia questa traccia");
+    copia.addEventListener("click", () => {
+      AppuntiTraccia.copia(g, schemaCorrente.lato);
+      chiudiFogli();
+      avviso(`Traccia di ${g.etichetta} copiata: tocca un altro giocatore → Traccia → Incolla`);
+    });
+    altro.appendChild(copia);
     const togli = el("button", "riga toccabile btn-testo rosso", "Togli la traccia");
     togli.addEventListener("click", () => { ricorda(); delete g.traccia; salvaEditor(); chiudiFogli(); disegnaEditor(); });
     altro.appendChild(togli);

@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.26 — copia e incolla delle tracce
+
+- Clic su un giocatore → **📋 Copia traccia**; clic su un altro → **📥 Incolla traccia** o **⇋ Incolla specchiata**
+  (ribaltata destra/sinistra). Funziona anche tra schemi diversi. Tasti: Ctrl+C, Ctrl+V, Ctrl+Maiusc+V. Con Annulla (Ctrl+Z).
+- Regole: alla linea solo blocchi, il movimento del QB solo al QB, attacco su attacco e difesa su difesa, niente blocchi nel flag.
+- Anche nell'editor del telefono (foglio «Traccia»).
+
 ## Versione 0.25 — riordino degli schemi
 
 - Nell'elenco si cambia l'ordine degli schemi **trascinando** una riga sopra o sotto un'altra
