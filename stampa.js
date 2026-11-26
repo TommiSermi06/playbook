@@ -495,6 +495,7 @@ async function stampaPlaybook(opzioni) {
    Le pagine di stampa sono nascoste: per misurarle le rendiamo
    visibili un attimo, fuori dallo schermo.
    ========================================================================== */
+const MARGINE_TESTI = 0.93; // il testo deve occupare al massimo il 93% dello spazio
 const TESTI_DA_ADATTARE = ".chiamata-nome, .inserto-nome, .carta-scout-testi strong, .scheda-titolo strong";
 
 function adattaTesti(contenitore) {
@@ -507,16 +508,24 @@ function adattaTesti(contenitore) {
   }
   try {
     for (const el of elementi) {
-      if (!el.clientWidth || el.scrollWidth <= el.clientWidth + 0.5) continue;
+      if (!el.clientWidth) continue;
       const base = parseFloat(getComputedStyle(el).fontSize);
       const minimo = base * 0.5;
       let grandezza = base;
-      while (el.scrollWidth > el.clientWidth + 0.5 && grandezza > minimo) {
-        grandezza = Math.max(minimo, grandezza - base * 0.04);
-        el.style.fontSize = `${grandezza.toFixed(2)}px`;
-      }
+      while (alLimite(el, grandezza) && grandezza > minimo) grandezza = Math.max(minimo, grandezza - base * 0.04);
+      el.style.fontSize = grandezza < base ? `${grandezza.toFixed(2)}px` : "";
     }
   } finally {
     if (nascosto) contenitore.setAttribute("style", prima);
   }
+}
+
+/* Il testo è al limite? Lo proviamo un po' più grande (margine di
+   sicurezza): la stampante disegna le lettere un filo più larghe dello
+   schermo, quindi se così non entra lo rimpiccioliamo. */
+function alLimite(el, grandezza) {
+  el.style.fontSize = `${(grandezza / MARGINE_TESTI).toFixed(2)}px`;
+  const trabocca = el.scrollWidth > el.clientWidth + 0.5;
+  el.style.fontSize = `${grandezza.toFixed(2)}px`;
+  return trabocca;
 }

@@ -3,6 +3,10 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.42 — nomi al limite: margine di sicurezza
+
+- Stampa: un nome viene rimpicciolito anche quando entra «al pelo» (prova con il carattere +7%): la stampante disegna le lettere un filo più larghe dello schermo, e prima alcuni nomi accanto a bollini larghi (PLAY ACT.) finivano con i «…»
+
 ## Versione 0.41 — nomi lunghi che entrano e colori delle formazioni scelti dal coach
 
 - Stampa: se il nome di uno schema è troppo lungo, il carattere si rimpicciolisce da solo finché entra tutto (call sheet, wristband, scout cards, schede del playbook), fino a metà grandezza; niente più «…» sui nomi normali, anche in A3
