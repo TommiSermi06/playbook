@@ -3130,3 +3130,62 @@ html[data-tema="chiaro"] .giocatore .nome-pedina,
 }
 .menu-tracce.orizzontale .menu-testa + .menu-azioni { grid-column: 1 / -1; border-left: 0; padding-left: 0; }
 .menu-tracce.orizzontale .voce-traccia { padding: 6px 2px 5px; }
+
+/* ==========================================================================
+   SEZIONI (cartelle) DEGLI SCHEMI — sezioni.js
+   ========================================================================== */
+.riga-conteggio { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.riga-conteggio .titolo-sezione { flex: 1; }
+.btn-nuova-sezione {
+  flex: none; padding: 3px 8px; border-radius: 7px; font-size: 11.5px; font-weight: 700;
+  color: var(--accento); white-space: nowrap;
+}
+.btn-nuova-sezione:hover { background: var(--accento-tenue); }
+.btn-nuova-sezione[hidden] { display: none; }
+
+.intestazione-sezione {
+  display: flex; align-items: center; gap: 6px; list-style: none;
+  margin: 10px 0 4px; padding: 6px 6px 6px 8px; border-radius: 8px;
+  background: var(--sfondo-grigio); cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: var(--testo);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.intestazione-sezione:first-child { margin-top: 2px; }
+.intestazione-sezione:hover { background: var(--sfondo-hover); }
+.intestazione-sezione.senza-sezione { color: var(--testo-secondario); }
+.intestazione-sezione.rilascio { box-shadow: inset 0 0 0 2px var(--accento); background: var(--accento-tenue); }
+.freccia-sezione { flex: none; width: 12px; font-size: 10px; color: var(--testo-secondario); transition: transform 0.18s var(--curva); }
+.intestazione-sezione.chiusa .freccia-sezione { transform: rotate(-90deg); }
+.nome-sezione { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conto-sezione {
+  flex: none; min-width: 20px; padding: 1px 6px; border-radius: 9px; text-align: center;
+  background: rgba(0, 0, 0, 0.25); color: var(--testo-secondario); font-size: 11px; letter-spacing: 0;
+}
+.menu-sezione-btn {
+  flex: none; width: 22px; height: 22px; border-radius: 6px; font-size: 15px; line-height: 1;
+  color: var(--testo-secondario); opacity: 0; transition: opacity 0.15s;
+}
+.intestazione-sezione:hover .menu-sezione-btn, .menu-sezione-btn:focus { opacity: 1; }
+.menu-sezione-btn:hover { background: rgba(0, 0, 0, 0.25); color: var(--testo); }
+.input-sezione {
+  flex: 1; min-width: 0; border: 0; outline: none; border-radius: 5px; padding: 3px 6px;
+  background: var(--sfondo-card); color: var(--testo); font: inherit; text-transform: none; letter-spacing: 0;
+  box-shadow: 0 0 0 2px var(--accento-tenue);
+}
+.menu-sezione {
+  position: fixed; z-index: 40; min-width: 170px; padding: 5px; border-radius: 10px;
+  background: var(--sfondo-card); border: 1px solid var(--separatore); box-shadow: var(--ombra-dialogo);
+  display: flex; flex-direction: column;
+}
+.voce-menu-sezione { text-align: left; padding: 7px 10px; border-radius: 6px; font-size: 13px; color: var(--testo); }
+.voce-menu-sezione:hover { background: var(--sfondo-hover); }
+.voce-menu-sezione.distruttiva { color: var(--rosso); }
+
+.card-sezione[hidden] { display: none; }
+#riga-sezione-schema select {
+  max-width: 60%; border: 0; border-radius: 6px; padding: 4px 6px;
+  background: var(--sfondo-grigio); color: var(--testo); font: inherit;
+}
+.segmentato-5 { grid-template-columns: repeat(5, 1fr); }
+.segmentato-5::before { width: calc(20% - 1px); transform: translateX(calc(var(--indice, 0) * 100%)); }
+.segmentato-5 .segmento { font-size: 12px; }

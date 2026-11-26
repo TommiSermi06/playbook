@@ -429,7 +429,34 @@ function mostraElenco() {
   $("#conteggio").textContent = `${Stato.elenco.length} ${Stato.elenco.length === 1 ? "schema" : "schemi"}`;
   $("#elenco-vuoto").hidden = Stato.elenco.length > 0;
   lista.hidden = !Stato.elenco.length;
-  Stato.elenco.forEach((s, i) => {
+  // Sezioni del playbook (come sul computer): gli schemi sotto il loro titolo
+  const sezioni = ((Stato.pb.sezioni) || []).filter((x) => x.lato === Stato.lato);
+  if (sezioni.length) {
+    const ids = new Set(sezioni.map((x) => x.id));
+    const sezioneDiS = (s) => (s.sezione && ids.has(s.sezione) ? s.sezione : "");
+    const ordine = [...sezioni.map((x) => x.id), ""];
+    Stato.elenco = ordine.flatMap((id) => Stato.elenco.filter((s) => sezioneDiS(s) === id));
+    let ultima = null;
+    Stato.elenco.forEach((s, i) => {
+      const id = sezioneDiS(s);
+      if (id !== ultima) {
+        ultima = id;
+        const sez = sezioni.find((x) => x.id === id);
+        const n = Stato.elenco.filter((x) => sezioneDiS(x) === id).length;
+        const titolo = el("div", "titolo-sezione-elenco");
+        titolo.appendChild(el("span", "", sez ? sez.nome : "Senza sezione"));
+        titolo.appendChild(el("span", "conto", String(n)));
+        lista.appendChild(titolo);
+      }
+      lista.appendChild(rigaSchemaM(s, i));
+    });
+    return;
+  }
+  Stato.elenco.forEach((s, i) => lista.appendChild(rigaSchemaM(s, i)));
+}
+
+function rigaSchemaM(s, i) {
+  {
     const riga = el("button", "riga riga-schema toccabile");
     riga.appendChild(svgCampo(s, "miniatura", { miniatura: true, ritaglio: true }));
     const testi = el("span", "riga-testi");
@@ -440,8 +467,8 @@ function mostraElenco() {
     riga.appendChild(testi);
     if (s.chiamata) riga.appendChild(el("span", "numero-chiamata", String(s.chiamata)));
     riga.addEventListener("click", () => apriSchema(i));
-    lista.appendChild(riga);
-  });
+    return riga;
+  }
 }
 
 /* ==========================================================================

@@ -3,6 +3,15 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.45 — sezioni (cartelle) degli schemi
+
+- Ogni playbook può avere sezioni sue per attacco, difesa e special teams, es. «Base», «Red zone», «Game plan» (`sezioni.js`, `playbook.sezioni`, `schema.sezione`)
+- Elenco: gli schemi sotto il titolo della loro sezione, con il conteggio; clic sul titolo per chiuderla / aprirla (ricordato su questo computer); cercando o filtrando si vedono solo le sezioni con risultati
+- «＋ Sezione» sopra l'elenco; sul titolo: doppio clic per rinominare, ⋯ per rinominare, spostare su / giù o eliminare (gli schemi restano, «Senza sezione»), sempre con Annulla
+- Uno schema va in una sezione trascinandolo sul titolo o tra i suoi schemi, oppure dal pannello a destra «Sezione» (anche «＋ Nuova sezione…»)
+- Stampa del playbook: «Raggruppa» anche per sezione. Telefono: elenco diviso per sezioni
+- Corretto: un nome doppio tra il telefono e gli special teams poteva far prendere al campo lungo le misure dello schema sbagliato
+
 ## Versione 0.44 — riquadro delle tracce: solo sul campo, anche orizzontale
 
 - Il riquadro delle tracce si muove (e si apre) solo nella colonna centrale, sotto la barra del titolo: non copre più l'elenco degli schemi né il pannello di destra

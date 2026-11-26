@@ -74,7 +74,7 @@ function posizionePalla(schema) {
 function disegnaCampo(svg, schema, opzioni = {}) {
   impostaCampo(schema); // campo normale o lungo (special teams, ../speciali.js)
   try { disegnaCampoDentro(svg, schema, opzioni); }
-  finally { impostaCampo(schemaAperto() || schema); } // poi le misure tornano quelle dello schema in modifica
+  finally { impostaCampo(schemaInModifica() || schema); } // poi le misure tornano quelle dello schema in modifica
 }
 
 function disegnaCampoDentro(svg, schema, { miniatura = false, anima = false, ritaglio = false, logo = null, selezionato = null, viewBox = null } = {}) {

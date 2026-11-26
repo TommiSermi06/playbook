@@ -826,3 +826,11 @@ a.riga { display: flex; }
 .ruolo-st-ritorno    { --colore-ruolo: var(--ruolo-back); }
 .ruolo-st-copertura  { --colore-ruolo: var(--ruolo-ricevitori); }
 .segmentato button[hidden] { display: none; }
+
+/* Titoli delle sezioni nell'elenco (cartelle del playbook) */
+.titolo-sezione-elenco {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 6px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--testo-secondario); background: var(--sfondo);
+}
+.titolo-sezione-elenco .conto { font-weight: 600; }

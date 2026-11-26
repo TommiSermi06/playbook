@@ -48,7 +48,7 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
   const vivo = !miniatura && !stampa;
   impostaCampo(schema); // campo normale o lungo (special teams, speciali.js)
   try { disegnaCampoDentro(svg, schema, { miniatura, selezionato, stampa, vivo }); }
-  finally { impostaCampo(schemaAperto() || schema); } // poi le misure tornano quelle dello schema aperto
+  finally { impostaCampo(schemaInModifica() || schema); } // poi le misure tornano quelle dello schema aperto
 }
 
 function disegnaCampoDentro(svg, schema, { miniatura, selezionato, stampa, vivo }) {
@@ -377,7 +377,32 @@ function mostraElenco() {
     ? `${delLato.length} ${delLato.length === 1 ? "schema" : "schemi"}`
     : "";
 
-  for (const schema of schemi) {
+  // «＋ Sezione»: solo per il proprietario, dentro un playbook
+  $("#btn-nuova-sezione").hidden = !(typeof puoGestireSezioni === "function" && puoGestireSezioni());
+
+  // Con le sezioni (sezioni.js): gli schemi sotto il titolo della loro sezione
+  const filtrato = Boolean(testoCerca) || filtroCategoria !== "tutte";
+  const gruppi = typeof gruppiElenco === "function" ? gruppiElenco(schemi, latoSelezionato) : null;
+  if (gruppi) {
+    lista.hidden = false;
+    vuota.hidden = true;
+    const chiuse = sezioniChiuse();
+    for (const g of gruppi) {
+      if (filtrato && !g.schemi.length) continue; // cercando: solo le sezioni con risultati
+      if (!g.sezione && !g.schemi.length) continue; // «Senza sezione» vuota: non serve
+      const chiusa = !filtrato && chiuse.has(g.sezione ? g.sezione.id : "__senza");
+      lista.appendChild(intestazioneSezione(g, { chiusa, filtrato }));
+      if (chiusa) continue;
+      for (const schema of g.schemi) lista.appendChild(rigaSchema(schema));
+    }
+    return;
+  }
+  for (const schema of schemi) lista.appendChild(rigaSchema(schema));
+}
+
+// Una riga dell'elenco degli schemi
+function rigaSchema(schema) {
+  {
     const riga = document.createElement("li");
     riga.className = "riga" + (schemaCorrente && schemaCorrente.id === schema.id ? " attiva" : "");
     riga.tabIndex = 0;
@@ -403,7 +428,7 @@ function mostraElenco() {
     riga.addEventListener("click", () => apriEditor(schema.id));
     riga.addEventListener("keydown", (e) => { if (e.key === "Enter") apriEditor(schema.id); });
     abilitaRiordino(riga, schema); // trascina per cambiare l'ordine
-    lista.appendChild(riga);
+    return riga;
   }
 }
 
@@ -509,6 +534,7 @@ function ridisegna() {
   aggiornaBannerBozza();
   mostraInfoGiocatore();
   mostraPannelloAvversari();
+  if (typeof mostraSezioneSchema === "function") mostraSezioneSchema();
 }
 
 /* ---------- Salvataggio automatico ----------

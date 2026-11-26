@@ -4,10 +4,10 @@
    subito; se non c'è rete usa la copia salvata.
    I dati degli schemi stanno nella copia del telefono (localStorage).
    ========================================================================== */
-const CACHE = "playbook-mobile-m15";
+const CACHE = "playbook-mobile-m16";
 const FILE = [
-  "./", "index.html", "mobile.css?v=m14", "campo.js?v=m14", "mobile.js?v=m14", "editor.js?v=m14", "proposte.js?v=m3", "manifest.json",
-  "../config.js?v=m1", "../lib/supabase.js", "../filigrana.js?v=m12", "../pedine.js?v=m14", "../speciali.js?v=m14", "../avversari.js?v=m14", "../annotazioni.js?v=m7", "../formazioni.js?v=m14", "../regole.js?v=m14",
+  "./", "index.html", "mobile.css?v=m15", "campo.js?v=m15", "mobile.js?v=m15", "editor.js?v=m14", "proposte.js?v=m3", "manifest.json",
+  "../config.js?v=m1", "../lib/supabase.js", "../filigrana.js?v=m12", "../pedine.js?v=m14", "../speciali.js?v=m15", "../avversari.js?v=m14", "../annotazioni.js?v=m7", "../formazioni.js?v=m14", "../regole.js?v=m14",
   "../categorie.js?v=m14", "../tracce.js?v=m14", "../animazione.js?v=m14", "../cloud.js?v=m1", "../icon-180.png",
 ];
 

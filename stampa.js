@@ -75,6 +75,24 @@ function gruppiPerTag(schemi, conLato) {
   return gruppi;
 }
 
+/* Gruppi per sezione (sezioni.js): nell'ordine delle sezioni del playbook,
+   in fondo quelli senza sezione. */
+function gruppiPerSezione(schemi, conLato) {
+  const gruppi = [];
+  for (const lato of ORDINE_LATI) {
+    const delLato = schemi.filter((s) => s.lato === lato);
+    if (!delLato.length) continue;
+    const prefisso = conLato ? `${NOMI_LATO[lato]} · ` : "";
+    for (const sez of sezioniDel(lato)) {
+      const qui = delLato.filter((s) => s.sezione === sez.id);
+      if (qui.length) gruppi.push({ nome: `${prefisso}${sez.nome}`, lato, schemi: qui });
+    }
+    const senza = delLato.filter((s) => !sezioneDi(s));
+    if (senza.length) gruppi.push({ nome: `${prefisso}Senza sezione`, lato, schemi: senza });
+  }
+  return gruppi;
+}
+
 function chiaveOrdine() {
   return "playbook.ordine-formazioni." + (playbookCorrente ? playbookCorrente.id : "");
 }
@@ -119,6 +137,7 @@ function mostraOrdineFormazioni() {
     formazione: "Un gruppo per formazione, nell'ordine che scegli qui sotto.",
     categoria: "Corsa, Passaggio, Play action, RPO, Screen, Trick play… e in fondo quelli senza categoria.",
     tag: "Un gruppo per tag, in ordine alfabetico: ogni schema va sotto il suo primo tag.",
+    sezione: "Un gruppo per sezione, nell'ordine delle sezioni; in fondo gli schemi senza sezione.",
   }[raggruppa];
   const attivo = raggruppa === "formazione";
   $("#blocco-formazioni").hidden = !attivo;
@@ -420,6 +439,7 @@ function costruisciPagine(opzioni, contenitore) {
   const gruppi = !dividi
     ? [{ nome: null, schemi: schemiTutti, formazione: null, lato: null }]
     : raggruppa === "categoria" ? gruppiPerCategoria(schemiTutti, opzioni.cosa === "tutto")
+    : raggruppa === "sezione" ? gruppiPerSezione(schemiTutti, opzioni.cosa === "tutto")
     : raggruppa === "tag" ? gruppiPerTag(schemiTutti, opzioni.cosa === "tutto")
     : gruppiPerFormazione(schemiTutti);
   const schemi = gruppi.flatMap((g) => g.schemi); // ordine finale, per numeri e indice

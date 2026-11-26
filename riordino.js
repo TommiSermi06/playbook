@@ -10,6 +10,7 @@
    ========================================================================== */
 
 let idTrascinato = null;
+let annullaAncheSezione = null; // sezioni.js: rimette lo schema nella sezione di prima
 
 // Si riordina solo nei propri playbook e quando l'elenco non è filtrato dalla ricerca
 function puoRiordinare() {
@@ -57,7 +58,11 @@ function abilitaRiordino(riga, schema) {
     e.preventDefault();
     const sopra = metaSopra(riga, e);
     const mosso = idTrascinato;
+    idTrascinato = null; // la riga trascinata sparisce col ridisegno: niente «dragend»
+    document.body.classList.remove("riordino-in-corso");
     togliSegni();
+    // tra gli schemi di un'altra sezione: cambia anche sezione (Annulla rimette tutto)
+    annullaAncheSezione = typeof seguiSezioneDi === "function" ? seguiSezioneDi(mosso, schema) : null;
     spostaSchema(mosso, schema.id, sopra);
   });
 }
@@ -96,7 +101,10 @@ function salvaOrdine(nuovo, idMosso) {
     setTimeout(() => riga.classList.remove("appena-spostata"), 900);
   }
   aggiornaOrdineSeCondiviso(pb.id); // anche il link in sola lettura segue il nuovo ordine
-  mostraAvviso("Ordine aggiornato", () => {
+  const sezione = annullaAncheSezione;
+  annullaAncheSezione = null;
+  mostraAvviso(sezione ? "Spostato nella sezione" : "Ordine aggiornato", () => {
+    if (sezione) sezione();
     if (vecchio) pb.ordine = vecchio; else delete pb.ordine;
     Playbook.salva(pb);
     mostraElenco();

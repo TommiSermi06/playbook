@@ -68,9 +68,9 @@ function impostaCampo(schema) {
 // Disegna qualcosa con le misure di "schema" e poi torna a quelle dello schema aperto
 function conCampoDi(schema, fn) {
   impostaCampo(schema);
-  try { return fn(); } finally { impostaCampo(schemaAperto()); }
+  try { return fn(); } finally { impostaCampo(schemaInModifica()); }
 }
-function schemaAperto() {
+function schemaInModifica() {
   return typeof schemaCorrente !== "undefined" ? schemaCorrente : null;
 }
 
