@@ -3,6 +3,14 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.39 — stampa: galleria dei tipi, stili e anteprima
+
+- La finestra «Stampa» parte da una galleria di 6 tipi, ognuno con l'anteprima vera della prima pagina (fatta con i propri schemi): Wristband · Schemi, Wristband · Lista, Call sheet · Schemi, Call sheet · Lista, Playbook, Scout cards (`stampa-scelta.js`)
+- Ogni tipo ha i suoi stili, con miniatura: wristband 12 / 8 / 6 / 4 schemi; liste 24 / 36 / 12 grandi / a colori; call sheet per situazione, per categoria, per formazione e griglia di schemi (con titoli a colori); playbook 1 / 2 / 4 / 6 per pagina e «con appunti»; scout cards 1 o 2 per foglio e «vista dall'altra parte»
+- Anteprima grande da sfogliare pagina per pagina, che cambia con le opzioni: è esattamente quello che esce in stampa
+- Nuove **Scout cards**: una carta per schema con numero e nome grandi e il campo grandissimo
+- Corretto: nella stampa l'ordine delle formazioni (trascina / frecce) non si salvava più dopo l'arrivo del riordino degli schemi
+
 ## Versione 0.38 — Special teams
 
 - Terza sezione **Special** accanto ad Attacco e Difesa (computer e telefono; non c'è nei playbook flag) — `speciali.js`

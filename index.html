@@ -24,7 +24,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=0.38">
+  <link rel="stylesheet" href="style.css?v=0.39">
 </head>
 <body>
   <!-- ======================================================================
@@ -93,7 +93,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.38<button type="button" class="btn-tema btn-tema-laterale">☀️ Tema chiaro</button></p>
+      <p class="versione" id="versione">Versione 0.39<button type="button" class="btn-tema btn-tema-laterale">☀️ Tema chiaro</button></p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -431,86 +431,101 @@
        FINESTRA "STAMPA IL PLAYBOOK"
        ====================================================================== -->
   <form class="dialogo dialogo-stampa" id="foglio-stampa" role="dialog" aria-modal="true" hidden>
-    <p class="dialogo-titolo">Stampa il playbook</p>
-    <p class="dialogo-testo">Con il logo e il nome della squadra su ogni pagina.</p>
-
-    <!-- Tipo di stampa: playbook, wristband del QB o call sheet -->
-    <div class="segmentato segmentato-3" id="stampa-tipo">
-      <button type="button" class="segmento" data-valore="playbook">📘 Playbook</button>
-      <button type="button" class="segmento" data-valore="wristband">⌚ Wristband</button>
-      <button type="button" class="segmento" data-valore="callsheet">📋 Call sheet</button>
-    </div>
-    <p class="info-tipo" id="info-tipo"></p>
-
-    <!-- Formato del foglio (il wristband resta in A4: inserti a misura vera) -->
-    <div id="blocco-carta">
-      <p class="etichetta-stampa">Foglio</p>
-      <div class="segmentato segmentato-2" id="stampa-carta">
-        <button type="button" class="segmento" data-valore="A4">A4</button>
-        <button type="button" class="segmento" data-valore="A3">A3 · tutto più grande</button>
+    <!-- PASSO 1: galleria dei tipi di stampa, con l'anteprima vera dei tuoi schemi (stampa-scelta.js) -->
+    <div class="passo-stampa" id="passo-galleria">
+      <p class="dialogo-titolo">Stampa</p>
+      <p class="dialogo-testo">Scegli cosa stampare: le anteprime usano i tuoi schemi.</p>
+      <div class="galleria-stampa" id="galleria-stampa"></div>
+      <p class="messaggio-errore" id="errore-galleria"></p>
+      <div class="dialogo-pulsanti">
+        <button type="button" class="btn-secondario" id="btn-stampa-chiudi">Chiudi</button>
       </div>
     </div>
 
-    <p class="etichetta-stampa">Cosa stampare</p>
-    <div class="lista-stampa" id="stampa-cosa"></div>
-
-    <!-- Opzioni del wristband -->
-    <div class="opzioni-tipo" id="opzioni-wristband">
-      <p class="etichetta-stampa">Contenuto dell'inserto</p>
-      <div class="segmentato segmentato-2" id="stampa-wristband">
-        <button type="button" class="segmento" data-valore="schemi">Con mini-schemi · 12</button>
-        <button type="button" class="segmento" data-valore="testo">Solo testo · 24</button>
+    <!-- PASSO 2: stile, opzioni e anteprima grande -->
+    <div class="passo-stampa" id="passo-opzioni" hidden>
+      <div class="testa-passo-stampa">
+        <button type="button" class="btn-indietro-stampa" id="btn-stampa-indietro">‹ Tutti i tipi</button>
+        <p class="dialogo-titolo" id="titolo-scheda-stampa"></p>
+        <span></span>
       </div>
-      <label class="riga-copie">Copie <input type="number" id="stampa-copie" min="1" max="10" value="1"></label>
-    </div>
+      <p class="etichetta-stampa">Stile</p>
+      <div class="stili-stampa" id="stili-stampa"></div>
 
-    <!-- Opzioni del call sheet -->
-    <div class="opzioni-tipo" id="opzioni-callsheet">
-      <label class="spunta-stampa"><input type="checkbox" id="stampa-mini-schemi"> Mini-schemi accanto alle chiamate</label>
-      <label class="spunta-stampa"><input type="checkbox" id="stampa-senza-situazione"> Aggiungi «Altri schemi» (senza situazione)</label>
-      <label class="spunta-stampa"><input type="checkbox" id="stampa-note-callsheet"> Riquadro «Note» con le righe, per scrivere a pennarello</label>
-    </div>
+      <div class="colonne-stampa">
+        <div class="colonna-opzioni-stampa">
+          <p class="info-tipo" id="info-tipo"></p>
 
-    <div class="opzioni-tipo" id="opzioni-playbook">
-    <p class="etichetta-stampa">Schemi per pagina</p>
-    <div class="segmentato segmentato-4" id="stampa-per-pagina">
-      <button type="button" class="segmento" data-valore="1">1</button>
-      <button type="button" class="segmento" data-valore="2">2</button>
-      <button type="button" class="segmento" data-valore="4">4</button>
-      <button type="button" class="segmento" data-valore="6">6</button>
-    </div>
+          <p class="etichetta-stampa">Cosa stampare</p>
+          <div class="lista-stampa" id="stampa-cosa"></div>
 
-    <p class="etichetta-stampa">Campo</p>
-    <div class="segmentato segmentato-2" id="stampa-campo">
-      <button type="button" class="segmento" data-valore="chiaro">Chiaro · meno inchiostro</button>
-      <button type="button" class="segmento" data-valore="scuro">Scuro come nell'app</button>
-    </div>
+          <!-- Formato del foglio (il wristband resta in A4: inserti a misura vera) -->
+          <div id="blocco-carta">
+            <p class="etichetta-stampa">Foglio</p>
+            <div class="segmentato segmentato-2" id="stampa-carta">
+              <button type="button" class="segmento" data-valore="A4">A4</button>
+              <button type="button" class="segmento" data-valore="A3">A3 · tutto più grande</button>
+            </div>
+          </div>
 
-    <!-- Raggruppamento: per formazione (con l'ordine scelto dal coach), per categoria o per tag -->
-    <p class="etichetta-stampa">Raggruppa (ogni gruppo da una pagina nuova)</p>
-    <div class="segmentato segmentato-4" id="stampa-raggruppa">
-      <button type="button" class="segmento" data-valore="nessuno">Nessuno</button>
-      <button type="button" class="segmento" data-valore="formazione">Formazione</button>
-      <button type="button" class="segmento" data-valore="categoria">Categoria</button>
-      <button type="button" class="segmento" data-valore="tag">Tag</button>
-    </div>
-    <p class="suggerimento-stampa aiuto-raggruppa" id="aiuto-raggruppa"></p>
-    <input type="checkbox" id="stampa-per-formazione" hidden>
-    <div class="blocco-formazioni" id="blocco-formazioni">
-      <p class="etichetta-stampa">Ordine delle formazioni <span class="aiuto-ordine">trascina o usa le frecce</span></p>
-      <ol class="ordine-formazioni" id="ordine-formazioni"></ol>
-      <label class="spunta-stampa"><input type="checkbox" id="stampa-formazione-vuota"> Formazione vuota (senza tracce) all'inizio di ogni gruppo</label>
-    </div>
+          <div id="blocco-campo">
+            <p class="etichetta-stampa">Campo</p>
+            <div class="segmentato segmentato-2" id="stampa-campo">
+              <button type="button" class="segmento" data-valore="chiaro">Chiaro · meno inchiostro</button>
+              <button type="button" class="segmento" data-valore="scuro">Scuro come nell'app</button>
+            </div>
+          </div>
 
-    <label class="spunta-stampa"><input type="checkbox" id="stampa-copertina"> Copertina con logo e indice</label>
-    <label class="spunta-stampa"><input type="checkbox" id="stampa-note"> Note di ogni schema</label>
-    </div>
+          <!-- Opzioni del wristband -->
+          <div class="opzioni-tipo" id="opzioni-wristband">
+            <label class="riga-copie">Copie <input type="number" id="stampa-copie" min="1" max="10" value="1"></label>
+          </div>
 
-    <p class="messaggio-errore" id="errore-stampa"></p>
-    <p class="suggerimento-stampa">Nella finestra che si apre scegli la stampante oppure <b>«Salva come PDF»</b>.</p>
-    <div class="dialogo-pulsanti">
-      <button type="button" class="btn-secondario" id="btn-stampa-annulla">Annulla</button>
-      <button type="submit" class="btn-pieno" id="btn-stampa-vai">Stampa / PDF</button>
+          <!-- Opzioni del call sheet -->
+          <div class="opzioni-tipo" id="opzioni-callsheet">
+            <label class="spunta-stampa"><input type="checkbox" id="stampa-colori-callsheet"> Titoli a colori</label>
+            <label class="spunta-stampa" id="riga-senza-situazione"><input type="checkbox" id="stampa-senza-situazione"> Aggiungi «Altri schemi» (senza situazione)</label>
+            <label class="spunta-stampa" id="riga-note-callsheet"><input type="checkbox" id="stampa-note-callsheet"> Riquadro «Note» con le righe, per scrivere a pennarello</label>
+          </div>
+
+          <!-- Opzioni del playbook -->
+          <div class="opzioni-tipo" id="opzioni-playbook">
+            <!-- Raggruppamento: per formazione (con l'ordine scelto dal coach), per categoria o per tag -->
+            <p class="etichetta-stampa">Raggruppa (ogni gruppo da una pagina nuova)</p>
+            <div class="segmentato segmentato-4" id="stampa-raggruppa">
+              <button type="button" class="segmento" data-valore="nessuno">Nessuno</button>
+              <button type="button" class="segmento" data-valore="formazione">Formazione</button>
+              <button type="button" class="segmento" data-valore="categoria">Categoria</button>
+              <button type="button" class="segmento" data-valore="tag">Tag</button>
+            </div>
+            <p class="suggerimento-stampa aiuto-raggruppa" id="aiuto-raggruppa"></p>
+            <input type="checkbox" id="stampa-per-formazione" hidden>
+            <div class="blocco-formazioni" id="blocco-formazioni">
+              <p class="etichetta-stampa">Ordine delle formazioni <span class="aiuto-ordine">trascina o usa le frecce</span></p>
+              <ol class="ordine-formazioni" id="ordine-formazioni"></ol>
+              <label class="spunta-stampa"><input type="checkbox" id="stampa-formazione-vuota"> Formazione vuota (senza tracce) all'inizio di ogni gruppo</label>
+            </div>
+            <label class="spunta-stampa"><input type="checkbox" id="stampa-copertina"> Copertina con logo e indice</label>
+            <label class="spunta-stampa"><input type="checkbox" id="stampa-note"> Note di ogni schema</label>
+          </div>
+        </div>
+
+        <div class="colonna-anteprima-stampa">
+          <div class="anteprima-grande" id="anteprima-grande"></div>
+          <div class="naviga-anteprima">
+            <button type="button" class="btn-mini" id="anteprima-prima" aria-label="Pagina precedente">‹</button>
+            <span id="pagina-anteprima"></span>
+            <button type="button" class="btn-mini" id="anteprima-dopo" aria-label="Pagina successiva">›</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="messaggio-errore" id="errore-stampa"></p>
+      <p class="suggerimento-stampa">Nella finestra che si apre scegli la stampante oppure <b>«Salva come PDF»</b>.</p>
+      <div class="dialogo-pulsanti">
+        <button type="button" class="btn-secondario" id="btn-stampa-annulla">Annulla</button>
+        <button type="submit" class="btn-pieno" id="btn-stampa-vai">Stampa / PDF</button>
+      </div>
     </div>
   </form>
 
@@ -580,36 +595,37 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="tema.js?v=0.38"></script>
-  <script src="filigrana.js?v=0.38"></script>
-  <script src="pedine.js?v=0.38"></script>
-  <script src="config.js?v=0.38"></script>
+  <script src="tema.js?v=0.39"></script>
+  <script src="filigrana.js?v=0.39"></script>
+  <script src="pedine.js?v=0.39"></script>
+  <script src="config.js?v=0.39"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.38"></script>
-  <script src="regole.js?v=0.38"></script>
-  <script src="cloud.js?v=0.38"></script>
-  <script src="dati.js?v=0.38"></script>
-  <script src="formazioni-personali.js?v=0.38"></script>
-  <script src="app.js?v=0.38"></script>
-  <script src="tracce.js?v=0.38"></script>
-  <script src="avversari.js?v=0.38"></script>
-  <script src="annotazioni.js?v=0.38"></script>
-  <script src="animazione.js?v=0.38"></script>
-  <script src="costruttore.js?v=0.38"></script>
-  <script src="lucchetto.js?v=0.38"></script>
-  <script src="stampa.js?v=0.38"></script>
-  <script src="partita.js?v=0.38"></script>
-  <script src="playbook.js?v=0.38"></script>
-  <script src="squadra.js?v=0.38"></script>
-  <script src="avversari-ui.js?v=0.38"></script>
-  <script src="note-campo.js?v=0.38"></script>
-  <script src="selezione.js?v=0.38"></script>
-  <script src="categorie.js?v=0.38"></script>
-  <script src="speciali.js?v=0.38"></script>
-  <script src="riordino.js?v=0.38"></script>
-  <script src="condivisione.js?v=0.38"></script>
-  <script src="proposte.js?v=0.38"></script>
-  <script src="accesso.js?v=0.38"></script>
-  <script src="aggiornamento.js?v=0.38"></script>
+  <script src="formazioni.js?v=0.39"></script>
+  <script src="regole.js?v=0.39"></script>
+  <script src="cloud.js?v=0.39"></script>
+  <script src="dati.js?v=0.39"></script>
+  <script src="formazioni-personali.js?v=0.39"></script>
+  <script src="app.js?v=0.39"></script>
+  <script src="tracce.js?v=0.39"></script>
+  <script src="avversari.js?v=0.39"></script>
+  <script src="annotazioni.js?v=0.39"></script>
+  <script src="animazione.js?v=0.39"></script>
+  <script src="costruttore.js?v=0.39"></script>
+  <script src="lucchetto.js?v=0.39"></script>
+  <script src="stampa.js?v=0.39"></script>
+  <script src="partita.js?v=0.39"></script>
+  <script src="stampa-scelta.js?v=0.39"></script>
+  <script src="playbook.js?v=0.39"></script>
+  <script src="squadra.js?v=0.39"></script>
+  <script src="avversari-ui.js?v=0.39"></script>
+  <script src="note-campo.js?v=0.39"></script>
+  <script src="selezione.js?v=0.39"></script>
+  <script src="categorie.js?v=0.39"></script>
+  <script src="speciali.js?v=0.39"></script>
+  <script src="riordino.js?v=0.39"></script>
+  <script src="condivisione.js?v=0.39"></script>
+  <script src="proposte.js?v=0.39"></script>
+  <script src="accesso.js?v=0.39"></script>
+  <script src="aggiornamento.js?v=0.39"></script>
 </body>
 </html>

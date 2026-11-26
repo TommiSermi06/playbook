@@ -176,10 +176,20 @@ function schemiNumerati(schemi) {
   return schemi.filter((s) => s.chiamata).sort((a, b) => a.chiamata - b.chiamata);
 }
 
+/* Stili del wristband:
+   - con gli schemi: 12 (4×3), 8 (4×2), 6 (3×2) o 4 (2×2) per inserto
+   - lista: "24" (2 colonne con formazione), "36" (3 colonne, solo nome),
+     "12" (1 colonna, testo grande), "colori" (24 con il colore della categoria) */
+const GRIGLIE_WRISTBAND = { 12: [4, 3], 8: [4, 2], 6: [3, 2], 4: [2, 2] };
+const LISTE_WRISTBAND = { 24: [2, 12], 36: [3, 12], 12: [1, 12], colori: [2, 12] };
+
 function costruisciWristband(opzioni, contenitore) {
-  const schemi = schemiNumerati(schemiDaStampare(opzioni.cosa));
+  const schemi = schemiNumerati(schemiDaStampare(opzioni.cosa)).slice(0, opzioni.limite || Infinity);
   const conSchemi = opzioni.wristband !== "testo";
-  const perInserto = conSchemi ? 12 : 24;
+  const lista = LISTE_WRISTBAND[opzioni.lista] ? String(opzioni.lista) : "24";
+  const [colonne, righe] = conSchemi ? GRIGLIE_WRISTBAND[opzioni.perInserto] || GRIGLIE_WRISTBAND[12] : LISTE_WRISTBAND[lista];
+  const perInserto = colonne * righe;
+  const stile = { conSchemi, colonne, righe, lista };
   const inserti = [];
   for (let i = 0; i < schemi.length; i += perInserto) inserti.push(schemi.slice(i, i + perInserto));
   const copie = Math.max(1, Math.min(10, opzioni.copie || 1));
@@ -192,7 +202,7 @@ function costruisciWristband(opzioni, contenitore) {
     const pag = elemento("section", "pagina-stampa pagina-wristband");
     pag.appendChild(intestazione(`${playbookCorrente.nome} · Wristband`, p + 1, pagine.length));
     const colonna = elemento("div", "colonna-inserti");
-    for (const ins of gruppo) colonna.appendChild(insertoWristband(ins, conSchemi, inserti.length, copie));
+    for (const ins of gruppo) colonna.appendChild(insertoWristband(ins, stile, inserti.length, copie));
     pag.appendChild(colonna);
     pag.appendChild(elemento("p", "pagina-piede", "✂ Ritaglia lungo il tratteggio · inserto 12 × 7 cm"));
     contenitore.appendChild(pag);
@@ -200,24 +210,28 @@ function costruisciWristband(opzioni, contenitore) {
   return { titolo: `${playbookCorrente.nome} - Wristband`, pagine: pagine.length };
 }
 
-function insertoWristband(ins, conSchemi, totaleInserti, copie) {
-  const inserto = elemento("div", "inserto " + (conSchemi ? "con-schemi" : "solo-testo"));
+function insertoWristband(ins, { conSchemi, colonne, righe, lista }, totaleInserti, copie) {
+  const inserto = elemento("div", "inserto " + (conSchemi ? "con-schemi" : `solo-testo lista-${lista}`));
   const testa = elemento("div", "inserto-testa");
   testa.appendChild(elemento("strong", "", playbookCorrente.nome));
   const info = totaleInserti > 1 ? `Inserto ${ins.numero}/${totaleInserti}` : "";
   testa.appendChild(elemento("span", "", [info, copie > 1 ? `copia ${ins.copia}` : ""].filter(Boolean).join(" · ")));
   inserto.appendChild(testa);
   const griglia = elemento("div", "inserto-griglia");
+  griglia.style.gridTemplateColumns = `repeat(${colonne}, 1fr)`;
+  griglia.style.gridTemplateRows = `repeat(${righe}, 1fr)`;
   for (const s of ins.schemi) {
     const cella = elemento("div", "inserto-cella");
+    // Stile «A colori»: una striscia col colore della categoria (corsa, passaggio…)
+    if (lista === "colori" && categoriaDi(s)) cella.style.setProperty("--colore-categoria", coloreCategoria(s));
     const riga = elemento("div", "inserto-riga");
     riga.appendChild(elemento("span", "inserto-numero", String(s.chiamata)));
     const testi = elemento("span", "inserto-testi");
     testi.appendChild(elemento("span", "inserto-nome", s.nome || "Senza nome"));
-    if (!conSchemi) testi.appendChild(elemento("span", "inserto-formazione", nomeFormazione(s)));
+    if (!conSchemi && lista !== "36") testi.appendChild(elemento("span", "inserto-formazione", lista === "colori" && categoriaDi(s) ? nomeCategoria(s) : nomeFormazione(s)));
     riga.appendChild(testi);
     cella.appendChild(riga);
-    if (conSchemi) cella.appendChild(miniSchema(s, "inserto-campo", 1.75));
+    if (conSchemi) cella.appendChild(miniSchema(s, "inserto-campo", (116 / colonne) / (60 / righe - 4)));
     griglia.appendChild(cella);
   }
   inserto.appendChild(griglia);
@@ -233,14 +247,42 @@ function insertoWristband(ins, conSchemi, totaleInserti, copie) {
 // Altezze stimate in mm (la pagina non è visibile, quindi non si può misurare)
 const CALLSHEET = { altezzaColonna: 160, testa: 7, riga: 7.2, rigaConSchema: 17, spazio: 3 };
 
-function costruisciCallSheet(opzioni, contenitore) {
-  const schemi = schemiDaStampare(opzioni.cosa);
-  const riquadri = SITUAZIONI
-    .map((sit) => ({ nome: sit.nome, schemi: schemi.filter((s) => (s.situazioni || []).includes(sit.id)) }))
-    .filter((r) => r.schemi.length);
-  const senza = schemi.filter((s) => !(s.situazioni || []).length);
-  if (opzioni.senzaSituazione && senza.length) riquadri.push({ nome: "Altri schemi", schemi: senza });
+/* I riquadri del call sheet: per situazione (1° & 10, Red zone…),
+   per categoria (Corsa, Passaggio…) o per formazione. */
+function riquadriCallSheet(schemi, opzioni) {
+  const gruppi = opzioni.gruppiCallsheet || "situazione";
+  let riquadri;
+  if (gruppi === "categoria") {
+    riquadri = ORDINE_LATI.flatMap((lato) => (CATEGORIE[lato] || []).map((c) => ({
+      nome: `${c.icona} ${c.nome}`, schemi: schemi.filter((s) => s.lato === lato && s.categoria === c.id),
+    })));
+    riquadri.push({ nome: "Senza categoria", schemi: schemi.filter((s) => !categoriaDi(s)) });
+  } else if (gruppi === "formazione") {
+    const mappa = new Map();
+    for (const s of schemi) {
+      const k = `${s.lato}|${chiaveFormazione(s)}`;
+      if (!mappa.has(k)) mappa.set(k, { nome: nomeFormazione(s), schemi: [] });
+      mappa.get(k).schemi.push(s);
+    }
+    riquadri = [...mappa.values()];
+  } else {
+    riquadri = SITUAZIONI.map((sit) => ({ nome: sit.nome, schemi: schemi.filter((s) => (s.situazioni || []).includes(sit.id)) }));
+    const senza = schemi.filter((s) => !(s.situazioni || []).length);
+    if (opzioni.senzaSituazione && senza.length) riquadri.push({ nome: "Altri schemi", schemi: senza });
+  }
+  riquadri = riquadri.filter((r) => r.schemi.length);
   for (const r of riquadri) r.schemi.sort((a, b) => (a.chiamata || 9999) - (b.chiamata || 9999));
+  return riquadri;
+}
+
+// Colori dei titoli dei riquadri (stile «Titoli a colori»)
+const COLORI_RIQUADRI = ["#D7263D", "#F46036", "#E2B400", "#1B998B", "#2E86AB", "#7B2CBF", "#C2185B", "#3A7D44"];
+
+function costruisciCallSheet(opzioni, contenitore) {
+  if (opzioni.gruppiCallsheet === "griglia") return costruisciGrigliaSchemi(opzioni, contenitore);
+  const schemi = schemiDaStampare(opzioni.cosa).slice(0, opzioni.limite || Infinity);
+  const riquadri = riquadriCallSheet(schemi, opzioni);
+  riquadri.forEach((r, i) => { if (opzioni.coloriCallsheet) r.colore = COLORI_RIQUADRI[i % COLORI_RIQUADRI.length]; });
 
   // 1. Distribuisce i riquadri nelle colonne
   // In A3 il foglio è più grande: più colonne e colonne più alte (stessa grandezza del testo)
@@ -265,7 +307,7 @@ function costruisciCallSheet(opzioni, contenitore) {
         if (libero < C.testa + altezzaRiga) { colonne.push([]); libero = altezzaDi(colonne.length - 1); }
         const entrano = Math.max(1, Math.floor((libero - C.testa - C.spazio) / altezzaRiga));
         const pezzo = resto.slice(0, entrano);
-        colonne[colonne.length - 1].push({ nome: r.nome + (primo ? "" : " (segue)"), totale: r.schemi.length, schemi: pezzo });
+        colonne[colonne.length - 1].push({ nome: r.nome + (primo ? "" : " (segue)"), totale: r.schemi.length, schemi: pezzo, colore: r.colore });
         libero -= C.testa + C.spazio + pezzo.length * altezzaRiga;
         resto = resto.slice(entrano);
         primo = false;
@@ -305,8 +347,9 @@ function costruisciCallSheet(opzioni, contenitore) {
       griglia.appendChild(col);
     });
     if (!riquadri.length) {
-      griglia.appendChild(elemento("p", "callsheet-vuoto",
-        "Nessuno schema ha una situazione: aprili e scegli 1° & 10, 3° & corto, Red zone…"));
+      griglia.appendChild(elemento("p", "callsheet-vuoto", (opzioni.gruppiCallsheet || "situazione") === "situazione"
+        ? "Nessuno schema ha una situazione: aprili e scegli 1° & 10, 3° & corto, Red zone…"
+        : "Nessuno schema da mettere nel call sheet."));
     }
     pag.appendChild(griglia);
     if (conNote && p === pagine.length - 1) pag.appendChild(riquadroNote(fasciaNote - C.testa));
@@ -326,7 +369,8 @@ function riquadroNote(altezza) {
 }
 
 function riquadroSituazione(r, conSchemi) {
-  const box = elemento("section", "riquadro-situazione");
+  const box = elemento("section", "riquadro-situazione" + (r.colore ? " a-colori" : ""));
+  if (r.colore) box.style.setProperty("--colore-riquadro", r.colore);
   const titolo = elemento("h3", "", r.nome);
   titolo.appendChild(elemento("span", "", String(r.totale)));
   box.appendChild(titolo);
@@ -341,4 +385,92 @@ function riquadroSituazione(r, conSchemi) {
     box.appendChild(riga);
   }
   return box;
+}
+
+/* ==========================================================================
+   STAMPA: CALL SHEET «GRIGLIA DI SCHEMI»
+   Tutti gli schemi in ordine di numero, ognuno nel suo riquadro con il
+   mini-schema grande: 20 per foglio A4 orizzontale, 35 in A3.
+   ========================================================================== */
+function costruisciGrigliaSchemi(opzioni, contenitore) {
+  const tutti = schemiDaStampare(opzioni.cosa).slice(0, opzioni.limite || Infinity);
+  const schemi = [...tutti].sort((a, b) => (a.chiamata || 9999) - (b.chiamata || 9999));
+  const a3 = opzioni.carta === "A3";
+  const [colonne, righe] = a3 ? [7, 5] : [5, 4];
+  const perPagina = colonne * righe;
+  const pagine = [];
+  for (let i = 0; i < schemi.length; i += perPagina) pagine.push(schemi.slice(i, i + perPagina));
+  if (!pagine.length) pagine.push([]);
+  pagine.forEach((gruppo, p) => {
+    const pag = elemento("section", "pagina-stampa pagina-callsheet pagina-griglia-schemi" + (a3 ? " a3" : ""));
+    pag.appendChild(intestazione(`${playbookCorrente.nome} · Call sheet`, p + 1, pagine.length));
+    const griglia = elemento("div", "griglia-schemi-callsheet");
+    griglia.style.gridTemplateColumns = `repeat(${colonne}, 1fr)`;
+    griglia.style.gridTemplateRows = `repeat(${righe}, 1fr)`;
+    gruppo.forEach((s, i) => {
+      const cella = elemento("div", "cella-griglia-schemi");
+      if (opzioni.coloriCallsheet && categoriaDi(s)) cella.style.setProperty("--colore-riquadro", coloreCategoria(s));
+      const testa = elemento("div", "cella-griglia-testa");
+      testa.appendChild(elemento("span", "chiamata-numero", s.chiamata ? String(s.chiamata) : "–"));
+      testa.appendChild(elemento("span", "chiamata-nome", s.nome || "Senza nome"));
+      cella.appendChild(testa);
+      cella.appendChild(miniSchema(s, "cella-griglia-campo", 1.6));
+      griglia.appendChild(cella);
+    });
+    pag.appendChild(griglia);
+    pag.appendChild(elemento("p", "pagina-piede", "Creato con Playbook"));
+    contenitore.appendChild(pag);
+  });
+  return { titolo: `${playbookCorrente.nome} - Call sheet`, pagine: pagine.length };
+}
+
+// Colore di una categoria (per wristband e call sheet «a colori»)
+const COLORI_CATEGORIE = {
+  corsa: "#1E9E57", passaggio: "#1679C2", "play-action": "#7B2CBF", rpo: "#E2B400", screen: "#F46036", trick: "#C2185B",
+  zona: "#2E86AB", uomo: "#D7263D", blitz: "#F46036", "contro-corsa": "#1E9E57", speciale: "#7B2CBF",
+  kickoff: "#D7263D", "kick-return": "#1E9E57", punt: "#F46036", "punt-return": "#1B998B", "field-goal": "#2E86AB", "fg-block": "#7B2CBF", onside: "#E2B400",
+};
+function coloreCategoria(s) {
+  return COLORI_CATEGORIE[s.categoria] || "#6B7370";
+}
+
+/* ==========================================================================
+   STAMPA: SCOUT CARDS
+   Una carta per schema, con il campo grandissimo e numero e nome ben
+   visibili: si mostra alla scout team (o in allenamento) per far
+   ripetere lo schema. Stili: 1 per foglio (orizzontale), 2 per foglio,
+   oppure «vista dall'altra parte»: campo capovolto, come lo vede chi
+   sta di fronte (le scritte restano dritte).
+   ========================================================================== */
+function costruisciScout(opzioni, contenitore) {
+  const schemi = schemiDaStampare(opzioni.cosa).slice(0, opzioni.limite || Infinity);
+  const perPagina = opzioni.scoutPerPagina === 2 ? 2 : 1;
+  const pagine = [];
+  for (let i = 0; i < schemi.length; i += perPagina) pagine.push(schemi.slice(i, i + perPagina));
+  pagine.forEach((gruppo) => {
+    const pag = elemento("section", `pagina-stampa pagina-scout scout-${perPagina}` + (opzioni.capovolta ? " capovolta" : ""));
+    for (const s of gruppo) {
+      const carta = elemento("article", "carta-scout");
+      const testa = elemento("header", "carta-scout-testa");
+      if (s.chiamata) testa.appendChild(elemento("span", "carta-scout-numero", String(s.chiamata)));
+      const testi = elemento("div", "carta-scout-testi");
+      testi.appendChild(elemento("strong", "", s.nome || "Senza nome"));
+      const cat = nomeCategoria(s);
+      testi.appendChild(elemento("span", "", `${NOMI_LATO[s.lato]} · ${nomeFormazione(s)}${cat ? " · " + cat : ""}`));
+      testa.appendChild(testi);
+      if (Squadra.logo) {
+        const img = document.createElement("img");
+        img.src = Squadra.logo; img.alt = ""; img.className = "carta-scout-logo";
+        testa.appendChild(img);
+      }
+      carta.appendChild(testa);
+      const svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("class", "campo-stampa campo-scout");
+      disegnaCampo(svg, s, { stampa: true });
+      carta.appendChild(svg);
+      pag.appendChild(carta);
+    }
+    contenitore.appendChild(pag);
+  });
+  return { titolo: `${playbookCorrente.nome} - Scout cards`, pagine: pagine.length };
 }

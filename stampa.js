@@ -103,70 +103,7 @@ function gruppiPerFormazione(schemi) {
 }
 let opzioniStampa = { ...OPZIONI_STAMPA_DEFAULT, ...(leggiLocale("playbook.opzioni-stampa") || {}) };
 
-/* ---------- Finestra delle opzioni ---------- */
-function apriFoglioStampa() {
-  if (Tracce.disegno) Tracce.annullaDisegno();
-  chiudiMenuTracce();
-  salvaInSospeso();
-
-  if (!playbookCorrente) return; // si stampa da dentro un playbook
-  const tutti = schemiDelPlaybook();
-  const conta = (lato) => tutti.filter((s) => s.lato === lato).length;
-  const scelte = [
-    { id: "schema", testo: "Solo lo schema aperto", n: schemaCorrente ? 1 : 0 },
-    { id: "attacco", testo: "Tutto l'attacco", n: conta("attacco") },
-    { id: "difesa", testo: "Tutta la difesa", n: conta("difesa") },
-    ...(conta("speciali") ? [{ id: "speciali", testo: "Tutti gli special teams", n: conta("speciali") }] : []),
-    { id: "tutto", testo: `Tutto «${playbookCorrente.nome}»`, n: tutti.length },
-  ];
-  // Se la scelta salvata non ha schemi, passiamo alla prima che ne ha
-  if (!scelte.find((s) => s.id === opzioniStampa.cosa && s.n)) {
-    opzioniStampa.cosa = (scelte.find((s) => s.n) || scelte[scelte.length - 1]).id;
-  }
-
-  const lista = $("#stampa-cosa");
-  lista.innerHTML = "";
-  for (const s of scelte) {
-    const riga = document.createElement("label");
-    riga.className = "scelta-stampa" + (s.n ? "" : " vuota");
-    riga.innerHTML = `<input type="radio" name="stampa-cosa"><span></span><span class="conteggio-stampa"></span>`;
-    const radio = riga.querySelector("input");
-    radio.value = s.id;
-    radio.disabled = !s.n;
-    radio.checked = opzioniStampa.cosa === s.id;
-    riga.querySelector("span").textContent = s.testo;
-    riga.querySelector(".conteggio-stampa").textContent = s.n === 1 ? "1 schema" : `${s.n} schemi`;
-    lista.appendChild(riga);
-  }
-
-  impostaSegmentato("#stampa-tipo", opzioniStampa.tipo || "playbook");
-  impostaSegmentato("#stampa-carta", opzioniStampa.carta || "A4");
-  impostaSegmentato("#stampa-wristband", opzioniStampa.wristband || "schemi");
-  $("#stampa-copie").value = opzioniStampa.copie || 1;
-  $("#stampa-mini-schemi").checked = Boolean(opzioniStampa.miniSchemi);
-  $("#stampa-senza-situazione").checked = Boolean(opzioniStampa.senzaSituazione);
-  $("#stampa-note-callsheet").checked = opzioniStampa.noteCallsheet !== false;
-  $("#stampa-per-formazione").checked = opzioniStampa.perFormazione !== false;
-  // Raggruppa: per le opzioni salvate prima esisteva solo «Dividi per formazioni»
-  impostaSegmentato("#stampa-raggruppa", opzioniStampa.raggruppa || (opzioniStampa.perFormazione === false ? "nessuno" : "formazione"));
-  $("#stampa-formazione-vuota").checked = opzioniStampa.formazioneVuota !== false;
-  mostraOrdineFormazioni();
-  aggiornaOpzioniTipo();
-
-  impostaSegmentato("#stampa-per-pagina", String(opzioniStampa.perPagina));
-  impostaSegmentato("#stampa-campo", opzioniStampa.campo);
-  $("#stampa-copertina").checked = opzioniStampa.copertina;
-  $("#stampa-note").checked = opzioniStampa.note;
-  $("#errore-stampa").textContent = tutti.length ? "" : "Non ci sono ancora schemi da stampare.";
-  $("#btn-stampa-vai").disabled = !tutti.length;
-
-  $("#velo").hidden = false;
-  $("#foglio-stampa").hidden = false;
-  requestAnimationFrame(() => {
-    $("#velo").classList.add("visibile");
-    $("#foglio-stampa").classList.add("visibile");
-  });
-}
+/* La finestra di stampa (galleria, stili, anteprima) è in stampa-scelta.js */
 
 /* ---------- Lista "Ordine delle formazioni" (trascina o frecce) ---------- */
 function cosaScelta() {
@@ -238,11 +175,12 @@ function ordineAttuale() {
   return [...document.querySelectorAll("#ordine-formazioni .riga-ordine")].map((r) => r.dataset.chiave);
 }
 
-function salvaOrdine(ordine) {
+function salvaOrdineFormazioni(ordine) {
   // teniamo anche le formazioni non presenti in questa stampa, in coda
   const vecchio = (leggiLocale(chiaveOrdine()) || []).filter((k) => !ordine.includes(k));
   scriviLocale(chiaveOrdine(), [...ordine, ...vecchio]);
   mostraOrdineFormazioni();
+  if (typeof aggiornaAnteprimaStampa === "function") aggiornaAnteprimaStampa(); // anche l'anteprima segue il nuovo ordine
   const riga = document.querySelector(`#ordine-formazioni [data-chiave="${CSS.escape(ordine.__mossa || "")}"]`);
   if (riga) riga.classList.add("appena-spostata");
 }
@@ -253,7 +191,7 @@ function spostaGruppo(chiave, verso) {
   if (i < 0 || j < 0 || j >= ordine.length) return;
   [ordine[i], ordine[j]] = [ordine[j], ordine[i]];
   ordine.__mossa = chiave;
-  salvaOrdine(ordine);
+  salvaOrdineFormazioni(ordine);
 }
 
 function mettiGruppo(chiave, vicino, prima) {
@@ -261,7 +199,7 @@ function mettiGruppo(chiave, vicino, prima) {
   const i = ordine.indexOf(vicino);
   ordine.splice(prima ? i : i + 1, 0, chiave);
   ordine.__mossa = chiave;
-  salvaOrdine(ordine);
+  salvaOrdineFormazioni(ordine);
 }
 
 $("#stampa-per-formazione").addEventListener("change", mostraOrdineFormazioni);
@@ -285,82 +223,13 @@ function impostaSegmentato(selettore, valore) {
   gruppo.style.setProperty("--indice", indice);
   gruppo.dataset.valore = bottoni[indice].dataset.valore;
 }
-["#stampa-per-pagina", "#stampa-campo", "#stampa-tipo", "#stampa-wristband", "#stampa-carta", "#stampa-raggruppa"].forEach((sel) => {
+["#stampa-campo", "#stampa-carta", "#stampa-raggruppa"].forEach((sel) => {
   $(sel).querySelectorAll(".segmento").forEach((b) =>
     b.addEventListener("click", () => {
       impostaSegmentato(sel, b.dataset.valore);
-      if (sel === "#stampa-tipo") aggiornaOpzioniTipo();
       if (sel === "#stampa-raggruppa") mostraOrdineFormazioni();
+      aggiornaAnteprimaStampa(); // stampa-scelta.js
     }));
-});
-
-/* Mostra le opzioni giuste per il tipo di stampa e un riepilogo
-   (es. "12 schemi con il numero di chiamata") */
-function aggiornaOpzioniTipo() {
-  const tipo = $("#stampa-tipo").dataset.valore || "playbook";
-  $("#opzioni-playbook").hidden = tipo !== "playbook";
-  $("#opzioni-wristband").hidden = tipo !== "wristband";
-  $("#opzioni-callsheet").hidden = tipo !== "callsheet";
-  $("#blocco-carta").hidden = tipo === "wristband"; // il wristband ha la misura fissa
-  const info = $("#info-tipo");
-  info.innerHTML = "";
-  info.className = "info-tipo";
-  if (tipo === "playbook") return;
-  const schemi = schemiDaStampare(cosaScelta());
-  if (tipo === "wristband") {
-    const numerati = schemi.filter((s) => s.chiamata).length;
-    if (numerati) {
-      info.textContent = `${numerati} ${numerati === 1 ? "schema" : "schemi"} con il numero di chiamata`;
-      if (numerati < schemi.length) info.textContent += ` (${schemi.length - numerati} senza numero restano fuori)`;
-    } else {
-      info.classList.add("da-fare");
-      info.textContent = "Nessuno schema ha ancora un numero di chiamata. ";
-    }
-    if (numerati < schemi.length) {
-      const b = Object.assign(document.createElement("button"), { type: "button", className: "btn-link", textContent: "Numera in automatico" });
-      b.addEventListener("click", () => numeraInAutomatico(["difesa", "speciali"].includes(cosaScelta()) ? cosaScelta() : "attacco"));
-      info.appendChild(b);
-    }
-  } else {
-    const conSituazione = schemi.filter((s) => (s.situazioni || []).length).length;
-    info.textContent = conSituazione
-      ? `${conSituazione} ${conSituazione === 1 ? "schema" : "schemi"} con almeno una situazione`
-      : "Nessuno schema ha ancora una situazione: aprili e scegli 1° & 10, 3° & corto, Red zone… nella sezione «Partita».";
-    if (!conSituazione) info.classList.add("da-fare");
-  }
-}
-$("#stampa-cosa").addEventListener("change", aggiornaOpzioniTipo);
-
-$("#btn-stampa").addEventListener("click", apriFoglioStampa);
-$("#btn-stampa-annulla").addEventListener("click", chiudiFoglioStampa);
-$("#foglio-stampa").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const scelta = document.querySelector('input[name="stampa-cosa"]:checked');
-  opzioniStampa = {
-    cosa: scelta ? scelta.value : "tutto",
-    perPagina: Number($("#stampa-per-pagina").dataset.valore),
-    campo: $("#stampa-campo").dataset.valore,
-    copertina: $("#stampa-copertina").checked,
-    note: $("#stampa-note").checked,
-    perFormazione: ($("#stampa-raggruppa").dataset.valore || "formazione") === "formazione",
-    raggruppa: $("#stampa-raggruppa").dataset.valore || "formazione",
-    formazioneVuota: $("#stampa-formazione-vuota").checked,
-    tipo: $("#stampa-tipo").dataset.valore || "playbook",
-    carta: $("#stampa-carta").dataset.valore || "A4",
-    wristband: $("#stampa-wristband").dataset.valore || "schemi",
-    copie: Math.max(1, Math.min(10, parseInt($("#stampa-copie").value, 10) || 1)),
-    miniSchemi: $("#stampa-mini-schemi").checked,
-    senzaSituazione: $("#stampa-senza-situazione").checked,
-    noteCallsheet: $("#stampa-note-callsheet").checked,
-  };
-  // Un wristband senza numeri di chiamata sarebbe vuoto
-  if (opzioniStampa.tipo === "wristband" && !schemiNumerati(schemiDaStampare(opzioniStampa.cosa)).length) {
-    $("#errore-stampa").textContent = "Dai prima un numero di chiamata agli schemi (o usa «Numera in automatico»).";
-    return;
-  }
-  scriviLocale("playbook.opzioni-stampa", opzioniStampa);
-  chiudiFoglioStampa();
-  setTimeout(() => stampaPlaybook(opzioniStampa), 250); // dopo la chiusura della finestra
 });
 
 /* ==========================================================================
@@ -411,7 +280,7 @@ function intestazione(titolo, numero, totale) {
   return testa;
 }
 
-function schedaSchema(schema, numero, conNote) {
+function schedaSchema(schema, numero, conNote, conAppunti = false) {
   const scheda = elemento("article", "scheda-schema");
   const titolo = elemento("div", "scheda-titolo");
   titolo.appendChild(elemento("span", "scheda-numero", String(numero)));
@@ -428,6 +297,8 @@ function schedaSchema(schema, numero, conNote) {
   if (conNote && schema.note && schema.note.trim()) {
     scheda.appendChild(elemento("p", "scheda-note", schema.note.trim()));
   }
+  // Stile «Con spazio per appunti»: righe vuote da scrivere a penna
+  if (conAppunti) scheda.appendChild(elemento("div", "scheda-appunti"));
   return scheda;
 }
 
@@ -509,20 +380,31 @@ function impostaPagina(orizzontale, carta = "A4") {
   stilePagina.textContent = `@page { size: ${carta} ${orizzontale ? "landscape" : "portrait"}; margin: 0; }`;
 }
 
-function costruisciStampa(opzioni) {
-  // Wristband e call sheet hanno una loro impaginazione (partita.js)
-  if (opzioni.tipo === "wristband" || opzioni.tipo === "callsheet") {
-    const contenitore = $("#stampa");
+/* Costruisce le pagine in "contenitore" (di solito #stampa, nascosto).
+   Con anteprima = true non tocca il formato della stampa vera: serve per
+   le anteprime nella finestra di stampa (opzioni.limite = quanti schemi
+   al massimo, per fare in fretta). Restituisce { titolo, pagine,
+   orizzontale, carta }. */
+function costruisciStampa(opzioni, contenitore = $("#stampa"), { anteprima = false } = {}) {
+  const esito = costruisciPagine(opzioni, contenitore);
+  if (!anteprima) impostaPagina(esito.orizzontale, esito.carta);
+  return esito;
+}
+
+function costruisciPagine(opzioni, contenitore) {
+  // Wristband, call sheet e scout cards hanno una loro impaginazione (partita.js)
+  if (opzioni.tipo === "wristband" || opzioni.tipo === "callsheet" || opzioni.tipo === "scout") {
     contenitore.innerHTML = "";
-    contenitore.className = `stampa campo-${opzioni.campo} tipo-${opzioni.tipo}`;
-    const esito = opzioni.tipo === "wristband"
-      ? costruisciWristband(opzioni, contenitore)
+    contenitore.className = `stampa campo-${opzioni.campo || "chiaro"} tipo-${opzioni.tipo}`;
+    const esito = opzioni.tipo === "wristband" ? costruisciWristband(opzioni, contenitore)
+      : opzioni.tipo === "scout" ? costruisciScout(opzioni, contenitore)
       : costruisciCallSheet({ ...opzioni, note: opzioni.noteCallsheet !== false }, contenitore);
-    // Il wristband resta in A4: gli inserti devono avere la misura vera (12 × 7 cm)
-    impostaPagina(opzioni.tipo === "callsheet", opzioni.tipo === "callsheet" ? opzioni.carta : "A4");
-    return esito;
+    // Il wristband resta in A4 verticale: gli inserti devono avere la misura vera (12 × 7 cm).
+    // Scout cards: 1 per foglio in orizzontale, 2 per foglio in verticale.
+    const orizzontale = opzioni.tipo === "callsheet" || (opzioni.tipo === "scout" && opzioni.scoutPerPagina !== 2);
+    return { ...esito, orizzontale, carta: opzioni.tipo === "wristband" ? "A4" : opzioni.carta || "A4" };
   }
-  const schemiTutti = schemiDaStampare(opzioni.cosa);
+  const schemiTutti = schemiDaStampare(opzioni.cosa).slice(0, opzioni.limite || Infinity);
   const titolo = titoloStampa(opzioni.cosa, schemiTutti);
   const perPagina = opzioni.perPagina;
   const conCopertina = opzioni.copertina;
@@ -561,9 +443,8 @@ function costruisciStampa(opzioni) {
   const paginaDi = (indiceSchema) =>
     primaPagina + pagine.findIndex((p) => p.elementi.some((e) => e.tipo === "schema" && e.numero === indiceSchema + 1));
 
-  const contenitore = $("#stampa");
   contenitore.innerHTML = "";
-  contenitore.className = `stampa campo-${opzioni.campo} per-pagina-${perPagina}`;
+  contenitore.className = `stampa campo-${opzioni.campo} per-pagina-${perPagina}` + (opzioni.appunti ? " con-appunti" : "");
 
   if (conCopertina) contenitore.appendChild(copertina(titolo, schemi, paginaDi, dividi ? gruppi : null));
 
@@ -575,7 +456,7 @@ function costruisciStampa(opzioni) {
     for (const e of p.elementi) {
       griglia.appendChild(e.tipo === "formazione"
         ? schedaFormazione(e.gruppo)
-        : schedaSchema(e.schema, e.numero, opzioni.note));
+        : schedaSchema(e.schema, e.numero, opzioni.note, opzioni.appunti));
     }
     pag.appendChild(griglia);
     pag.appendChild(elemento("p", "pagina-piede", "Creato con Playbook"));
@@ -583,8 +464,7 @@ function costruisciStampa(opzioni) {
   });
 
   // Formato della pagina: 1 schema per pagina in orizzontale, gli altri in verticale
-  impostaPagina(perPagina === 1, opzioni.carta);
-  return { titolo, pagine: totale };
+  return { titolo, pagine: totale, orizzontale: perPagina === 1, carta: opzioni.carta || "A4" };
 }
 
 // Aspetta che i loghi siano caricati, poi apre la finestra di stampa
