@@ -8,7 +8,7 @@
    si ricarica da sola, ma solo se non ci sono modifiche in attesa di
    salvataggio (altrimenti si salva prima).
    ========================================================================== */
-const VERSIONE_PAGINA = "0.42";
+const VERSIONE_PAGINA = "0.43";
 
 async function controllaAggiornamento() {
   let online;

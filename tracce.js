@@ -600,8 +600,58 @@ function apriMenuTracce(g) {
   top = Math.max(12, Math.min(innerHeight - alt - 12, top));
   menu.style.left = Math.max(12, left) + "px";
   menu.style.top = top + "px";
+  // Se il coach l'ha spostato, il riquadro si riapre dove l'ha lasciato
+  const fissata = leggiLocale(CHIAVE_POSIZIONE_MENU);
+  if (fissata) mettiMenuIn(menu, fissata.left, fissata.top);
+  menu.classList.toggle("spostato", Boolean(fissata));
   menu.dataset.giocatore = g.id;
+  testa.title = "Trascina per spostare il riquadro · doppio clic: torna accanto al giocatore";
+  testa.addEventListener("pointerdown", (e) => iniziaSpostamentoMenu(menu, e));
+  testa.addEventListener("dblclick", () => {
+    scriviLocale(CHIAVE_POSIZIONE_MENU, null);
+    apriMenuTracce(g); // di nuovo accanto al giocatore
+  });
   requestAnimationFrame(() => menu.classList.add("visibile"));
+}
+
+/* ---------- Riquadro delle tracce trascinabile ----------
+   Si prende dalla barra in alto e si lascia dove si vuole, così non copre
+   il campo. La posizione resta ricordata: il riquadro si riapre lì anche
+   cliccando altri giocatori. Doppio clic sulla barra: torna accanto al giocatore. */
+const CHIAVE_POSIZIONE_MENU = "playbook.posizione-menu-tracce";
+
+// Tiene il riquadro dentro la finestra
+function mettiMenuIn(menu, left, top) {
+  const l = Math.max(8, Math.min(innerWidth - menu.offsetWidth - 8, left));
+  const t = Math.max(8, Math.min(innerHeight - menu.offsetHeight - 8, top));
+  menu.style.left = l + "px";
+  menu.style.top = t + "px";
+  return { left: l, top: t };
+}
+
+function iniziaSpostamentoMenu(menu, e) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  const r = menu.getBoundingClientRect();
+  const dx = e.clientX - r.left, dy = e.clientY - r.top;
+  const barra = e.currentTarget;
+  barra.setPointerCapture(e.pointerId);
+  menu.classList.add("in-spostamento");
+  let ultima = null;
+  const muovi = (ev) => { ultima = mettiMenuIn(menu, ev.clientX - dx, ev.clientY - dy); };
+  const fine = () => {
+    barra.removeEventListener("pointermove", muovi);
+    barra.removeEventListener("pointerup", fine);
+    barra.removeEventListener("pointercancel", fine);
+    menu.classList.remove("in-spostamento");
+    if (ultima) {
+      scriviLocale(CHIAVE_POSIZIONE_MENU, ultima);
+      menu.classList.add("spostato");
+    }
+  };
+  barra.addEventListener("pointermove", muovi);
+  barra.addEventListener("pointerup", fine);
+  barra.addEventListener("pointercancel", fine);
 }
 
 function chiudiMenuTracce() {

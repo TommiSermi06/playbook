@@ -3,6 +3,10 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.43 — riquadro delle tracce trascinabile
+
+- Il riquadro che si apre cliccando un giocatore (albero delle route, blocco, copia/incolla…) si sposta trascinandolo dalla barra in alto e resta dove lo lasci, anche per gli altri giocatori; doppio clic sulla barra: torna accanto al giocatore. Resta sempre dentro la finestra
+
 ## Versione 0.42 — nomi al limite: margine di sicurezza
 
 - Stampa: un nome viene rimpicciolito anche quando entra «al pelo» (prova con il carattere +7%): la stampante disegna le lettere un filo più larghe dello schermo, e prima alcuni nomi accanto a bollini larghi (PLAY ACT.) finivano con i «…»
