@@ -13,8 +13,8 @@
 /* ---------- Misure del campo (in yarde) ---------- */
 const LARGHEZZA_CAMPO = 53.33; // da linea laterale a linea laterale
 const YARDE_DIETRO = 12;       // quanto campo si vede dietro la linea (attacco)
-const YARDE_AVANTI = 23;       // quanto campo si vede oltre la linea (difesa)
-const ALTEZZA_CAMPO = YARDE_DIETRO + YARDE_AVANTI;
+let YARDE_AVANTI = 23;         // quanto campo si vede oltre la linea (difesa); 50 per alcuni special teams (speciali.js)
+let ALTEZZA_CAMPO = YARDE_DIETRO + YARDE_AVANTI;
 const HASH_SINISTRO = 20;      // hash mark regolamento NCAA (usato anche in Europa)
 const HASH_DESTRO = LARGHEZZA_CAMPO - 20;
 const RAGGIO_GIOCATORE = 0.95;
@@ -46,6 +46,12 @@ const $ = (sel) => document.querySelector(sel);
 function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stampa = false } = {}) {
   // "vivo" = il campo dell'editor (con animazioni e maniglie); miniature e stampa sono statiche
   const vivo = !miniatura && !stampa;
+  impostaCampo(schema); // campo normale o lungo (special teams, speciali.js)
+  try { disegnaCampoDentro(svg, schema, { miniatura, selezionato, stampa, vivo }); }
+  finally { impostaCampo(schemaAperto() || schema); } // poi le misure tornano quelle dello schema aperto
+}
+
+function disegnaCampoDentro(svg, schema, { miniatura, selezionato, stampa, vivo }) {
   svg.innerHTML = "";
   svg.setAttribute("viewBox", `0 0 ${LARGHEZZA_CAMPO} ${ALTEZZA_CAMPO}`);
 
@@ -76,7 +82,7 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
   const linee = crea("g", { class: "linee" }, svg);
 
   // Linee delle yarde ogni 5 yarde (più marcate ogni 10)
-  for (let y = -10; y <= 20; y += 5) {
+  for (let y = -10; y < YARDE_AVANTI; y += 5) {
     if (y === 0) continue; // la linea di scrimmage la disegniamo a parte
     crea("line", {
       x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(y), y2: yDisegno(y),
@@ -97,7 +103,7 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
     }
 
     // Distanza dalla linea scritta a bordo campo (+5, +10, -5…)
-    for (let y = -10; y <= 20; y += 5) {
+    for (let y = -10; y < YARDE_AVANTI; y += 5) {
       if (y === 0) continue;
       const testo = (y > 0 ? "+" : "−") + Math.abs(y);
       for (const [x, ancora] of [[2.4, "start"], [LARGHEZZA_CAMPO - 2.4, "end"]]) {
@@ -110,7 +116,9 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
   }
 
   // Linea del primo down (10 yarde avanti) e linea di scrimmage
-  crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
+  if (schema.lato !== "speciali") { // negli special teams il primo down non c'entra
+    crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
+  }
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(0), y2: yDisegno(0), class: "linea-scrimmage" }, linee);
 
   // In stampa: un bordo attorno al campo (sul foglio bianco altrimenti non si vede)
@@ -188,6 +196,7 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
 const DISTANZA_MIN_LINEA = 0.9; // yarde: il giocatore "tocca" la linea
 
 function limitiY(lato) {
+  if (lato === "speciali") lato = versoSchema(schemaCorrente); // chi calcia sta sotto, chi riceve sopra
   return lato === "attacco"
     ? { min: -YARDE_DIETRO + 0.6, max: -DISTANZA_MIN_LINEA }
     : { min: DISTANZA_MIN_LINEA, max: YARDE_AVANTI - 0.6 };
@@ -195,6 +204,7 @@ function limitiY(lato) {
 
 // Tiene la y dentro i limiti; se il giocatore "sbatte" sulla linea la fa illuminare
 function limitaY(lato, y, { avvisa = true } = {}) {
+  if (lato === "speciali") lato = versoSchema(schemaCorrente);
   const { min, max } = limitiY(lato);
   const oltreLinea = lato === "attacco" ? y > max + 0.01 : y < min - 0.01;
   if (oltreLinea && avvisa) segnalaLinea();
@@ -230,12 +240,19 @@ function posizionaGiocatore(g) {
 let statoPalla = { idSchema: null, visibile: false }; // per sapere quando "sbuca"
 
 function centroDi(schema) {
-  return schema.lato === "attacco" ? schema.giocatori.find((g) => g.etichetta === "C") : null;
+  if (schema.lato === "attacco") return schema.giocatori.find((g) => g.etichetta === "C");
+  // Special teams che calciano: lo snapper (punt, field goal)
+  if (schema.lato === "speciali" && versoSchema(schema) === "attacco") return schema.giocatori.find((g) => g.etichetta === "LS" || g.etichetta === "C") || null;
+  return null;
 }
 
 // Dove sta la palla (in yarde), oppure null se non va disegnata
 function posizionePalla(schema) {
   if (schema.lato === "difesa") return { x: LARGHEZZA_CAMPO / 2, y: 0 };
+  if (schema.lato === "speciali") { // con lo snapper davanti a lui, altrimenti (kickoff, chi riceve) al centro della linea
+    const s = centroDi(schema);
+    return s ? { x: s.x, y: s.y + 1 } : { x: CENTRO, y: 0 };
+  }
   const c = centroDi(schema);
   return c ? { x: c.x, y: c.y + 1 } : null; // appena davanti al centro, sulla linea
 }
@@ -281,7 +298,7 @@ function ruoloDi(lato, etichetta) {
   for (const [ruolo, sigle] of Object.entries(RUOLI[lato])) {
     if (sigle.includes(etichetta)) return ruolo;
   }
-  return lato === "attacco" ? "ricevitori" : "lb"; // sigla sconosciuta
+  return { attacco: "ricevitori", difesa: "lb" }[lato] || "st-copertura"; // sigla sconosciuta
 }
 
 function disegnaGiocatore(genitore, g, lato, { miniatura = false } = {}) {
@@ -440,6 +457,7 @@ function apriEditor(id, { focusNome = false } = {}) {
   Avversari.sel = null;
   schemaCorrente = Dati.trova(id);
   if (!schemaCorrente) return;
+  impostaCampo(schemaCorrente); // misure del campo (lungo per alcuni special teams) prima di controllare le posizioni
   giocatoreSelezionato = null;
   Selezione.ids.clear();
   tavolozzaAperta = schemaCorrente.formazione === "libera" && !schemaCorrente.bloccato;
@@ -477,7 +495,8 @@ function chiudiEditor() {
 // Ridisegna campo, pannello e intestazione dello schema aperto
 function ridisegna() {
   disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
-  const lato = schemaCorrente.lato === "attacco" ? "Attacco" : "Difesa";
+  const unita = unitaDi(schemaCorrente);
+  const lato = unita ? `Special teams · ${unita.nome}` : NOMI_LATO[schemaCorrente.lato];
   const ribaltato = schemaCorrente.ribaltato ? " (ribaltata)" : "";
   $("#info-schema").textContent = `${lato} · ${formatoDi(schemaCorrente).nome} · ${nomeFormazione(schemaCorrente)}${ribaltato} ·`;
   $("#btn-ribalta").classList.toggle("attivo", !!schemaCorrente.ribaltato);
@@ -632,12 +651,17 @@ function cambiaFormazione(idFormazione) {
   chiudiMenuTracce();
   ricordaStato();
   schemaCorrente.formazione = idFormazione;
+  // Special teams: la formazione pronta decide l'unità (Kickoff, Punt…)
+  const pronta = (FORMAZIONI[schemaCorrente.lato] || []).find((f) => f.id === idFormazione);
+  if (pronta && pronta.categoria) schemaCorrente.categoria = pronta.categoria;
+  impostaCampo(schemaCorrente);
   schemaCorrente.giocatori = giocatoriDaFormazione(schemaCorrente.lato, idFormazione);
   schemaCorrente.ribaltato = false;
   giocatoreSelezionato = null;
   ridisegna();
   animaEntrata();
   salvaSubito();
+  if (pronta && pronta.categoria) mostraFiltriCategoria(); // nuova unità nei filtri dell'elenco
   mostraAvviso(`Formazione: ${nomeFormazione(schemaCorrente)}`, annulla);
 }
 
@@ -789,7 +813,7 @@ function mostraInfoGiocatore() {
   // Scrivi le yarde: il giocatore si sposta da solo.
   // L'attacco sta sempre dietro la linea, la difesa sempre oltre.
   const campoYd = $("#profondita-giocatore");
-  const attacco = schemaCorrente.lato === "attacco";
+  const attacco = versoSchema(schemaCorrente) === "attacco";
   const verso = attacco ? -1 : 1;
   const { min, max } = limitiY(schemaCorrente.lato);
   campoYd.min = DISTANZA_MIN_LINEA;
@@ -1325,6 +1349,11 @@ document.addEventListener("keydown", (e) => {
       if (movimento) Tracce.applica(sel, tracciaDaQb(sel, movimento));
       return;
     }
+    if (numero >= 1 && numero <= 9 && schemaCorrente.lato === "speciali") { // tracce pronte degli special teams
+      const preset = tracceSpecialiPer(schemaCorrente, sel)[numero - 1];
+      if (preset) Tracce.applica(sel, tracciaDaSpeciale(schemaCorrente, sel, preset));
+      return;
+    }
     if (numero >= 1 && numero <= 9 && !senzaAlbero(sel)) {
       if (attacco) Tracce.applica(sel, tracciaDaRoute(sel, ALBERO_ROUTE[numero - 1]));
       else if (TRACCE_DIFESA[numero - 1]) Tracce.applica(sel, tracciaDaDifesa(sel, TRACCE_DIFESA[numero - 1]));
@@ -1332,8 +1361,8 @@ document.addEventListener("keydown", (e) => {
     }
     if (e.key === "t" || e.key === "T") { e.preventDefault(); Tracce.iniziaDisegno(sel); return; }
     if (e.key === "c" || e.key === "C") { e.preventDefault(); Tracce.commutaCurva(sel); return; }
-    if ((e.key === "b" || e.key === "B") && attacco && !eQuarterback(sel) && !formatoDi(schemaCorrente).flag) {
-      Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, 1.5)] });
+    if ((e.key === "b" || e.key === "B") && (attacco || schemaCorrente.lato === "speciali") && !eQuarterback(sel) && !formatoDi(schemaCorrente).flag) {
+      Tracce.applica(sel, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(sel, 0, versoSchema(schemaCorrente) === "attacco" ? 1.5 : -1.5)] });
       return;
     }
     // Canc: prima toglie la traccia, poi (se non c'è) il giocatore

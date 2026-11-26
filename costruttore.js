@@ -26,6 +26,7 @@ const PEDINE = {
 // Nel flag la linea non esiste: il centro è l'unico "uomo di linea"
 function pedineDelFormato() {
   const flag = formatoDi(schemaCorrente).flag;
+  if (schemaCorrente.lato === "speciali") return PEDINE_SPECIALI.map((p) => ({ gruppo: p.nome, sigle: p.sigle }));
   if (schemaCorrente.lato === "attacco") {
     return flag
       ? [{ gruppo: "Centro", sigle: ["C"] }, { gruppo: "Backfield", sigle: ["QB", "RB"] },
@@ -140,7 +141,7 @@ function mostraTavolozza() {
     pedine.className = "pedine";
     sigle.forEach((sigla, i) => {
       const p = document.createElement("button");
-      const forma = schemaCorrente.lato === "difesa" ? "lettera" : sigla === "C" ? "quadrato" : "cerchio";
+      const forma = formaPedina(schemaCorrente.lato, sigla);
       p.className = `pedina forma-${forma} ruolo-${ruoloDi(schemaCorrente.lato, sigla)}`;
       p.textContent = sigla;
       p.title = `Trascina ${sigla} in campo (o clicca per metterlo nella posizione tipica)`;
@@ -247,7 +248,7 @@ function aggiungiGiocatore(sigla, posizione = null) {
     etichetta: sigla,
     x: +Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, pos.x)).toFixed(1),
     y: limitaY(schemaCorrente.lato, pos.y), // mai oltre la linea di scrimmage
-    forma: schemaCorrente.lato === "difesa" ? "lettera" : sigla === "C" ? "quadrato" : "cerchio",
+    forma: formaPedina(schemaCorrente.lato, sigla),
   };
   schemaCorrente.giocatori.push(g);
   if (!schemaCorrente.formazione) schemaCorrente.formazione = "libera";
@@ -276,13 +277,18 @@ function rimuoviGiocatore(g) {
 function posizioneSuggerita(lato, sigla) {
   const libero = (x, y) => schemaCorrente.giocatori.every((g) => Math.hypot(g.x - x, g.y - y) > 1.6);
   const formato = formatoDi(schemaCorrente).id;
-  const ordinate = [...formazioniPronte(lato, formato), ...FORMAZIONI[lato].filter((f) => f.formato !== formato)];
+  let ordinate = [...formazioniPronte(lato, formato), ...FORMAZIONI[lato].filter((f) => f.formato !== formato)];
+  if (lato === "speciali") { // prima l'unità scelta, poi le altre dalla stessa parte della linea
+    const verso = versoSchema(schemaCorrente);
+    ordinate = ordinate.filter((f) => versoUnita(f.categoria) === verso)
+      .sort((a, b) => (b.categoria === schemaCorrente.categoria) - (a.categoria === schemaCorrente.categoria));
+  }
   for (const f of ordinate) {
     for (const g of f.giocatori) {
       if (g.etichetta === sigla && libero(g.x, g.y)) return { x: g.x, y: g.y };
     }
   }
-  const base = lato === "attacco" ? { x: CENTRO, y: -4 } : { x: CENTRO, y: 5 };
+  const base = versoSchema(schemaCorrente) === "attacco" ? { x: CENTRO, y: -4 } : { x: CENTRO, y: 5 };
   for (let passo = 0; passo < 20; passo++) {
     const x = base.x + (passo % 2 ? 1 : -1) * Math.ceil(passo / 2) * 2.4;
     if (libero(x, base.y)) return { x, y: base.y };

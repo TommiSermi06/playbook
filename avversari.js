@@ -12,7 +12,10 @@
    spostarle sul computer c'è avversari-ui.js.
    ========================================================================== */
 
-const latoAvversario = (schema) => (schema.lato === "attacco" ? "difesa" : "attacco");
+// Special teams contro special teams: l'avversario sta dall'altra parte della linea
+const latoAvversario = (schema) => (schema.lato === "speciali" ? "speciali" : schema.lato === "attacco" ? "difesa" : "attacco");
+// Da che parte della linea stanno gli avversari ("attacco" = sotto, "difesa" = sopra)
+const versoAvversario = (schema) => (versoSchema(schema) === "attacco" ? "difesa" : "attacco");
 
 // Le pedine avversarie visibili (nessuna se nascoste)
 function avversariVisibili(schema) {
@@ -54,5 +57,5 @@ function ribaltaAvversari(schema) {
 
 // Forma della pedina per il lato avversario (come per i propri giocatori)
 function formaAvversario(lato, sigla) {
-  return lato === "difesa" ? "lettera" : sigla === "C" ? "quadrato" : "cerchio";
+  return formaPedina(lato, sigla);
 }

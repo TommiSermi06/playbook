@@ -19,6 +19,7 @@ const nuovoIdAvversario = () => "a_" + Date.now().toString(36) + Math.random().t
 function pedineAvversarie() {
   const lato = latoAvversario(schemaCorrente);
   const flag = formatoDi(schemaCorrente).flag;
+  if (lato === "speciali") return PEDINE_SPECIALI.flatMap((p) => p.sigle);
   if (lato === "attacco") {
     return flag ? ["C", "QB", "RB", "X", "Y", "Z", "H", "WR"] : ["C", "G", "T", "QB", "RB", "FB", "X", "Y", "Z", "H", "TE"];
   }
@@ -41,15 +42,30 @@ function posizioneAvversario(sigla) {
   const occupati = schemaCorrente.avversari || [];
   const libero = (x, y) => occupati.every((g) => Math.hypot(g.x - x, g.y - y) > 1.6);
   const formato = formatoDi(schemaCorrente).id;
-  for (const f of [...formazioniPronte(lato, formato), ...FORMAZIONI[lato].filter((x) => x.formato !== formato)]) {
+  for (const f of formazioniAvversarie(formato, true)) {
     for (const g of f.giocatori) if (g.etichetta === sigla && libero(g.x, g.y)) return { x: g.x, y: g.y };
   }
-  const base = lato === "attacco" ? { x: CENTRO, y: -4 } : { x: CENTRO, y: 5 };
+  const base = versoAvversario(schemaCorrente) === "attacco" ? { x: CENTRO, y: -4 } : { x: CENTRO, y: 5 };
   for (let passo = 0; passo < 20; passo++) {
     const x = base.x + (passo % 2 ? 1 : -1) * Math.ceil(passo / 2) * 2.4;
     if (libero(x, base.y)) return { x, y: base.y };
   }
   return base;
+}
+
+/* Formazioni pronte per l'avversario. Special teams: solo le unità
+   dall'altra parte della linea, con quella "naturale" per prima
+   (Kickoff → Kick return, Punt → Punt return…). */
+function formazioniAvversarie(formato, ancheAltriFormati = false) {
+  const lato = latoAvversario(schemaCorrente);
+  let lista = [...formazioniPronte(lato, formato), ...(ancheAltriFormati ? FORMAZIONI[lato].filter((x) => x.formato !== formato) : [])];
+  if (lato === "speciali") {
+    const verso = versoAvversario(schemaCorrente);
+    const naturale = CONTRO_UNITA[schemaCorrente.categoria];
+    lista = lista.filter((f) => versoUnita(f.categoria) === verso)
+      .sort((a, b) => (b.categoria === naturale) - (a.categoria === naturale));
+  }
+  return lista;
 }
 
 /* ---------- Azioni ---------- */
@@ -61,7 +77,7 @@ function aggiungiAvversario(sigla) {
   ricordaStato();
   const lato = latoAvversario(schemaCorrente);
   const pos = posizioneAvversario(sigla);
-  const g = { id: nuovoIdAvversario(), etichetta: sigla, x: +pos.x.toFixed(1), y: limitaY(lato, pos.y, { avvisa: false }), forma: formaAvversario(lato, sigla) };
+  const g = { id: nuovoIdAvversario(), etichetta: sigla, x: +pos.x.toFixed(1), y: limitaY(versoAvversario(schemaCorrente), pos.y, { avvisa: false }), forma: formaAvversario(lato, sigla) };
   lista.push(g);
   schemaCorrente.avversariNascosti = false;
   Avversari.sel = g.id;
@@ -86,14 +102,14 @@ function caricaAvversari(chiave) {
     id: nuovoIdAvversario() + Math.random().toString(36).slice(2, 4),
     etichetta: g.etichetta,
     x: g.x,
-    y: limitaY(lato, g.y, { avvisa: false }),
+    y: limitaY(versoAvversario(schemaCorrente), g.y, { avvisa: false }),
     forma: g.forma || formaAvversario(lato, g.etichetta),
   }));
   schemaCorrente.avversariNascosti = false;
   Avversari.sel = null;
   ridisegna();
   salvaTraPoco();
-  mostraAvviso(`${lato === "difesa" ? "Difesa" : "Attacco"} avversaria caricata: trascina le pedine dove vuoi`, annulla);
+  mostraAvviso(`${lato === "speciali" ? "Squadra avversaria caricata" : lato === "difesa" ? "Difesa avversaria caricata" : "Attacco avversario caricato"}: trascina le pedine dove vuoi`, annulla);
 }
 
 function togliAvversari() {
@@ -133,24 +149,26 @@ function mostraPannelloAvversari() {
   const lato = latoAvversario(schemaCorrente);
   const formato = formatoDi(schemaCorrente).id;
   const lista = schemaCorrente.avversari || [];
-  $("#titolo-avversari").textContent = lato === "difesa" ? "Difesa avversaria" : "Attacco avversario";
+  const speciali = lato === "speciali";
+  $("#titolo-avversari").textContent = speciali ? "Squadra avversaria" : lato === "difesa" ? "Difesa avversaria" : "Attacco avversario";
 
   // Cosa si può caricare: le tue formazioni, quelle pronte e gli schemi dell'altro lato
   const mie = FormazioniMie.perLato(lato, formato);
-  const pronte = formazioniPronte(lato, formato);
-  const schemi = schemiDelPlaybook().filter((s) => s.lato === lato && s.giocatori.length);
+  const pronte = formazioniAvversarie(formato);
+  const schemi = schemiDelPlaybook().filter((s) => s.lato === lato && s.giocatori.length && s.id !== schemaCorrente.id
+    && (!speciali || versoSchema(s) === versoAvversario(schemaCorrente)));
   const opzioni = (titolo, voci) => voci.length
     ? `<optgroup label="${titolo}">${voci.map(([v, n]) => `<option value="${v}">${n.replace(/</g, "&lt;")}</option>`).join("")}</optgroup>` : "";
 
   box.innerHTML = `
     <p class="testo-secondario aiuto-avversari">${lista.length
       ? `${lista.length} ${lista.length === 1 ? "pedina" : "pedine"} in trasparenza: trascinale sul campo, clic + Canc per toglierne una.`
-      : `Opzionale: metti ${lato === "difesa" ? "la difesa" : "l'attacco"} contro cui giochi, tutto o solo qualche giocatore.`}</p>
+      : `Opzionale: metti ${speciali ? "la squadra avversaria" : lato === "difesa" ? "la difesa" : "l'attacco"} contro cui giochi, ${speciali ? "tutta" : "tutto"} o solo qualche giocatore.`}</p>
     <select id="carica-avversari">
       <option value="">${lista.length ? "Sostituisci con…" : "Carica una formazione o uno schema…"}</option>
       ${opzioni("Le tue formazioni", mie.map((f) => [`formazione:${f.id}`, f.nome]))}
       ${opzioni("Formazioni pronte", pronte.map((f) => [`formazione:${f.id}`, f.nome]))}
-      ${opzioni(`Schemi di ${lato} del playbook`, schemi.map((s) => [`schema:${s.id}`, s.nome || "Senza nome"]))}
+      ${opzioni(speciali ? "Special teams del playbook" : `Schemi di ${lato} del playbook`, schemi.map((s) => [`schema:${s.id}`, s.nome || "Senza nome"]))}
     </select>
     <p class="etichetta-pedine-avv">Oppure aggiungi una pedina:</p>
     <div class="pedine-avversarie" id="pedine-avversarie"></div>
@@ -186,7 +204,7 @@ function muoviAvversario(t, p, agganciaMezza) {
   const passo = agganciaMezza ? 0.5 : 0.1;
   const g = t.avversario;
   const x = Math.round(Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, p.x + t.scostX)) / passo) * passo;
-  const y = limitaY(latoAvversario(schemaCorrente), Math.round((YARDE_AVANTI - (p.y + t.scostY)) / passo) * passo);
+  const y = limitaY(versoAvversario(schemaCorrente), Math.round((YARDE_AVANTI - (p.y + t.scostY)) / passo) * passo);
   if (+x.toFixed(1) === g.x && y === g.y) return;
   g.x = +x.toFixed(1);
   g.y = y;

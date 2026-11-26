@@ -18,7 +18,7 @@
     // Tema scelto nell'account (automatico se non scelto): subito, prima di disegnare
     try { var t = localStorage.getItem("playbook.m.tema"); if (t === "chiaro" || t === "scuro") document.documentElement.dataset.tema = t; } catch (e) {}
   </script>
-  <link rel="stylesheet" href="mobile.css?v=m12">
+  <link rel="stylesheet" href="mobile.css?v=m14">
 </head>
 <body>
   <!-- Schermata d'avvio, mentre controlliamo l'accesso -->
@@ -116,6 +116,7 @@
     <div class="segmentato" id="scelta-lato" style="margin-top: 12px">
       <button data-valore="attacco">Attacco</button>
       <button data-valore="difesa">Difesa</button>
+      <button data-valore="speciali" class="solo-speciali">Special</button>
     </div>
     <label class="cerca">
       <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2.2" fill="none"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
@@ -181,6 +182,7 @@
     <div class="segmentato" id="scelta-lato-partita">
       <button data-valore="attacco">Attacco</button>
       <button data-valore="difesa">Difesa</button>
+      <button data-valore="speciali" class="solo-speciali">Special</button>
     </div>
     <div id="lista-partita"></div>
     <p class="vuoto" id="partita-vuota" hidden>Nessuno schema ha ancora una situazione.<br>Sceglile dal pannello «Partita» sul computer, o da «Modifica» in uno schema.</p>
@@ -339,19 +341,20 @@
   <script src="../config.js?v=m1"></script>
   <script src="../lib/supabase.js"></script>
   <script src="../filigrana.js?v=m12"></script>
-  <script src="../pedine.js?v=m13"></script>
-  <script src="campo.js?v=m12"></script>
-  <script src="../avversari.js?v=m8"></script>
+  <script src="../pedine.js?v=m14"></script>
+  <script src="campo.js?v=m14"></script>
+  <script src="../avversari.js?v=m14"></script>
   <script src="../annotazioni.js?v=m7"></script>
-  <script src="../formazioni.js?v=m1"></script>
-  <script src="../regole.js?v=m1"></script>
-  <script src="../categorie.js?v=m9"></script>
-  <script src="../tracce.js?v=m5"></script>
-  <script src="../animazione.js?v=m6"></script>
+  <script src="../formazioni.js?v=m14"></script>
+  <script src="../regole.js?v=m14"></script>
+  <script src="../categorie.js?v=m14"></script>
+  <script src="../tracce.js?v=m14"></script>
+  <script src="../animazione.js?v=m14"></script>
+  <script src="../speciali.js?v=m14"></script>
   <script src="../cloud.js?v=m1"></script>
   <!-- ...e la logica tutta nuova per il telefono -->
-  <script src="mobile.js?v=m11"></script>
-  <script src="editor.js?v=m12"></script>
+  <script src="mobile.js?v=m14"></script>
+  <script src="editor.js?v=m14"></script>
   <script src="proposte.js?v=m3"></script>
   <script>
     // Il pulsante "indietro" con la freccia iOS

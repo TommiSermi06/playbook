@@ -61,6 +61,8 @@ function mostraCategoria() {
   if (!box || !schemaCorrente) return;
   const s = schemaCorrente;
   const vietato = typeof modificheVietate === "function" && modificheVietate();
+  const titolo = $("#titolo-categoria");
+  if (titolo) titolo.textContent = s.lato === "speciali" ? "Unità e tag" : "Categoria e tag";
   box.innerHTML = `
     <div class="scelte-categoria" id="scelte-categoria"></div>
     <div class="tag-schema" id="tag-schema"></div>
@@ -73,9 +75,17 @@ function mostraCategoria() {
     b.className = "scelta-categoria" + (s.categoria === c.id ? " attiva" : "");
     b.textContent = `${c.icona} ${c.nome}`;
     b.disabled = vietato;
+    // Special teams: con i giocatori in campo non si passa a un'unità dall'altra parte della linea
+    if (s.lato === "speciali" && s.giocatori.length && versoUnita(c.id) !== versoSchema(s)) {
+      b.disabled = true;
+      b.title = "I tuoi giocatori sono dall'altra parte della linea: scegli la formazione di questa unità";
+    }
     b.addEventListener("click", () => {
+      // Special teams con giocatori in campo: l'unità si cambia, non si toglie
+      if (schemaCorrente.lato === "speciali" && schemaCorrente.categoria === c.id && schemaCorrente.giocatori.length) return;
       schemaCorrente.categoria = schemaCorrente.categoria === c.id ? undefined : c.id; // secondo clic: la toglie
       if (!schemaCorrente.categoria) delete schemaCorrente.categoria;
+      if (schemaCorrente.lato === "speciali") { ridisegna(); mostraElenco(); } // può cambiare il campo (lungo o normale)
       salvaTraPoco();
       mostraCategoria();
       mostraFiltriCategoria();

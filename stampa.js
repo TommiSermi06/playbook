@@ -45,7 +45,7 @@ function nomeGruppo(chiave, schemaEsempio) {
    Dentro ogni gruppo resta l'ordine del playbook. */
 function gruppiPerCategoria(schemi, conLato) {
   const gruppi = [];
-  for (const lato of ["attacco", "difesa"]) {
+  for (const lato of ORDINE_LATI) {
     const delLato = schemi.filter((s) => s.lato === lato);
     if (!delLato.length) continue;
     const prefisso = conLato ? `${NOMI_LATO[lato]} · ` : "";
@@ -63,7 +63,7 @@ function gruppiPerCategoria(schemi, conLato) {
    (così nessuna pagina si ripete); in fondo quelli senza tag. */
 function gruppiPerTag(schemi, conLato) {
   const gruppi = [];
-  for (const lato of ["attacco", "difesa"]) {
+  for (const lato of ORDINE_LATI) {
     const delLato = schemi.filter((s) => s.lato === lato);
     if (!delLato.length) continue;
     const prefisso = conLato ? `${NOMI_LATO[lato]} · ` : "";
@@ -97,7 +97,7 @@ function gruppiPerFormazione(schemi) {
   // a parità (formazioni mai ordinate) resta l'ordine in cui compaiono nel playbook
   return gruppi
     .map((g, i) => ({ g, i }))
-    .sort((a, b) => (a.g.lato === b.g.lato ? 0 : a.g.lato === "attacco" ? -1 : 1) ||
+    .sort((a, b) => ORDINE_LATI.indexOf(a.g.lato) - ORDINE_LATI.indexOf(b.g.lato) ||
       posizione(a.g) - posizione(b.g) || a.i - b.i)
     .map(({ g }) => g);
 }
@@ -116,11 +116,12 @@ function apriFoglioStampa() {
     { id: "schema", testo: "Solo lo schema aperto", n: schemaCorrente ? 1 : 0 },
     { id: "attacco", testo: "Tutto l'attacco", n: conta("attacco") },
     { id: "difesa", testo: "Tutta la difesa", n: conta("difesa") },
+    ...(conta("speciali") ? [{ id: "speciali", testo: "Tutti gli special teams", n: conta("speciali") }] : []),
     { id: "tutto", testo: `Tutto «${playbookCorrente.nome}»`, n: tutti.length },
   ];
   // Se la scelta salvata non ha schemi, passiamo alla prima che ne ha
   if (!scelte.find((s) => s.id === opzioniStampa.cosa && s.n)) {
-    opzioniStampa.cosa = (scelte.find((s) => s.n) || scelte[3]).id;
+    opzioniStampa.cosa = (scelte.find((s) => s.n) || scelte[scelte.length - 1]).id;
   }
 
   const lista = $("#stampa-cosa");
@@ -317,7 +318,7 @@ function aggiornaOpzioniTipo() {
     }
     if (numerati < schemi.length) {
       const b = Object.assign(document.createElement("button"), { type: "button", className: "btn-link", textContent: "Numera in automatico" });
-      b.addEventListener("click", () => numeraInAutomatico(cosaScelta() === "difesa" ? "difesa" : "attacco"));
+      b.addEventListener("click", () => numeraInAutomatico(["difesa", "speciali"].includes(cosaScelta()) ? cosaScelta() : "attacco"));
       info.appendChild(b);
     }
   } else {
@@ -365,14 +366,14 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
 /* ==========================================================================
    COSTRUZIONE DELLE PAGINE
    ========================================================================== */
-const NOMI_LATO = { attacco: "Attacco", difesa: "Difesa" };
+// NOMI_LATO (Attacco, Difesa, Special teams) è in speciali.js
 
 // Ordine di stampa: quello del playbook (come nell'elenco), prima l'attacco poi la difesa
 function schemiDaStampare(cosa) {
   let schemi = schemiDelPlaybook();
   if (cosa === "schema" && schemaCorrente) schemi = [Dati.trova(schemaCorrente.id)];
-  else if (cosa === "attacco" || cosa === "difesa") schemi = schemi.filter((s) => s.lato === cosa);
-  return [...schemi.filter((s) => s.lato === "attacco"), ...schemi.filter((s) => s.lato !== "attacco")];
+  else if (ORDINE_LATI.includes(cosa)) schemi = schemi.filter((s) => s.lato === cosa);
+  return ORDINE_LATI.flatMap((lato) => schemi.filter((s) => s.lato === lato)); // attacco, difesa, special teams
 }
 
 function titoloStampa(cosa, schemi) {
@@ -380,6 +381,7 @@ function titoloStampa(cosa, schemi) {
   if (cosa === "schema") return schemi[0].nome || "Schema";
   if (cosa === "attacco") return `${nome} · Attacco`;
   if (cosa === "difesa") return `${nome} · Difesa`;
+  if (cosa === "speciali") return `${nome} · Special teams`;
   return nome;
 }
 
@@ -444,10 +446,11 @@ function schedaFormazione(gruppo) {
   disegnaCampo(svg, {
     lato: gruppo.lato,
     formato: esempio.formato,
+    categoria: esempio.categoria, // special teams: l'unità decide il campo (lungo o normale)
     // senza tracce: solo i giocatori della formazione
     giocatori: (giocatori || esempio.giocatori).map((g, i) => ({
       id: "f" + i, etichetta: g.etichetta, x: g.x, y: g.y,
-      forma: g.forma || (gruppo.lato === "attacco" ? (g.etichetta === "C" ? "quadrato" : "cerchio") : "lettera"),
+      forma: g.forma || formaPedina(gruppo.lato, g.etichetta),
     })),
   }, { stampa: true });
   scheda.appendChild(svg);

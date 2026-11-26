@@ -238,7 +238,8 @@ function disegnaHome() {
   visibili.forEach((pb, i) => {
     const schemi = schemiDelPlaybook(pb.id);
     const attacco = schemi.filter((s) => s.lato === "attacco").length;
-    const difesa = schemi.length - attacco;
+    const difesa = schemi.filter((s) => s.lato === "difesa").length;
+    const speciali = schemi.length - attacco - difesa;
     const scheda = document.createElement("article");
     scheda.className = "scheda-playbook " + (eFlag(pb) ? "tipo-flag" : "tipo-tackle");
     scheda.style.setProperty("--i", i);
@@ -260,7 +261,7 @@ function disegnaHome() {
     corpo.querySelector(".badge-formato").textContent = descriviPlaybook(pb);
     corpo.querySelector("h3").textContent = pb.nome;
     corpo.querySelector(".scheda-conteggi").textContent =
-      `${attacco} ${attacco === 1 ? "schema" : "schemi"} di attacco · ${difesa} di difesa`;
+      `${attacco} ${attacco === 1 ? "schema" : "schemi"} di attacco · ${difesa} di difesa` + (speciali ? ` · ${speciali} special` : "");
     corpo.querySelector(".scheda-data").textContent = `Modificato ${dataBreve(pb.modificato)}`;
     if (pb.proprietario) {
       scheda.classList.add("condiviso");
@@ -352,6 +353,8 @@ function apriPlaybook(id) {
   aggiornaOrdineSeCondiviso(pb.id);
   $("#cerca").value = "";
   if (schemaCorrente) chiudiEditor();
+  // Nel flag non ci sono calci: niente sezione Special teams
+  $("#filtro-lato").classList.toggle("senza-speciali", !conSpecialTeams(pb.formato));
   const ultimo = schemiDelPlaybook()[0];
   if (ultimo) apriEditor(ultimo.id);
   else { scegliLato("attacco"); mostraElenco(); }
@@ -672,7 +675,7 @@ function ruoliDelPlaybook(pb) {
   }
   return [...conta.entries()]
     .map(([k, n]) => ({ chiave: k, lato: k.split("|")[0], sigla: k.split("|")[1], schemi: n }))
-    .sort((a, b) => (a.lato === b.lato ? a.sigla.localeCompare(b.sigla) : a.lato === "attacco" ? -1 : 1));
+    .sort((a, b) => (a.lato === b.lato ? a.sigla.localeCompare(b.sigla) : ORDINE_LATI.indexOf(a.lato) - ORDINE_LATI.indexOf(b.lato)));
 }
 
 // Cosa cambierebbe: schemi e formazioni che contengono la sigla

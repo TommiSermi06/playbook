@@ -84,8 +84,12 @@ const Animazione = {
 
     // Il pallone: dal centro al QB allo snap, poi resta al QB
     const palla = svg.querySelector(".palla");
-    const centro = schema.lato === "attacco" ? corse.find((c) => c.g.etichetta === "C") : null;
-    const qb = schema.lato === "attacco" ? corse.find((c) => ["QB", "Q"].includes(c.g.etichetta)) : null;
+    // (special teams: dallo snapper al punter o all'holder)
+    const st = schema.lato === "speciali" && versoSchema(schema) === "attacco";
+    const centro = schema.lato === "attacco" ? corse.find((c) => c.g.etichetta === "C")
+      : st ? corse.find((c) => ["LS", "C"].includes(c.g.etichetta)) : null;
+    const qb = schema.lato === "attacco" ? corse.find((c) => ["QB", "Q"].includes(c.g.etichetta))
+      : st && centro ? corse.find((c) => ["P", "H"].includes(c.g.etichetta)) : null;
     const pallaInizio = centro ? { x: centro.inizio.x, y: centro.inizio.y - 1 } : null;
 
     svg.classList.add("in-gioco");

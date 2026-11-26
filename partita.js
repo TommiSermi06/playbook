@@ -146,6 +146,10 @@ function miniSchema(schema, classe, rapporto) {
     for (const p of punti) { xs.push(g.x + p.dx); ys.push(g.y + p.dy); }
   }
   if (!xs.length) return svg;
+  return conCampoDi(schema, () => ritagliaMini(svg, xs, ys, rapporto)); // misure del campo di questo schema
+}
+
+function ritagliaMini(svg, xs, ys, rapporto) {
   const margine = 1.5;
   let x0 = Math.min(...xs) - margine, x1 = Math.max(...xs) + margine;
   let y0 = Math.min(...ys) - margine, y1 = Math.max(...ys) + margine; // yarde (avanti = +)

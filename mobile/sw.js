@@ -4,11 +4,11 @@
    subito; se non c'è rete usa la copia salvata.
    I dati degli schemi stanno nella copia del telefono (localStorage).
    ========================================================================== */
-const CACHE = "playbook-mobile-m14";
+const CACHE = "playbook-mobile-m15";
 const FILE = [
-  "./", "index.html", "mobile.css?v=m12", "campo.js?v=m12", "mobile.js?v=m11", "editor.js?v=m12", "proposte.js?v=m3", "manifest.json",
-  "../config.js?v=m1", "../lib/supabase.js", "../filigrana.js?v=m12", "../pedine.js?v=m13", "../avversari.js?v=m8", "../annotazioni.js?v=m7", "../formazioni.js?v=m1", "../regole.js?v=m1",
-  "../categorie.js?v=m9", "../tracce.js?v=m5", "../animazione.js?v=m6", "../cloud.js?v=m1", "../icon-180.png",
+  "./", "index.html", "mobile.css?v=m14", "campo.js?v=m14", "mobile.js?v=m14", "editor.js?v=m14", "proposte.js?v=m3", "manifest.json",
+  "../config.js?v=m1", "../lib/supabase.js", "../filigrana.js?v=m12", "../pedine.js?v=m14", "../speciali.js?v=m14", "../avversari.js?v=m14", "../annotazioni.js?v=m7", "../formazioni.js?v=m14", "../regole.js?v=m14",
+  "../categorie.js?v=m14", "../tracce.js?v=m14", "../animazione.js?v=m14", "../cloud.js?v=m1", "../icon-180.png",
 ];
 
 self.addEventListener("install", (e) => {

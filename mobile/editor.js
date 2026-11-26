@@ -39,6 +39,7 @@ const Editor = {
 /* ---------- Regole (come sul computer) ---------- */
 const DISTANZA_MIN_LINEA = 0.9;
 function limitaY(lato, y) {
+  if (lato === "speciali") lato = versoSchema(schemaCorrente); // chi calcia sta sotto, chi riceve sopra
   const min = lato === "attacco" ? -YARDE_DIETRO + 0.6 : DISTANZA_MIN_LINEA;
   const max = lato === "attacco" ? -DISTANZA_MIN_LINEA : YARDE_AVANTI - 0.6;
   return +Math.min(max, Math.max(min, y)).toFixed(1);
@@ -47,6 +48,7 @@ function limitaY(lato, y) {
 // Pedine disponibili per lato e formato
 function pedineDelFormato() {
   const flag = formatoDi(schemaCorrente).flag;
+  if (schemaCorrente.lato === "speciali") return PEDINE_SPECIALI.map((p) => ({ gruppo: p.nome, sigle: p.sigle }));
   if (schemaCorrente.lato === "attacco") {
     return flag
       ? [{ gruppo: "Centro", sigle: ["C"] }, { gruppo: "Backfield", sigle: ["QB", "RB"] }, { gruppo: "Ricevitori", sigle: ["X", "Y", "Z", "H", "WR"] }]
@@ -61,10 +63,16 @@ function pedineDelFormato() {
 function posizioneTipica(lato, sigla) {
   const libero = (x, y) => schemaCorrente.giocatori.every((g) => Math.hypot(g.x - x, g.y - y) > 1.6);
   const formato = formatoDi(schemaCorrente).id;
-  for (const f of [...formazioniPronte(lato, formato), ...FORMAZIONI[lato].filter((x) => x.formato !== formato)]) {
+  let ordinate = [...formazioniPronte(lato, formato), ...FORMAZIONI[lato].filter((x) => x.formato !== formato)];
+  if (lato === "speciali") { // l'unità scelta per prima, e solo dalla stessa parte della linea
+    const verso = versoSchema(schemaCorrente);
+    ordinate = ordinate.filter((f) => versoUnita(f.categoria) === verso)
+      .sort((a, b) => (b.categoria === schemaCorrente.categoria) - (a.categoria === schemaCorrente.categoria));
+  }
+  for (const f of ordinate) {
     for (const g of f.giocatori) if (g.etichetta === sigla && libero(g.x, g.y)) return { x: g.x, y: g.y };
   }
-  const base = lato === "attacco" ? { x: CENTRO, y: -4 } : { x: CENTRO, y: 5 };
+  const base = versoSchema(schemaCorrente) === "attacco" ? { x: CENTRO, y: -4 } : { x: CENTRO, y: 5 };
   for (let passo = 0; passo < 20; passo++) {
     const x = base.x + (passo % 2 ? 1 : -1) * Math.ceil(passo / 2) * 2.4;
     if (libero(x, base.y)) return { x, y: base.y };
@@ -252,7 +260,8 @@ function iniziaDisegno() {
   const g = selezionato();
   if (!g) return;
   const tipo = eUomoDiLinea(g) ? "blocco" : eQuarterback(g) ? "qb"
-    : schemaCorrente.lato === "attacco" ? "route" : "blitz";
+    : schemaCorrente.lato === "attacco" ? "route"
+    : schemaCorrente.lato === "speciali" ? tipoSpecialeAMano(schemaCorrente, g) : "blitz";
   Editor.disegno = { tipo, curva: Boolean(leggiLocale("playbook.m.curva")), punti: [] };
   mostraTipiDisegno();
   disegnaEditor();
@@ -264,7 +273,8 @@ function mostraTipiDisegno() {
   const g = selezionato();
   const box = $("#tipi-disegno");
   box.innerHTML = "";
-  const tipi = schemaCorrente.lato === "difesa" ? TIPI_TRACCIA.difesa
+  const tipi = schemaCorrente.lato === "speciali" ? TIPI_TRACCIA.speciali
+    : schemaCorrente.lato === "difesa" ? TIPI_TRACCIA.difesa
     : eUomoDiLinea(g) ? TIPI_TRACCIA.attacco.filter((t) => t.id === "blocco")
     : TIPI_TRACCIA.attacco.filter((t) => eQuarterback(g) ? ["qb", "route", "motion"].includes(t.id) : t.id !== "qb");
   for (const t of tipi) {
@@ -455,13 +465,15 @@ function apriFoglioFormazioni() {
     const gruppo = el("div", "gruppo");
     for (const f of lista) {
       const riga = el("button", "riga toccabile");
-      const anteprima = { lato: schemaCorrente.lato, giocatori: f.giocatori.map((g, i) => ({ ...g, id: "a" + i, forma: g.forma || (schemaCorrente.lato === "attacco" ? (g.etichetta === "C" ? "quadrato" : "cerchio") : "lettera") })) };
+      const anteprima = { lato: schemaCorrente.lato, categoria: f.categoria, giocatori: f.giocatori.map((g, i) => ({ ...g, id: "a" + i, forma: g.forma || formaPedina(schemaCorrente.lato, g.etichetta) })) };
       riga.appendChild(svgCampo(anteprima, "miniatura", { miniatura: true, ritaglio: true }));
       riga.appendChild(el("span", "riga-testi")).appendChild(el("span", "riga-titolo", f.nome));
       if (f.id === schemaCorrente.formazione) riga.appendChild(el("span", "spunta", "✓"));
       riga.addEventListener("click", () => {
         ricorda();
         schemaCorrente.formazione = f.id;
+        if (f.categoria) schemaCorrente.categoria = f.categoria; // special teams: la formazione decide l'unità
+        impostaCampo(schemaCorrente);
         schemaCorrente.giocatori = giocatoriDaFormazione(schemaCorrente.lato, f.id);
         schemaCorrente.ribaltato = false;
         Editor.sel = null;
@@ -517,7 +529,7 @@ function apriFoglioPedine() {
           etichetta: sigla,
           x: +Math.min(LARGHEZZA_CAMPO - 0.6, Math.max(0.6, pos.x)).toFixed(1),
           y: limitaY(schemaCorrente.lato, pos.y),
-          forma: schemaCorrente.lato === "difesa" ? "lettera" : sigla === "C" ? "quadrato" : "cerchio",
+          forma: formaPedina(schemaCorrente.lato, sigla),
         };
         schemaCorrente.giocatori.push(g);
         if (!schemaCorrente.formazione) schemaCorrente.formazione = "libera";
@@ -565,7 +577,10 @@ function apriFoglioTracce() {
       ["⇋ Incolla specchiata", () => AppuntiTraccia.crea(g, true)],
     ]);
   }
-  if (schemaCorrente.lato === "difesa") {
+  if (schemaCorrente.lato === "speciali") {
+    sezione(unitaDi(schemaCorrente) ? unitaDi(schemaCorrente).nome : "Special teams",
+      tracceSpecialiPer(schemaCorrente, g).map((p) => [p.nome, () => tracciaDaSpeciale(schemaCorrente, g, p)]));
+  } else if (schemaCorrente.lato === "difesa") {
     sezione("Difesa", TRACCE_DIFESA.map((p) => [p.nome, () => tracciaDaDifesa(g, p)]));
   } else if (eQuarterback(g)) {
     sezione("Movimento del QB", MOVIMENTI_QB.map((m) => [m.nome, () => tracciaDaQb(g, m)]));

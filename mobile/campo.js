@@ -9,8 +9,8 @@
 /* ---------- Misure del campo (in yarde): le stesse del computer ---------- */
 const LARGHEZZA_CAMPO = 53.33;
 const YARDE_DIETRO = 12;
-const YARDE_AVANTI = 23;
-const ALTEZZA_CAMPO = YARDE_DIETRO + YARDE_AVANTI;
+let YARDE_AVANTI = 23;   // 50 per Kickoff, Kick return e Punt return (../speciali.js)
+let ALTEZZA_CAMPO = YARDE_DIETRO + YARDE_AVANTI;
 const HASH_SINISTRO = 20;
 const HASH_DESTRO = LARGHEZZA_CAMPO - 20;
 const RAGGIO_GIOCATORE = 0.95;
@@ -51,12 +51,16 @@ function ruoloDi(lato, etichetta) {
   for (const [ruolo, sigle] of Object.entries(RUOLI[lato])) {
     if (sigle.includes(etichetta)) return ruolo;
   }
-  return lato === "attacco" ? "ricevitori" : "lb";
+  return { attacco: "ricevitori", difesa: "lb" }[lato] || "st-copertura";
 }
 
 // Dove sta la palla: davanti al centro in attacco, al centro in difesa
 function posizionePalla(schema) {
   if (schema.lato === "difesa") return { x: LARGHEZZA_CAMPO / 2, y: 0 };
+  if (schema.lato === "speciali") { // davanti allo snapper (punt, field goal), altrimenti al centro della linea
+    const s = versoSchema(schema) === "attacco" && schema.giocatori.find((g) => g.etichetta === "LS" || g.etichetta === "C");
+    return s ? { x: s.x, y: s.y + 1 } : { x: LARGHEZZA_CAMPO / 2, y: 0 };
+  }
   const c = schema.giocatori.find((g) => g.etichetta === "C");
   return c ? { x: c.x, y: c.y + 1 } : null;
 }
@@ -67,7 +71,13 @@ function posizionePalla(schema) {
      con l'id di un giocatore si anima solo la sua
    - selezionato: id del giocatore selezionato nell'editor (anello attorno)
    - ritaglio: mostra solo la zona dove ci sono giocatori e tracce */
-function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio = false, logo = null, selezionato = null, viewBox = null } = {}) {
+function disegnaCampo(svg, schema, opzioni = {}) {
+  impostaCampo(schema); // campo normale o lungo (special teams, ../speciali.js)
+  try { disegnaCampoDentro(svg, schema, opzioni); }
+  finally { impostaCampo(schemaAperto() || schema); } // poi le misure tornano quelle dello schema in modifica
+}
+
+function disegnaCampoDentro(svg, schema, { miniatura = false, anima = false, ritaglio = false, logo = null, selezionato = null, viewBox = null } = {}) {
   svg.innerHTML = "";
   svg.setAttribute("viewBox", `0 0 ${LARGHEZZA_CAMPO} ${ALTEZZA_CAMPO}`);
 
@@ -89,7 +99,7 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
   }
 
   const linee = crea("g", { class: "linee" }, svg);
-  for (let y = -10; y <= 20; y += 5) {
+  for (let y = -10; y < YARDE_AVANTI; y += 5) {
     if (y === 0) continue;
     crea("line", {
       x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(y), y2: yDisegno(y),
@@ -106,7 +116,7 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
       }
     }
     // Distanza dalla linea (+5, +10, −5…)
-    for (let y = -10; y <= 20; y += 5) {
+    for (let y = -10; y < YARDE_AVANTI; y += 5) {
       if (y === 0) continue;
       const testo = (y > 0 ? "+" : "−") + Math.abs(y);
       for (const [x, ancora] of [[2.4, "start"], [LARGHEZZA_CAMPO - 2.4, "end"]]) {
@@ -115,7 +125,7 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
       }
     }
   }
-  crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
+  if (schema.lato !== "speciali") crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(10), y2: yDisegno(10), class: "linea-primo-down" }, linee);
   crea("line", { x1: 0, x2: LARGHEZZA_CAMPO, y1: yDisegno(0), y2: yDisegno(0), class: "linea-scrimmage" }, linee);
 
   // Note sul campo (../annotazioni.js): zone sotto tutto
@@ -187,12 +197,20 @@ function ritagliaCampo(svg, schema, margine = 2.5) {
     }
   }
   if (!xs.length) return;
-  const rapporto = LARGHEZZA_CAMPO / ALTEZZA_CAMPO;
+  const rapporto = LARGHEZZA_CAMPO / (YARDE_DIETRO + YARDE_AVANTI_NORMALE); // la forma del riquadro (anche col campo lungo)
   let x0 = Math.min(...xs) - margine, x1 = Math.max(...xs) + margine;
   let y0 = Math.min(...ys) - margine, y1 = Math.max(...ys) + margine;
   let w = x1 - x0, h = y1 - y0;
   if (w / h < rapporto) { const nw = h * rapporto; x0 -= (nw - w) / 2; w = nw; }
   else { const nh = w / rapporto; y0 -= (nh - h) / 2; h = nh; }
+  if (w > LARGHEZZA_CAMPO) {
+    // Campo lungo (special teams): tutto non ci sta nel riquadro, quindi
+    // si inquadrano i giocatori e un po' di quello che hanno davanti
+    w = LARGHEZZA_CAMPO; h = w / rapporto;
+    const py = (schema.giocatori || []).map((g) => g.y);
+    const centro = py.length ? (Math.min(...py) + Math.max(...py)) / 2 : (y0 + y1) / 2;
+    y0 = centro - h / 2;
+  }
   w = Math.min(w, LARGHEZZA_CAMPO); h = Math.min(h, ALTEZZA_CAMPO);
   x0 = Math.max(0, Math.min(x0, LARGHEZZA_CAMPO - w));
   const alto = Math.min(YARDE_AVANTI, Math.max(y0 + h, -YARDE_DIETRO + h));

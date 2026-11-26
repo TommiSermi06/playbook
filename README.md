@@ -3,6 +3,17 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.38 — Special teams
+
+- Terza sezione **Special** accanto ad Attacco e Difesa (computer e telefono; non c'è nei playbook flag) — `speciali.js`
+- Unità pronte per 11, 9 e 7 giocatori: Kickoff, Kick return, Punt (spread punt), Punt return, Field goal / PAT, Blocco FG, Onside kick. L'unità è la categoria dello schema (filtri, ricerca e stampa per categoria funzionano già)
+- Chi calcia sta sotto la linea, chi riceve sopra. Kickoff, Kick return e Punt return hanno il **campo lungo** (50 yarde oltre la linea, distanze vere)
+- Colori: calciatori, protezione, copertura e blocchi, ritorno. Pedine per «Crea da zero» con le sigle tipiche (K, P, H, LS, GU, PP, L1…R5, KR, PR, F1…, V1…)
+- Tracce pronte: copertura, contenimento, protezione, calcio lungo/corto, ritorno (centrale, destra, sinistra), blocco, rientra e blocca, rush sul calcio; tasti 1–9 e B sul computer
+- Squadra avversaria in trasparenza: su un Kickoff si carica il Kick return, su un Punt il Punt return, ecc.
+- ▶︎ Gioca: su Punt e Field goal la palla va dallo snapper al punter / holder
+- Stampa: «Tutti gli special teams» e raggruppamento per unità
+
 ## Versione 0.37 — spazi sistemati
 
 - Nome del giocatore più vicino alla pedina

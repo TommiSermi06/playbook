@@ -2906,3 +2906,18 @@ html[data-tema="chiaro"] .giocatore .nome-pedina,
 .riga-campo .campo-numero input { width: 52px; text-align: center; }
 .riga-campo #nome-giocatore { width: 130px; }
 #azioni-numero-nome { margin-top: 2px; }
+
+/* ---------- Special teams (speciali.js) ---------- */
+/* Tre sezioni nella barra laterale: Attacco / Difesa / Special */
+.segmentato-lati { grid-template-columns: repeat(3, 1fr); }
+.segmentato-lati::before { width: calc(33.333% - 1.4px); }
+.segmentato-lati[data-scelto="difesa"]::before { transform: translateX(100%); }
+.segmentato-lati[data-scelto="speciali"]::before { transform: translateX(200%); }
+.segmentato-lati.senza-speciali { grid-template-columns: 1fr 1fr; }
+.segmentato-lati.senza-speciali::before { width: calc(50% - 2px); }
+.segmentato-lati.senza-speciali [data-lato="speciali"] { display: none; }
+/* Colori dei ruoli negli special teams */
+.ruolo-st-calcio     { --colore-ruolo: var(--ruolo-qb); }
+.ruolo-st-protezione { --colore-ruolo: var(--ruolo-linea); }
+.ruolo-st-ritorno    { --colore-ruolo: var(--ruolo-back); }
+.ruolo-st-copertura  { --colore-ruolo: var(--ruolo-ricevitori); }

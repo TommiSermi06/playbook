@@ -24,7 +24,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=0.37">
+  <link rel="stylesheet" href="style.css?v=0.38">
 </head>
 <body>
   <!-- ======================================================================
@@ -66,9 +66,10 @@
       </div>
 
       <!-- Controllo segmentato: Attacco / Difesa -->
-      <div class="segmentato" id="filtro-lato" data-scelto="attacco" role="tablist">
+      <div class="segmentato segmentato-lati" id="filtro-lato" data-scelto="attacco" role="tablist">
         <button class="segmento attivo" data-lato="attacco" role="tab">Attacco</button>
         <button class="segmento" data-lato="difesa" role="tab">Difesa</button>
+        <button class="segmento" data-lato="speciali" role="tab" title="Special teams: kickoff, punt, field goal e ritorni">Special</button>
       </div>
 
       <div class="cerca">
@@ -92,7 +93,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.37<button type="button" class="btn-tema btn-tema-laterale">☀️ Tema chiaro</button></p>
+      <p class="versione" id="versione">Versione 0.38<button type="button" class="btn-tema btn-tema-laterale">☀️ Tema chiaro</button></p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -216,7 +217,7 @@
 
       <!-- Dati per la partita: numero di chiamata e situazioni -->
       <!-- Categoria (corsa, passaggio, screen…) e tag liberi -->
-      <p class="titolo-sezione">Categoria e tag</p>
+      <p class="titolo-sezione" id="titolo-categoria">Categoria e tag</p>
       <div class="card pannello-categoria" id="pannello-categoria"></div>
 
       <!-- Avversari in trasparenza (opzionali): difesa su un attacco, attacco su una difesa -->
@@ -579,35 +580,36 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="tema.js?v=0.37"></script>
-  <script src="filigrana.js?v=0.37"></script>
-  <script src="pedine.js?v=0.37"></script>
-  <script src="config.js?v=0.37"></script>
+  <script src="tema.js?v=0.38"></script>
+  <script src="filigrana.js?v=0.38"></script>
+  <script src="pedine.js?v=0.38"></script>
+  <script src="config.js?v=0.38"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.37"></script>
-  <script src="regole.js?v=0.37"></script>
-  <script src="cloud.js?v=0.37"></script>
-  <script src="dati.js?v=0.37"></script>
-  <script src="formazioni-personali.js?v=0.37"></script>
-  <script src="app.js?v=0.37"></script>
-  <script src="tracce.js?v=0.37"></script>
-  <script src="avversari.js?v=0.37"></script>
-  <script src="annotazioni.js?v=0.37"></script>
-  <script src="animazione.js?v=0.37"></script>
-  <script src="costruttore.js?v=0.37"></script>
-  <script src="lucchetto.js?v=0.37"></script>
-  <script src="stampa.js?v=0.37"></script>
-  <script src="partita.js?v=0.37"></script>
-  <script src="playbook.js?v=0.37"></script>
-  <script src="squadra.js?v=0.37"></script>
-  <script src="avversari-ui.js?v=0.37"></script>
-  <script src="note-campo.js?v=0.37"></script>
-  <script src="selezione.js?v=0.37"></script>
-  <script src="categorie.js?v=0.37"></script>
-  <script src="riordino.js?v=0.37"></script>
-  <script src="condivisione.js?v=0.37"></script>
-  <script src="proposte.js?v=0.37"></script>
-  <script src="accesso.js?v=0.37"></script>
-  <script src="aggiornamento.js?v=0.37"></script>
+  <script src="formazioni.js?v=0.38"></script>
+  <script src="regole.js?v=0.38"></script>
+  <script src="cloud.js?v=0.38"></script>
+  <script src="dati.js?v=0.38"></script>
+  <script src="formazioni-personali.js?v=0.38"></script>
+  <script src="app.js?v=0.38"></script>
+  <script src="tracce.js?v=0.38"></script>
+  <script src="avversari.js?v=0.38"></script>
+  <script src="annotazioni.js?v=0.38"></script>
+  <script src="animazione.js?v=0.38"></script>
+  <script src="costruttore.js?v=0.38"></script>
+  <script src="lucchetto.js?v=0.38"></script>
+  <script src="stampa.js?v=0.38"></script>
+  <script src="partita.js?v=0.38"></script>
+  <script src="playbook.js?v=0.38"></script>
+  <script src="squadra.js?v=0.38"></script>
+  <script src="avversari-ui.js?v=0.38"></script>
+  <script src="note-campo.js?v=0.38"></script>
+  <script src="selezione.js?v=0.38"></script>
+  <script src="categorie.js?v=0.38"></script>
+  <script src="speciali.js?v=0.38"></script>
+  <script src="riordino.js?v=0.38"></script>
+  <script src="condivisione.js?v=0.38"></script>
+  <script src="proposte.js?v=0.38"></script>
+  <script src="accesso.js?v=0.38"></script>
+  <script src="aggiornamento.js?v=0.38"></script>
 </body>
 </html>

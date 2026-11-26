@@ -132,7 +132,7 @@ function allineaProfondita() {
   if (gruppo.length < 2) return;
   ricordaStato();
   // La profondità di riferimento: quella più vicina alla linea (come una linea d'attacco)
-  const rif = schemaCorrente.lato === "attacco"
+  const rif = versoSchema(schemaCorrente) === "attacco"
     ? Math.max(...gruppo.map((g) => g.y))
     : Math.min(...gruppo.map((g) => g.y));
   for (const g of gruppo) g.y = limitaY(schemaCorrente.lato, rif, { avvisa: false });

@@ -323,7 +323,9 @@ function disegnaGruppoPlaybook(contenitore, lista) {
     const testi = el("span", "riga-testi");
     testi.appendChild(el("span", "riga-titolo", pb.nome));
     const att = schemi.filter((s) => s.lato === "attacco").length;
-    testi.appendChild(el("span", "riga-sotto", `${att} di attacco · ${schemi.length - att} di difesa`));
+    const dif = schemi.filter((s) => s.lato === "difesa").length;
+    const st = schemi.length - att - dif;
+    testi.appendChild(el("span", "riga-sotto", `${att} di attacco · ${dif} di difesa` + (st ? ` · ${st} special` : "")));
     const etichette = el("span", "etichette");
     etichette.appendChild(el("span", "etichetta-pill accento", descriviPlaybook(pb)));
     if (pb.proprietario) {
@@ -367,7 +369,9 @@ function apriPlaybook(pb, { sostituisci = false } = {}) {
   Stato.cerca = "";
   $("#cerca").value = "";
   const schemi = schemiDi(pb);
-  Stato.lato = schemi.some((s) => s.lato === "attacco") || !schemi.length ? "attacco" : "difesa";
+  Stato.lato = ORDINE_LATI.find((l) => schemi.some((s) => s.lato === l)) || "attacco";
+  // Nel flag non ci sono calci: niente Special teams
+  document.querySelectorAll(".solo-speciali").forEach((b) => { b.hidden = !conSpecialTeams(pb.formato); });
   $("#pb-titolo").textContent = pb.nome;
   $("#pb-barra-titolo").textContent = pb.nome;
   $("#pb-sotto").textContent = descriviPlaybook(pb) + (pb.proprietario ? ` · ${pb.squadra || "staff"}` : "");

@@ -144,6 +144,6 @@ function giocatoriDaFormazione(lato, idFormazione) {
     etichetta: g.etichetta,
     x: g.x,
     y: g.y,
-    forma: g.forma || (lato === "attacco" ? "cerchio" : "lettera"),
+    forma: g.forma || (lato === "difesa" ? "lettera" : "cerchio"),
   }));
 }

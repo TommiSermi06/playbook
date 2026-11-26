@@ -28,7 +28,7 @@ const TIPI_TRACCIA = {
   ],
 };
 function infoTipo(tipo) {
-  return [...TIPI_TRACCIA.attacco, ...TIPI_TRACCIA.difesa].find((t) => t.id === tipo) || TIPI_TRACCIA.attacco[0];
+  return [...TIPI_TRACCIA.attacco, ...TIPI_TRACCIA.difesa, ...(TIPI_TRACCIA.speciali || [])].find((t) => t.id === tipo) || TIPI_TRACCIA.attacco[0];
 }
 
 /* ---------- Albero delle route (attacco) ----------
@@ -367,7 +367,8 @@ const Tracce = {
       curva: Boolean(leggiLocale("playbook.disegno-curvo")), // ultima scelta del coach
       // La linea disegna blocchi (con la T finale), gli altri route o blitz
       tipo: (g.traccia && g.traccia.tipo) ||
-        (eUomoDiLinea(g) ? "blocco" : eQuarterback(g) ? "qb" : schemaCorrente.lato === "attacco" ? "route" : "blitz"),
+        (eUomoDiLinea(g) ? "blocco" : eQuarterback(g) ? "qb" : schemaCorrente.lato === "attacco" ? "route"
+          : schemaCorrente.lato === "speciali" ? tipoSpecialeAMano(schemaCorrente, g) : "blitz"),
       prima: istantanea(),
     };
     document.body.classList.add("disegnando");
@@ -481,6 +482,7 @@ function iconaTraccia(punti, tipo) {
 function apriMenuTracce(g) {
   const menu = $("#menu-tracce");
   const attacco = schemaCorrente.lato === "attacco";
+  const speciali = schemaCorrente.lato === "speciali";
   menu.innerHTML = "";
   menu.className = "menu-tracce ruolo-" + ruoloDi(schemaCorrente.lato, g.etichetta);
 
@@ -491,7 +493,7 @@ function apriMenuTracce(g) {
   const linea = eUomoDiLinea(g);
   const qb = eQuarterback(g);
   testa.querySelector(".menu-titolo").textContent =
-    linea ? "Blocco" : qb ? "Movimento del QB" : attacco ? "Albero delle route" : "Compito difensivo";
+    linea ? "Blocco" : qb ? "Movimento del QB" : attacco ? "Albero delle route" : speciali ? "Compito special teams" : "Compito difensivo";
   menu.appendChild(testa);
 
   const griglia = document.createElement("div");
@@ -506,6 +508,16 @@ function apriMenuTracce(g) {
         icona: iconaTraccia(m.punti.map(([x, y]) => ({ x, y })), "qb"),
         azione: () => Tracce.applica(g, tracciaDaQb(g, m)),
       }))
+    : speciali
+    ? tracceSpecialiPer(schemaCorrente, g).map((p, i) => {
+        const t = tracciaDaSpeciale(schemaCorrente, g, p);
+        return {
+          etichetta: p.nome,
+          tasto: String(i + 1),
+          icona: iconaTraccia(t.punti.map((q) => ({ x: q.dx, y: q.dy })), p.tipo),
+          azione: () => Tracce.applica(g, t),
+        };
+      })
     : attacco
     ? ALBERO_ROUTE.map((r) => ({
         etichetta: `${r.n}-${r.nome}`,
@@ -557,6 +569,9 @@ function apriMenuTracce(g) {
     aggiungiAzione("✏️  Disegna a mano", "T", () => Tracce.iniziaDisegno(g));
     if (attacco && !formatoDi(schemaCorrente).flag) { // nel flag non si blocca
       aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, 1.5)] }));
+    } else if (speciali && !tracceSpecialiPer(schemaCorrente, g).some((p) => p.tipo === "blocco")) {
+      const avanti = versoSchema(schemaCorrente) === "attacco" ? 1.5 : -1.5;
+      aggiungiAzione("Blocco", "B", () => Tracce.applica(g, { tipo: "blocco", nome: "Blocco", punti: [dentroCampo(g, 0, avanti)] }));
     }
   }
   // Copia / incolla (anche specchiata)
