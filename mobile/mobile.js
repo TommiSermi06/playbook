@@ -417,7 +417,8 @@ function mostraElenco() {
   if (Stato.filtro !== "tutte") schemi = schemi.filter((s) => (s.situazioni || []).includes(Stato.filtro));
   if (Stato.cerca) schemi = schemi.filter((s) =>
     (s.nome || "").toLowerCase().includes(Stato.cerca) || nomeFormazione(s).toLowerCase().includes(Stato.cerca)
-    || String(s.chiamata || "") === Stato.cerca);
+    || String(s.chiamata || "") === Stato.cerca
+    || testoCategoriaETag(s).includes(Stato.cerca.replace(/^#/, ""))); // anche tag e categorie
   Stato.elenco = ordinaComePlaybook(schemi, Stato.pb);
   const lista = $("#lista-schemi");
   lista.innerHTML = "";
@@ -430,7 +431,8 @@ function mostraElenco() {
     const testi = el("span", "riga-testi");
     testi.appendChild(el("span", "riga-titolo", s.nome || "Senza nome"));
     const sit = (s.situazioni || []).map((x) => NOME_SITUAZIONE[x]).filter(Boolean);
-    testi.appendChild(el("span", "riga-sotto", [nomeFormazione(s), ...sit].join(" · ")));
+    const cat = categoriaDi(s);
+    testi.appendChild(el("span", "riga-sotto", [cat ? `${cat.icona} ${cat.nome}` : "", nomeFormazione(s), ...sit].filter(Boolean).join(" · ")));
     riga.appendChild(testi);
     if (s.chiamata) riga.appendChild(el("span", "numero-chiamata", String(s.chiamata)));
     riga.addEventListener("click", () => apriSchema(i));
@@ -469,6 +471,14 @@ function mostraSchema(anima) {
   const sit = (s.situazioni || []).filter((x) => NOME_SITUAZIONE[x]);
   for (const id of sit) pillole.appendChild(el("span", "pillola attiva", NOME_SITUAZIONE[id]));
   if (!sit.length) pillole.appendChild(el("span", "riga-sotto", "Nessuna situazione"));
+  // Categoria e tag (messi dal computer)
+  const ct = $("#schema-categoria");
+  ct.innerHTML = "";
+  const cat = categoriaDi(s);
+  if (cat) ct.appendChild(el("span", "pillola attiva", `${cat.icona} ${cat.nome}`));
+  for (const t of s.tag || []) ct.appendChild(el("span", "pillola", "#" + t));
+  $("#gruppo-categoria").hidden = !cat && !(s.tag || []).length;
+  $("#titolo-categoria").hidden = $("#gruppo-categoria").hidden;
   const note = $("#schema-note");
   note.textContent = s.note || "Nessuna nota";
   note.classList.toggle("vuote", !s.note);

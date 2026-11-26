@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.32 — categorie e tag
+
+- Pannello **Categoria e tag**: una categoria per schema (attacco: Corsa, Passaggio, Play action, RPO, Screen, Trick play;
+  difesa: Zona, Uomo, Blitz, Contro la corsa, Speciale) e tag liberi (Invio per aggiungerli, suggerimenti da quelli già usati).
+- Elenco: filtri per categoria sopra gli schemi; la ricerca trova anche tag e categorie. La categoria compare nella riga e in stampa.
+- Sul telefono: categoria e tag nello schema, ricerca per tag.
+
 ## Versione 0.31 — avversari in trasparenza
 
 - Nuova sezione **Difesa avversaria** (o **Attacco avversario** negli schemi di difesa) nel pannello: opzionale.

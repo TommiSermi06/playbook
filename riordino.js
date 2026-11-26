@@ -15,7 +15,8 @@ let idTrascinato = null;
 function puoRiordinare() {
   return Boolean(playbookCorrente)
     && Playbook.permesso(playbookCorrente.id) === "proprietario"
-    && !$("#cerca").value.trim();
+    && !$("#cerca").value.trim()
+    && filtroCategoria === "tutte"; // con l'elenco filtrato l'ordine sarebbe ambiguo
 }
 
 // Chiamata da mostraElenco() per ogni riga

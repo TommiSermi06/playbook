@@ -367,7 +367,8 @@ function schedaSchema(schema, numero, conNote) {
   const titolo = elemento("div", "scheda-titolo");
   titolo.appendChild(elemento("span", "scheda-numero", String(numero)));
   titolo.appendChild(elemento("strong", "", schema.nome || "Senza nome"));
-  titolo.appendChild(elemento("span", "scheda-info", `${NOMI_LATO[schema.lato]} · ${nomeFormazione(schema)}`));
+  const categoria = nomeCategoria(schema);
+  titolo.appendChild(elemento("span", "scheda-info", `${NOMI_LATO[schema.lato]} · ${nomeFormazione(schema)}${categoria ? " · " + categoria : ""}`));
   scheda.appendChild(titolo);
 
   const svg = document.createElementNS(SVG_NS, "svg");

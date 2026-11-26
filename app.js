@@ -338,12 +338,16 @@ function dataBreve(ms) {
 }
 
 function mostraElenco() {
+  mostraFiltriCategoria();
   const testoCerca = $("#cerca").value.trim().toLowerCase();
   const delLato = schemiDelPlaybook().filter((s) => s.lato === latoSelezionato);
   const schemi = delLato.filter((s) =>
-    !testoCerca ||
-    (s.nome || "").toLowerCase().includes(testoCerca) ||
-    nomeFormazione(s).toLowerCase().includes(testoCerca)
+    (filtroCategoria === "tutte" || s.categoria === filtroCategoria) && (
+      !testoCerca ||
+      (s.nome || "").toLowerCase().includes(testoCerca) ||
+      nomeFormazione(s).toLowerCase().includes(testoCerca) ||
+      testoCategoriaETag(s).includes(testoCerca.replace(/^#/, "")) // anche tag e categorie
+    )
   );
 
   const lista = $("#lista-schemi");
@@ -379,7 +383,7 @@ function mostraElenco() {
     if (schema.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
     const sotto = document.createElement("span");
     sotto.className = "riga-sotto";
-    sotto.textContent = `${prefissoRiga(schema)}${schema.chiamata ? "#" + schema.chiamata + " · " : ""}${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
+    sotto.textContent = `${prefissoRiga(schema)}${schema.chiamata ? "#" + schema.chiamata + " · " : ""}${categoriaDi(schema) ? categoriaDi(schema).icona + " " + nomeCategoria(schema) + " · " : ""}${nomeFormazione(schema)} · ${dataBreve(schema.modificato)}`;
     testi.append(titolo, sotto);
 
     riga.append(mini, testi);
@@ -401,7 +405,7 @@ function aggiornaRigaCorrente() {
   if (schemaCorrente.bloccato) titolo.insertAdjacentHTML("afterbegin", '<span class="mini-lucchetto" title="Bloccato">🔒</span> ');
   titolo.classList.toggle("senza-nome", !schemaCorrente.nome);
   riga.querySelector(".riga-sotto").textContent =
-    `${prefissoRiga(schemaCorrente)}${schemaCorrente.chiamata ? "#" + schemaCorrente.chiamata + " · " : ""}${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
+    `${prefissoRiga(schemaCorrente)}${schemaCorrente.chiamata ? "#" + schemaCorrente.chiamata + " · " : ""}${categoriaDi(schemaCorrente) ? categoriaDi(schemaCorrente).icona + " " + nomeCategoria(schemaCorrente) + " · " : ""}${nomeFormazione(schemaCorrente)} · ${dataBreve(Date.now())}`;
 }
 
 function scegliLato(lato) {
@@ -486,6 +490,7 @@ function ridisegna() {
   mostraCampoVuoto();
   aggiornaLucchetto();
   mostraPartita();
+  mostraCategoria();
   aggiornaBannerBozza();
   mostraInfoGiocatore();
   mostraPannelloAvversari();
