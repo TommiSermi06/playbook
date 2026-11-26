@@ -18,7 +18,7 @@
     // Tema scelto nell'account (automatico se non scelto): subito, prima di disegnare
     try { var t = localStorage.getItem("playbook.m.tema"); if (t === "chiaro" || t === "scuro") document.documentElement.dataset.tema = t; } catch (e) {}
   </script>
-  <link rel="stylesheet" href="mobile.css?v=m11">
+  <link rel="stylesheet" href="mobile.css?v=m12">
 </head>
 <body>
   <!-- Schermata d'avvio, mentre controlliamo l'accesso -->
@@ -218,7 +218,7 @@
       <p class="nome-selezionato"><span id="nome-selezionato"></span><button class="btn-testo" id="btn-deseleziona">Fatto</button></p>
       <button class="strumento toccabile" id="btn-traccia"><span>↗︎</span>Traccia</button>
       <button class="strumento toccabile" id="btn-disegna"><span>✍️</span>Disegna</button>
-      <button class="strumento toccabile" id="btn-sigla"><span>Aa</span>Sigla</button>
+      <button class="strumento toccabile" id="btn-sigla"><span>#</span>Giocatore</button>
       <button class="strumento toccabile rosso" id="btn-togli"><span>✕</span>Togli</button>
     </div>
     <!-- Disegno con il dito in corso -->
@@ -265,6 +265,23 @@
   </div>
 
   <div class="velo" id="velo" hidden></div>
+
+  <div class="foglio" id="foglio-pedina" hidden>
+    <div class="maniglia-foglio"></div>
+    <div class="foglio-testa">
+      <button class="btn-barra toccabile" id="pedina-annulla" style="justify-self: start">Annulla</button>
+      <strong>Giocatore</strong>
+      <button class="btn-barra toccabile" id="pedina-salva">Salva</button>
+    </div>
+    <div class="gruppo">
+      <div class="campo-riga"><label for="pedina-ruolo">Ruolo</label><input id="pedina-ruolo" type="text" maxlength="3" autocapitalize="characters" autocomplete="off"></div>
+      <div class="campo-riga"><label for="pedina-numero">Numero #</label><input id="pedina-numero" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="—"></div>
+      <div class="campo-riga"><label for="pedina-nome">Nome</label><input id="pedina-nome" type="text" maxlength="16" autocomplete="off" placeholder="Cognome" list="pedina-rosa"></div>
+    </div>
+    <datalist id="pedina-rosa"></datalist>
+    <p class="nota-foglio">Il numero compare dentro la pedina al posto del ruolo, il nome sotto. Si muovono insieme alla pedina.</p>
+    <div class="gruppo"><label class="campo-riga"><span style="flex: 1">Usa in tutti gli schemi con questo ruolo</span><input type="checkbox" class="interruttore-m" id="pedina-ovunque"></label></div>
+  </div>
 
   <div class="foglio" id="foglio-modifica" hidden>
     <div class="maniglia-foglio"></div>
@@ -322,7 +339,8 @@
   <script src="../config.js?v=m1"></script>
   <script src="../lib/supabase.js"></script>
   <script src="../filigrana.js?v=m12"></script>
-  <script src="campo.js?v=m10"></script>
+  <script src="../pedine.js?v=m12"></script>
+  <script src="campo.js?v=m12"></script>
   <script src="../avversari.js?v=m8"></script>
   <script src="../annotazioni.js?v=m7"></script>
   <script src="../formazioni.js?v=m1"></script>
@@ -333,7 +351,7 @@
   <script src="../cloud.js?v=m1"></script>
   <!-- ...e la logica tutta nuova per il telefono -->
   <script src="mobile.js?v=m11"></script>
-  <script src="editor.js?v=m8"></script>
+  <script src="editor.js?v=m12"></script>
   <script src="proposte.js?v=m3"></script>
   <script>
     // Il pulsante "indietro" con la freccia iOS

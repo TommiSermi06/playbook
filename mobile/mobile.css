@@ -795,3 +795,27 @@ a.riga { display: flex; }
 }
 .riga-tema { padding: 8px 12px; }
 .riga-tema .segmentato { margin: 0; }
+
+/* Pedine con numero (#12) dentro e nome sotto (../pedine.js) */
+.giocatore .etichetta.numero { font-size: 0.74px; letter-spacing: -0.02em; }
+.giocatore .etichetta.numero.lunghissima { font-size: 0.6px; }
+.forma-lettera .etichetta.numero { font-size: 1.1px; }
+.forma-lettera .etichetta.numero.lunghissima { font-size: 0.9px; }
+.giocatore .nome-pedina {
+  font-size: 0.7px; font-weight: 700; fill: #F2F5F3;
+  stroke: var(--contorno-difesa); stroke-width: 0.22; stroke-linejoin: round; paint-order: stroke;
+  pointer-events: none; font-family: -apple-system, system-ui, sans-serif;
+}
+
+.nota-foglio { margin: 8px 32px 12px; font-size: 13px; color: var(--testo-secondario); }
+.interruttore-m {
+  appearance: none; -webkit-appearance: none; flex: none;
+  width: 51px; height: 31px; border-radius: 16px; margin: 0;
+  background: var(--sfondo-grigio, rgba(120, 120, 128, 0.32)); position: relative; transition: background 0.2s;
+}
+.interruttore-m::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25); transition: transform 0.2s;
+}
+.interruttore-m:checked { background: var(--verde, #34C759); }
+.interruttore-m:checked::after { transform: translateX(20px); }

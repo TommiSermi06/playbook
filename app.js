@@ -164,7 +164,7 @@ function disegnaCampo(svg, schema, { miniatura = false, selezionato = null, stam
   // Giocatori
   const gruppo = crea("g", { class: "giocatori lato-" + schema.lato }, svg);
   schema.giocatori.forEach((g, i) => {
-    const el = disegnaGiocatore(gruppo, g, schema.lato);
+    const el = disegnaGiocatore(gruppo, g, schema.lato, { miniatura });
     el.style.setProperty("--i", i); // per far entrare i giocatori uno dopo l'altro
     if (g.id === selezionato) el.classList.add("selezionato");
   });
@@ -284,7 +284,7 @@ function ruoloDi(lato, etichetta) {
   return lato === "attacco" ? "ricevitori" : "lb"; // sigla sconosciuta
 }
 
-function disegnaGiocatore(genitore, g, lato) {
+function disegnaGiocatore(genitore, g, lato, { miniatura = false } = {}) {
   const el = crea("g", {
     class: `giocatore forma-${g.forma} ruolo-${ruoloDi(lato, g.etichetta)}`,
     "data-id": g.id,
@@ -304,12 +304,7 @@ function disegnaGiocatore(genitore, g, lato) {
     crea("circle", { r: RAGGIO_GIOCATORE * 1.2, class: "sagoma-invisibile" }, el);
   }
 
-  const testo = crea("text", {
-    class: "etichetta" + (g.etichetta.length > 1 ? " lunga" : ""),
-    "text-anchor": "middle",
-    "dominant-baseline": "central",
-  }, el);
-  testo.textContent = g.etichetta;
+  scriviPedina(el, g, { miniatura }); // ruolo o #numero dentro, nome sotto (pedine.js)
   return el;
 }
 
@@ -722,6 +717,16 @@ function mostraInfoGiocatore() {
       <span>Ruolo</span>
       <input id="etichetta-giocatore" type="text" maxlength="3" autocomplete="off">
     </label>
+    <label class="riga-campo">
+      <span>Numero</span>
+      <span class="campo-numero"><span>#</span><input id="numero-giocatore" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="—"></span>
+    </label>
+    <label class="riga-campo">
+      <span>Nome</span>
+      <input id="nome-giocatore" type="text" maxlength="${MAX_NOME_PEDINA}" autocomplete="off" placeholder="Cognome" list="rosa-giocatori">
+    </label>
+    <datalist id="rosa-giocatori"></datalist>
+    <div class="riga-pulsanti" id="azioni-numero-nome"></div>
     <div class="riga-campo">
       <span>Profondità</span>
       <span class="campo-profondita">
@@ -810,6 +815,100 @@ function mostraInfoGiocatore() {
     salvaTraPoco();
   });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === "Escape") input.blur(); });
+  collegaNumeroNome(g);
+}
+
+/* ---------- Numero e nome del giocatore (pedine.js) ----------
+   Si scrivono nel pannello; dal nome scelto tra quelli già usati si
+   completa da solo il numero (e viceversa). «Usa in tutti gli schemi»
+   mette lo stesso giocatore su tutte le pedine con lo stesso ruolo. */
+function collegaNumeroNome(g) {
+  const campoN = $("#numero-giocatore");
+  const campoNome = $("#nome-giocatore");
+  campoN.value = g.numero || "";
+  campoNome.value = g.nome || "";
+  const rosa = rosaDaSchemi(schemiDelPlaybook().map((s) => (s.id === schemaCorrente.id ? schemaCorrente : s)));
+  const lista = $("#rosa-giocatori");
+  for (const r of rosa) if (r.nome) lista.appendChild(Object.assign(document.createElement("option"), { value: r.nome, label: r.numero ? `#${r.numero}` : "" }));
+
+  const applica = () => {
+    impostaNumeroNome(g, campoN.value, campoNome.value);
+    disegnaCampo(svgCampo, schemaCorrente, { selezionato: giocatoreSelezionato });
+    salvaTraPoco();
+    aggiornaAzioniNumeroNome(g);
+  };
+  for (const c of [campoN, campoNome]) {
+    c.addEventListener("focus", () => ricordaStato());
+    c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === "Escape") c.blur(); });
+  }
+  campoN.addEventListener("input", () => {
+    const pulito = pulisciNumero(campoN.value);
+    if (campoN.value !== pulito) campoN.value = pulito;
+    // Numero di un giocatore già usato: si completa il nome (se vuoto)
+    const r = rosa.find((r) => r.numero === pulito && r.nome);
+    if (r && !campoNome.value.trim()) campoNome.value = r.nome;
+    applica();
+  });
+  campoNome.addEventListener("input", () => {
+    const r = rosa.find((r) => r.nome.toLowerCase() === campoNome.value.trim().toLowerCase() && r.numero);
+    if (r && !campoN.value) campoN.value = r.numero;
+    applica();
+  });
+  aggiornaAzioniNumeroNome(g);
+}
+
+function aggiornaAzioniNumeroNome(g) {
+  const box = $("#azioni-numero-nome");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!g.numero && !g.nome) { box.hidden = true; return; }
+  box.hidden = false;
+  const tutti = document.createElement("button");
+  tutti.className = "btn-mini";
+  tutti.textContent = `Usa per tutti i «${g.etichetta}» del playbook`;
+  tutti.title = `Mette ${testoRosa({ numero: g.numero, nome: g.nome })} su ogni ${g.etichetta} degli schemi di ${schemaCorrente.lato}`;
+  tutti.addEventListener("click", () => usaNumeroNomeOvunque(g));
+  const via = document.createElement("button");
+  via.className = "btn-mini";
+  via.textContent = "Togli numero e nome";
+  via.addEventListener("click", () => {
+    ricordaStato();
+    impostaNumeroNome(g, "", "");
+    salvaTraPoco();
+    ridisegna();
+  });
+  box.append(tutti, via);
+}
+
+function usaNumeroNomeOvunque(g) {
+  salvaInSospeso();
+  const cambiati = [];
+  for (const s of schemiDelPlaybook()) {
+    if (s.lato !== schemaCorrente.lato || s.bloccato) continue;
+    const vecchi = [];
+    for (const x of s.giocatori) {
+      if (x.etichetta !== g.etichetta || (x.numero === g.numero && x.nome === g.nome)) continue;
+      vecchi.push({ x, numero: x.numero, nome: x.nome });
+    }
+    if (!vecchi.length) continue;
+    cambiati.push({ s, vecchi });
+  }
+  const bloccati = schemiDelPlaybook().filter((s) => s.lato === schemaCorrente.lato && s.bloccato && s.giocatori.some((x) => x.etichetta === g.etichetta)).length;
+  if (!cambiati.length) { mostraAvviso(bloccati ? `Niente da cambiare (${bloccati} schemi bloccati saltati)` : "È già così in tutti gli schemi"); return; }
+  const applica = (verso) => {
+    for (const { s, vecchi } of cambiati) {
+      for (const v of vecchi) {
+        const x = s.id === schemaCorrente.id ? schemaCorrente.giocatori.find((y) => y.id === v.x.id) || v.x : v.x;
+        if (verso) impostaNumeroNome(x, g.numero, g.nome); else impostaNumeroNome(x, v.numero, v.nome);
+      }
+    }
+    Dati.aggiornaMolti(cambiati.map((c) => (c.s.id === schemaCorrente.id ? schemaCorrente : c.s)));
+    ridisegna();
+    mostraElenco();
+  };
+  applica(true);
+  const testo = `${testoRosa(g)} messo su ${cambiati.length} ${cambiati.length === 1 ? "schema" : "schemi"}` + (bloccati ? ` (bloccati saltati)` : "");
+  mostraAvviso(testo, () => applica(false));
 }
 
 /* ==========================================================================

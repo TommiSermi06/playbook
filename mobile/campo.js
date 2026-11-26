@@ -164,11 +164,7 @@ function disegnaCampo(svg, schema, { miniatura = false, anima = false, ritaglio 
     } else if (g.forma === "cerchio") {
       crea("circle", { r: RAGGIO_GIOCATORE, class: "sagoma" }, el);
     }
-    const t = crea("text", {
-      class: "etichetta" + (g.etichetta.length > 1 ? " lunga" : ""),
-      "text-anchor": "middle", "dominant-baseline": "central",
-    }, el);
-    t.textContent = g.etichetta;
+    scriviPedina(el, g, { miniatura }); // ruolo o #numero dentro, nome sotto (../pedine.js)
   }
 
   // Testi sopra tutto

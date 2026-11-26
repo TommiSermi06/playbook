@@ -3,6 +3,14 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.36 — pedine con numero e nome del giocatore
+
+- Ogni pedina può avere un numero (compare «#12» dentro il cerchio al posto del ruolo) e un nome (scritto sotto); il colore resta quello del ruolo (`pedine.js`)
+- Numero e nome stanno nel gruppo della pedina: si muovono con lei (trascinamento, animazione, ribalta)
+- Computer: campi Numero e Nome nel pannello «Giocatore selezionato», con suggerimenti dei giocatori già usati (il numero completa il nome e viceversa) e «Usa per tutti i X del playbook» (con Annulla; gli schemi bloccati restano come sono)
+- Telefono: il pulsante «Giocatore» apre Ruolo / Numero / Nome, con l'interruttore «Usa in tutti gli schemi con questo ruolo»
+- In stampa si vedono; nelle miniature solo il numero
+
 ## Versione 0.35 — aggiornamento automatico e logo ancora più visibile
 
 - All'apertura (e quando si torna sulla scheda) l'app controlla `versione.json`: se online c'è una versione nuova si ricarica da sola (una volta), senza bisogno di Ctrl+F5 (`aggiornamento.js`)

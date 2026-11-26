@@ -4,10 +4,10 @@
    subito; se non c'è rete usa la copia salvata.
    I dati degli schemi stanno nella copia del telefono (localStorage).
    ========================================================================== */
-const CACHE = "playbook-mobile-m12";
+const CACHE = "playbook-mobile-m13";
 const FILE = [
-  "./", "index.html", "mobile.css?v=m11", "campo.js?v=m10", "mobile.js?v=m11", "editor.js?v=m8", "proposte.js?v=m3", "manifest.json",
-  "../config.js?v=m1", "../lib/supabase.js", "../filigrana.js?v=m10", "../avversari.js?v=m8", "../annotazioni.js?v=m7", "../formazioni.js?v=m1", "../regole.js?v=m1",
+  "./", "index.html", "mobile.css?v=m12", "campo.js?v=m12", "mobile.js?v=m11", "editor.js?v=m12", "proposte.js?v=m3", "manifest.json",
+  "../config.js?v=m1", "../lib/supabase.js", "../filigrana.js?v=m12", "../pedine.js?v=m12", "../avversari.js?v=m8", "../annotazioni.js?v=m7", "../formazioni.js?v=m1", "../regole.js?v=m1",
   "../categorie.js?v=m9", "../tracce.js?v=m5", "../animazione.js?v=m6", "../cloud.js?v=m1", "../icon-180.png",
 ];
 

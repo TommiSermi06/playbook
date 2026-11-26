@@ -356,14 +356,64 @@ $("#btn-ribalta").addEventListener("click", () => {
 });
 $("#btn-traccia").addEventListener("click", apriFoglioTracce);
 $("#btn-disegna").addEventListener("click", iniziaDisegno);
+/* ---------- Giocatore: ruolo, numero (#12 dentro la pedina) e nome sotto (../pedine.js) ---------- */
 $("#btn-sigla").addEventListener("click", () => {
   const g = selezionato();
-  const nuova = (prompt("Nuova sigla del giocatore (es. RB, TE, H)", g.etichetta) || "").trim().toUpperCase().slice(0, 3);
-  if (!nuova || nuova === g.etichetta) return;
+  if (!g) return;
+  $("#pedina-ruolo").value = g.etichetta;
+  $("#pedina-numero").value = g.numero || "";
+  $("#pedina-nome").value = g.nome || "";
+  $("#pedina-ovunque").checked = false;
+  const lista = $("#pedina-rosa");
+  lista.innerHTML = "";
+  const rosa = rosaDaSchemi(schemiDi(Stato.pb).map((s) => (s.id === schemaCorrente.id ? schemaCorrente : s)));
+  for (const r of rosa) if (r.nome) lista.appendChild(Object.assign(document.createElement("option"), { value: r.nome, label: r.numero ? `#${r.numero}` : "" }));
+  // Dal nome già usato si completa il numero, e viceversa
+  $("#pedina-numero").oninput = () => {
+    const n = pulisciNumero($("#pedina-numero").value);
+    $("#pedina-numero").value = n;
+    const r = rosa.find((r) => r.numero === n && r.nome);
+    if (r && !$("#pedina-nome").value.trim()) $("#pedina-nome").value = r.nome;
+  };
+  $("#pedina-nome").oninput = () => {
+    const v = $("#pedina-nome").value.trim().toLowerCase();
+    const r = rosa.find((r) => r.nome.toLowerCase() === v && r.numero);
+    if (r && !$("#pedina-numero").value) $("#pedina-numero").value = r.numero;
+  };
+  apriFoglio("#foglio-pedina");
+});
+$("#pedina-annulla").addEventListener("click", () => chiudiFogli());
+$("#pedina-salva").addEventListener("click", () => {
+  const g = selezionato();
+  if (!g) { chiudiFogli(); return; }
   ricorda();
-  g.etichetta = nuova;
+  const ruolo = $("#pedina-ruolo").value.trim().toUpperCase().slice(0, 3);
+  if (ruolo) g.etichetta = ruolo;
+  impostaNumeroNome(g, $("#pedina-numero").value, $("#pedina-nome").value);
   salvaEditor();
   disegnaEditor();
+  chiudiFogli();
+  if (!$("#pedina-ovunque").checked) return;
+  // Stesso giocatore su tutte le pedine con lo stesso ruolo negli altri schemi (non bloccati)
+  const cambiati = [];
+  for (const s of schemiDi(Stato.pb)) {
+    if (s.id === schemaCorrente.id || s.lato !== schemaCorrente.lato || s.bloccato) continue;
+    let tocca = false;
+    for (const x of s.giocatori) {
+      if (x.etichetta !== g.etichetta) continue;
+      impostaNumeroNome(x, g.numero, g.nome);
+      tocca = true;
+    }
+    if (tocca) { s.modificato = Date.now(); cambiati.push(s); }
+  }
+  if (!cambiati.length) { avviso("Negli altri schemi è già così"); return; }
+  salvaCopia();
+  Cloud.salvaSchemi(cambiati).catch(() => {
+    const ids = new Set(leggiLocale(chiaveInAttesa()) || []);
+    cambiati.forEach((s) => ids.add(s.id));
+    scriviLocale(chiaveInAttesa(), [...ids]);
+  });
+  avviso(`${testoRosa(g) || g.etichetta} messo su altri ${cambiati.length} ${cambiati.length === 1 ? "schema" : "schemi"}`);
 });
 $("#btn-togli").addEventListener("click", () => {
   const g = selezionato();
