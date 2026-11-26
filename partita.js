@@ -124,6 +124,7 @@ function aggiornaDopoPartita() {
     const s = Dati.trova(schemaCorrente.id);
     if (s) schemaCorrente = s;
     mostraPartita();
+    if (typeof mostraCategoria === "function") mostraCategoria();
   }
   mostraElenco();
   if (!$("#foglio-stampa").hidden) aggiornaOpzioniTipo();

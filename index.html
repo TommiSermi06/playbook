@@ -20,7 +20,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=0.32">
+  <link rel="stylesheet" href="style.css?v=0.33">
 </head>
 <body>
   <!-- ======================================================================
@@ -88,7 +88,7 @@
         <span class="stato-sync" id="stato-sync" title=""></span>
         <button class="btn-link" id="btn-esci">Esci</button>
       </div>
-      <p class="versione" id="versione">Versione 0.32</p>
+      <p class="versione" id="versione">Versione 0.33</p>
     </aside>
 
     <!-- ============ COLONNA 2: il campo ============ -->
@@ -480,8 +480,16 @@
       <button type="button" class="segmento" data-valore="scuro">Scuro come nell'app</button>
     </div>
 
-    <!-- Divisione per formazioni, con l'ordine scelto dal coach -->
-    <label class="spunta-stampa"><input type="checkbox" id="stampa-per-formazione"> Dividi per formazioni (ognuna da una pagina nuova)</label>
+    <!-- Raggruppamento: per formazione (con l'ordine scelto dal coach), per categoria o per tag -->
+    <p class="etichetta-stampa">Raggruppa (ogni gruppo da una pagina nuova)</p>
+    <div class="segmentato segmentato-4" id="stampa-raggruppa">
+      <button type="button" class="segmento" data-valore="nessuno">Nessuno</button>
+      <button type="button" class="segmento" data-valore="formazione">Formazione</button>
+      <button type="button" class="segmento" data-valore="categoria">Categoria</button>
+      <button type="button" class="segmento" data-valore="tag">Tag</button>
+    </div>
+    <p class="suggerimento-stampa aiuto-raggruppa" id="aiuto-raggruppa"></p>
+    <input type="checkbox" id="stampa-per-formazione" hidden>
     <div class="blocco-formazioni" id="blocco-formazioni">
       <p class="etichetta-stampa">Ordine delle formazioni <span class="aiuto-ordine">trascina o usa le frecce</span></p>
       <ol class="ordine-formazioni" id="ordine-formazioni"></ol>
@@ -565,31 +573,31 @@
   <div class="toast" id="toast" hidden></div>
 
   <!-- Ordine importante: configurazione e librerie, poi i dati, poi l'interfaccia -->
-  <script src="config.js?v=0.32"></script>
+  <script src="config.js?v=0.33"></script>
   <script src="lib/supabase.js"></script>
-  <script src="formazioni.js?v=0.32"></script>
-  <script src="regole.js?v=0.32"></script>
-  <script src="cloud.js?v=0.32"></script>
-  <script src="dati.js?v=0.32"></script>
-  <script src="formazioni-personali.js?v=0.32"></script>
-  <script src="app.js?v=0.32"></script>
-  <script src="tracce.js?v=0.32"></script>
-  <script src="avversari.js?v=0.32"></script>
-  <script src="annotazioni.js?v=0.32"></script>
-  <script src="animazione.js?v=0.32"></script>
-  <script src="costruttore.js?v=0.32"></script>
-  <script src="lucchetto.js?v=0.32"></script>
-  <script src="stampa.js?v=0.32"></script>
-  <script src="partita.js?v=0.32"></script>
-  <script src="playbook.js?v=0.32"></script>
-  <script src="squadra.js?v=0.32"></script>
-  <script src="avversari-ui.js?v=0.32"></script>
-  <script src="note-campo.js?v=0.32"></script>
-  <script src="selezione.js?v=0.32"></script>
-  <script src="categorie.js?v=0.32"></script>
-  <script src="riordino.js?v=0.32"></script>
-  <script src="condivisione.js?v=0.32"></script>
-  <script src="proposte.js?v=0.32"></script>
-  <script src="accesso.js?v=0.32"></script>
+  <script src="formazioni.js?v=0.33"></script>
+  <script src="regole.js?v=0.33"></script>
+  <script src="cloud.js?v=0.33"></script>
+  <script src="dati.js?v=0.33"></script>
+  <script src="formazioni-personali.js?v=0.33"></script>
+  <script src="app.js?v=0.33"></script>
+  <script src="tracce.js?v=0.33"></script>
+  <script src="avversari.js?v=0.33"></script>
+  <script src="annotazioni.js?v=0.33"></script>
+  <script src="animazione.js?v=0.33"></script>
+  <script src="costruttore.js?v=0.33"></script>
+  <script src="lucchetto.js?v=0.33"></script>
+  <script src="stampa.js?v=0.33"></script>
+  <script src="partita.js?v=0.33"></script>
+  <script src="playbook.js?v=0.33"></script>
+  <script src="squadra.js?v=0.33"></script>
+  <script src="avversari-ui.js?v=0.33"></script>
+  <script src="note-campo.js?v=0.33"></script>
+  <script src="selezione.js?v=0.33"></script>
+  <script src="categorie.js?v=0.33"></script>
+  <script src="riordino.js?v=0.33"></script>
+  <script src="condivisione.js?v=0.33"></script>
+  <script src="proposte.js?v=0.33"></script>
+  <script src="accesso.js?v=0.33"></script>
 </body>
 </html>

@@ -315,7 +315,7 @@ function apriMenuScheda(bottone, pb) {
     ["Condividi e co-allenatori…", () => apriFoglioCondividi(pb)],
     ["Duplica", () => duplicaPlaybook(pb)],
     ["Rinomina un ruolo…", () => apriRinominaRuolo(pb)],
-    ["Applica numeri e situazioni da file…", () => scegliFilePartita(pb)],
+    ["Applica dati da file (numeri, situazioni, categorie, tag)…", () => scegliFilePartita(pb)],
     ["Esporta (copia di sicurezza)", () => esportaPlaybook(pb)],
     ["Elimina…", () => eliminaPlaybook(pb), "distruttiva"],
   ];
@@ -547,7 +547,7 @@ async function applicaFilePartita(pb, file) {
   let dati;
   try { dati = JSON.parse(await file.text()); } catch { dati = null; }
   if (!dati || dati.tipo !== TIPO_FILE_PARTITA || !Array.isArray(dati.schemi)) {
-    mostraAvviso("Il file non contiene numeri e situazioni per questa app");
+    mostraAvviso("Il file non contiene dati degli schemi per questa app");
     return;
   }
   const chiave = (t) => (t || "").toLocaleLowerCase("it").replace(/\s+/g, " ").trim();
@@ -559,8 +559,17 @@ async function applicaFilePartita(pb, file) {
   for (const s of schemi) {
     const x = perNome.get(chiave(s.nome));
     if (!x) continue;
-    if (x.chiamata) s.chiamata = x.chiamata; else delete s.chiamata;
-    s.situazioni = (x.situazioni || []).filter((id) => validi.has(id));
+    // Si applicano solo i dati presenti nel file: il resto dello schema non cambia
+    if ("chiamata" in x) { if (x.chiamata) s.chiamata = x.chiamata; else delete s.chiamata; }
+    if ("situazioni" in x) s.situazioni = (x.situazioni || []).filter((id) => validi.has(id));
+    if ("categoria" in x) {
+      if ((CATEGORIE[s.lato] || []).some((c) => c.id === x.categoria)) s.categoria = x.categoria;
+      else delete s.categoria;
+    }
+    if ("tag" in x) {
+      const tag = [...new Set((x.tag || []).map((t) => String(t).trim().toLowerCase().slice(0, 20)).filter(Boolean))].slice(0, 8);
+      if (tag.length) s.tag = tag; else delete s.tag;
+    }
     cambiati.push(s);
     perNome.delete(chiave(s.nome));
   }
@@ -571,7 +580,9 @@ async function applicaFilePartita(pb, file) {
   Dati.aggiornaMolti(cambiati);
   if (playbookCorrente && playbookCorrente.id === pb.id) aggiornaDopoPartita();
   const mancanti = [...perNome.values()].map((x) => x.nome);
-  const testo = `Numeri e situazioni applicati a ${cambiati.length} schemi`
+  const cosa = ["chiamata", "situazioni", "categoria", "tag"].filter((k) => dati.schemi.some((x) => k in x))
+    .map((k) => ({ chiamata: "numeri", situazioni: "situazioni", categoria: "categorie", tag: "tag" })[k]).join(", ");
+  const testo = `Applicati (${cosa}) a ${cambiati.length} schemi`
     + (mancanti.length ? ` · non trovati: ${mancanti.slice(0, 4).join(", ")}${mancanti.length > 4 ? "…" : ""}` : "");
   mostraAvviso(testo, () => {
     Dati.aggiornaMolti(prima.filter((s) => cambiati.some((c) => c.id === s.id)));

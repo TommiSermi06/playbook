@@ -3,6 +3,11 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.33 — stampa per categoria e tag
+
+- Finestra di stampa: **Raggruppa** per Nessuno · Formazione · Categoria · Tag (ogni gruppo da una pagina nuova, con l'indice in copertina).
+- «Applica dati da file» applica anche categorie e tag, e solo i dati presenti nel file.
+
 ## Versione 0.32 — categorie e tag
 
 - Pannello **Categoria e tag**: una categoria per schema (attacco: Corsa, Passaggio, Play action, RPO, Screen, Trick play;

@@ -12,7 +12,7 @@
 
 const OPZIONI_STAMPA_DEFAULT = {
   cosa: "tutto", perPagina: 4, campo: "chiaro", copertina: true, note: true,
-  perFormazione: true, formazioneVuota: true,
+  perFormazione: true, formazioneVuota: true, raggruppa: "formazione",
   tipo: "playbook", carta: "A4", wristband: "schemi", copie: 1, miniSchemi: false, senzaSituazione: false, noteCallsheet: true,
 };
 
@@ -38,6 +38,41 @@ function nomeGruppo(chiave, schemaEsempio) {
   if (chiave === "nessuna") return "Senza formazione";
   if (chiave === "libera") return "Formazioni libere";
   return nomeFormazione(schemaEsempio);
+}
+
+/* Gruppi per categoria: nell'ordine delle categorie (Corsa, Passaggio…),
+   prima l'attacco poi la difesa; in fondo gli schemi senza categoria.
+   Dentro ogni gruppo resta l'ordine del playbook. */
+function gruppiPerCategoria(schemi, conLato) {
+  const gruppi = [];
+  for (const lato of ["attacco", "difesa"]) {
+    const delLato = schemi.filter((s) => s.lato === lato);
+    if (!delLato.length) continue;
+    const prefisso = conLato ? `${NOMI_LATO[lato]} · ` : "";
+    for (const c of CATEGORIE[lato]) {
+      const qui = delLato.filter((s) => s.categoria === c.id);
+      if (qui.length) gruppi.push({ nome: `${prefisso}${c.icona} ${c.nome}`, lato, schemi: qui });
+    }
+    const senza = delLato.filter((s) => !categoriaDi(s));
+    if (senza.length) gruppi.push({ nome: `${prefisso}Senza categoria`, lato, schemi: senza });
+  }
+  return gruppi;
+}
+
+/* Gruppi per tag: in ordine alfabetico, ogni schema sotto il suo primo tag
+   (così nessuna pagina si ripete); in fondo quelli senza tag. */
+function gruppiPerTag(schemi, conLato) {
+  const gruppi = [];
+  for (const lato of ["attacco", "difesa"]) {
+    const delLato = schemi.filter((s) => s.lato === lato);
+    if (!delLato.length) continue;
+    const prefisso = conLato ? `${NOMI_LATO[lato]} · ` : "";
+    const tag = [...new Set(delLato.map((s) => (s.tag || [])[0]).filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
+    for (const t of tag) gruppi.push({ nome: `${prefisso}#${t}`, lato, schemi: delLato.filter((s) => (s.tag || [])[0] === t) });
+    const senza = delLato.filter((s) => !(s.tag || []).length);
+    if (senza.length) gruppi.push({ nome: `${prefisso}Senza tag`, lato, schemi: senza });
+  }
+  return gruppi;
 }
 
 function chiaveOrdine() {
@@ -111,6 +146,8 @@ function apriFoglioStampa() {
   $("#stampa-senza-situazione").checked = Boolean(opzioniStampa.senzaSituazione);
   $("#stampa-note-callsheet").checked = opzioniStampa.noteCallsheet !== false;
   $("#stampa-per-formazione").checked = opzioniStampa.perFormazione !== false;
+  // Raggruppa: per le opzioni salvate prima esisteva solo «Dividi per formazioni»
+  impostaSegmentato("#stampa-raggruppa", opzioniStampa.raggruppa || (opzioniStampa.perFormazione === false ? "nessuno" : "formazione"));
   $("#stampa-formazione-vuota").checked = opzioniStampa.formazioneVuota !== false;
   mostraOrdineFormazioni();
   aggiornaOpzioniTipo();
@@ -137,7 +174,15 @@ function cosaScelta() {
 }
 
 function mostraOrdineFormazioni() {
-  const attivo = $("#stampa-per-formazione").checked;
+  const raggruppa = $("#stampa-raggruppa").dataset.valore || "formazione";
+  $("#stampa-per-formazione").checked = raggruppa === "formazione";
+  $("#aiuto-raggruppa").textContent = {
+    nessuno: "Gli schemi nell'ordine del playbook, uno dopo l'altro.",
+    formazione: "Un gruppo per formazione, nell'ordine che scegli qui sotto.",
+    categoria: "Corsa, Passaggio, Play action, RPO, Screen, Trick play… e in fondo quelli senza categoria.",
+    tag: "Un gruppo per tag, in ordine alfabetico: ogni schema va sotto il suo primo tag.",
+  }[raggruppa];
+  const attivo = raggruppa === "formazione";
   $("#blocco-formazioni").hidden = !attivo;
   if (!attivo) return;
   const lista = $("#ordine-formazioni");
@@ -239,11 +284,12 @@ function impostaSegmentato(selettore, valore) {
   gruppo.style.setProperty("--indice", indice);
   gruppo.dataset.valore = bottoni[indice].dataset.valore;
 }
-["#stampa-per-pagina", "#stampa-campo", "#stampa-tipo", "#stampa-wristband", "#stampa-carta"].forEach((sel) => {
+["#stampa-per-pagina", "#stampa-campo", "#stampa-tipo", "#stampa-wristband", "#stampa-carta", "#stampa-raggruppa"].forEach((sel) => {
   $(sel).querySelectorAll(".segmento").forEach((b) =>
     b.addEventListener("click", () => {
       impostaSegmentato(sel, b.dataset.valore);
       if (sel === "#stampa-tipo") aggiornaOpzioniTipo();
+      if (sel === "#stampa-raggruppa") mostraOrdineFormazioni();
     }));
 });
 
@@ -295,7 +341,8 @@ $("#foglio-stampa").addEventListener("submit", (e) => {
     campo: $("#stampa-campo").dataset.valore,
     copertina: $("#stampa-copertina").checked,
     note: $("#stampa-note").checked,
-    perFormazione: $("#stampa-per-formazione").checked,
+    perFormazione: ($("#stampa-raggruppa").dataset.valore || "formazione") === "formazione",
+    raggruppa: $("#stampa-raggruppa").dataset.valore || "formazione",
     formazioneVuota: $("#stampa-formazione-vuota").checked,
     tipo: $("#stampa-tipo").dataset.valore || "playbook",
     carta: $("#stampa-carta").dataset.valore || "A4",
@@ -476,19 +523,22 @@ function costruisciStampa(opzioni) {
   const titolo = titoloStampa(opzioni.cosa, schemiTutti);
   const perPagina = opzioni.perPagina;
   const conCopertina = opzioni.copertina;
-  const dividi = opzioni.perFormazione && opzioni.cosa !== "schema";
+  const raggruppa = opzioni.raggruppa || (opzioni.perFormazione === false ? "nessuno" : "formazione");
+  const dividi = raggruppa !== "nessuno" && opzioni.cosa !== "schema";
 
-  /* Ogni "blocco" diventa una o più pagine: con la divisione per formazioni
-     c'è un blocco per formazione (che parte sempre da una pagina nuova). */
-  const gruppi = dividi
-    ? gruppiPerFormazione(schemiTutti)
-    : [{ nome: null, schemi: schemiTutti, formazione: null, lato: null }];
+  /* Ogni "blocco" diventa una o più pagine: con il raggruppamento c'è un
+     blocco per formazione, categoria o tag (che parte da una pagina nuova). */
+  const gruppi = !dividi
+    ? [{ nome: null, schemi: schemiTutti, formazione: null, lato: null }]
+    : raggruppa === "categoria" ? gruppiPerCategoria(schemiTutti, opzioni.cosa === "tutto")
+    : raggruppa === "tag" ? gruppiPerTag(schemiTutti, opzioni.cosa === "tutto")
+    : gruppiPerFormazione(schemiTutti);
   const schemi = gruppi.flatMap((g) => g.schemi); // ordine finale, per numeri e indice
   const blocchi = [];
   let numero = 0;
   for (const g of gruppi) {
     const elementi = [];
-    if (dividi && opzioni.formazioneVuota && g.formazione !== "nessuna" && g.formazione !== "libera") {
+    if (dividi && raggruppa === "formazione" && opzioni.formazioneVuota && g.formazione !== "nessuna" && g.formazione !== "libera") {
       elementi.push({ tipo: "formazione", gruppo: g });
     }
     g.inizio = numero;
