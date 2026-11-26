@@ -3189,3 +3189,47 @@ html[data-tema="chiaro"] .giocatore .nome-pedina,
 .segmentato-5 { grid-template-columns: repeat(5, 1fr); }
 .segmentato-5::before { width: calc(20% - 1px); transform: translateX(calc(var(--indice, 0) * 100%)); }
 .segmentato-5 .segmento { font-size: 12px; }
+
+/* ==========================================================================
+   LIBRERIA DI FORMAZIONI E SCHEMI PRONTI (libreria.js)
+   ========================================================================== */
+body.blocco-modifiche #btn-libreria { display: none; }
+.dialogo-libreria {
+  width: min(940px, 94vw); max-height: 92vh; display: flex; flex-direction: column; gap: 10px; text-align: left;
+}
+.dialogo-libreria .dialogo-titolo, .dialogo-libreria .dialogo-testo { text-align: center; }
+.dialogo-libreria .dialogo-testo { margin: -4px 0 0; }
+.libreria-comandi { display: flex; gap: 12px; }
+.libreria-comandi .segmentato { flex: 1; margin: 0; }
+.libreria-filtri { margin: 0; }
+.libreria-filtri[hidden] { display: none; }
+.libreria-griglia {
+  flex: 1; min-height: 0; overflow-y: auto; padding: 2px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; align-content: start;
+}
+.carta-libreria {
+  position: relative; display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; text-align: left;
+  background: var(--sfondo-grigio); border: 2px solid transparent; transition: border-color 0.15s, background 0.15s, transform 0.15s var(--curva);
+}
+.carta-libreria:hover:not(:disabled) { background: var(--sfondo-hover); transform: translateY(-1px); }
+.carta-libreria.scelta { border-color: var(--accento); background: var(--accento-tenue); }
+.carta-libreria.non-disponibile { opacity: 0.45; cursor: default; }
+.anteprima-libreria {
+  display: grid; place-items: center; height: 150px; border-radius: 8px; overflow: hidden;
+  background: var(--prato); color: var(--testo-secondario); font-size: 12px;
+}
+.campo-libreria { width: 100%; height: 100%; display: block; }
+.testi-libreria { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.testi-libreria strong { font-size: 14px; color: var(--testo); }
+.sotto-libreria { font-size: 12px; color: var(--testo-secondario); }
+.nota-libreria {
+  font-size: 11.5px; line-height: 1.35; color: var(--testo-secondario); opacity: 0.85;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.spunta-libreria {
+  position: absolute; top: 16px; right: 16px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 13px; font-weight: 800;
+  background: rgba(0, 0, 0, 0.45); color: transparent; border: 2px solid rgba(255, 255, 255, 0.6);
+}
+.carta-libreria.scelta .spunta-libreria { background: var(--accento); border-color: var(--accento); color: var(--testo-su-accento); }
+.libreria-vuota { grid-column: 1 / -1; text-align: center; color: var(--testo-secondario); }

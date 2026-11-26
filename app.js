@@ -1267,6 +1267,10 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") chiudiFoglioStampa();
     return;
   }
+  if (!$("#foglio-libreria").hidden) { // libreria.js
+    if (e.key === "Escape") chiudiLibreria();
+    return;
+  }
   // Ctrl/⌘+P: la nostra stampa del playbook al posto di quella della pagina
   if (cmd && e.key.toLowerCase() === "p") { e.preventDefault(); apriFoglioStampa(); return; }
   if (!$("#foglio-condividi").hidden) {
@@ -1526,6 +1530,7 @@ $("#dialogo-annulla").addEventListener("click", chiudiDialogo);
 $("#velo").addEventListener("click", () => {
   if (!$("#foglio-squadra").hidden) chiudiFoglioSquadra();
   else if (!$("#foglio-stampa").hidden) chiudiFoglioStampa();
+  else if (!$("#foglio-libreria").hidden) chiudiLibreria();
   else if (!$("#foglio-playbook").hidden) chiudiFoglioPlaybook();
   else if (!$("#foglio-ruolo").hidden) chiudiFoglioRuolo();
   else if (!$("#foglio-condividi").hidden) chiudiFoglioCondividi();

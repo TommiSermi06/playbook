@@ -3,6 +3,13 @@
 App web per allenatori di football americano: crea il tuo playbook di attacco e di difesa.
 Pensata prima di tutto per il computer (mouse e tastiera); la versione per telefono e tablet arriverà dopo.
 
+## Versione 0.46 — libreria di formazioni e schemi pronti
+
+- Pulsante 📚 accanto a «+»: una libreria con 15 schemi d'attacco (Four Verticals, Mesh, Smash, Slant-Flat, Curl-Flat, Stick, Dagger, Y-Cross, Inside Zone, Outside Zone, Power, Bubble screen, RB screen, PA Boot, RPO Zone-Glance), 7 difese (Cover 0 blitz, Cover 1, Cover 2, Tampa 2, Cover 3, Cover 4, Fire zone) e 9 formazioni (`libreria.js`)
+- Anteprima di ognuno, filtri per categoria, scelta multipla; «Aggiungi» li mette nel playbook con categoria, tag e una nota che spiega l'idea (con Annulla)
+- Adattati al formato del playbook: a 9 senza i tackle, a 7 senza tackle e due ricevitori, nel flag senza linea e senza blocchi (quello che non esiste in un formato non si può scegliere)
+- Le formazioni degli schemi aggiunti usano quelle pronte o le tue con lo stesso nome; se mancano, si aggiungono a «Le tue formazioni»
+
 ## Versione 0.45 — sezioni (cartelle) degli schemi
 
 - Ogni playbook può avere sezioni sue per attacco, difesa e special teams, es. «Base», «Red zone», «Game plan» (`sezioni.js`, `playbook.sezioni`, `schema.sezione`)
